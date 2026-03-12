@@ -1,0 +1,21 @@
+{
+  "name": "Levante",
+  "short_name": "Levante",
+  "description": "Alzati. Costruisci. Domina.",
+  "display": "standalone",
+  "theme_color": "#d97706",
+  "background_color": "#0a0a0a",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
