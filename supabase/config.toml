@@ -1,1 +1,13 @@
 project_id = "rppjjgvfqhbhkhitgxff"
+
+[functions.generate-vapid-keys]
+verify_jwt = false
+
+[functions.subscribe-push]
+verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.check-reminders]
+verify_jwt = false
