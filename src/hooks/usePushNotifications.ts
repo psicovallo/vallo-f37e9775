@@ -45,7 +45,7 @@ export function usePushNotifications() {
       await navigator.serviceWorker.ready;
 
       // Convert VAPID key to Uint8Array
-      const applicationServerKey = urlBase64ToUint8Array(vapidData.publicKey);
+      const applicationServerKey = urlBase64ToUint8Array(vapidData.publicKey).buffer as ArrayBuffer;
 
       // Subscribe to push
       const subscription = await registration.pushManager.subscribe({
