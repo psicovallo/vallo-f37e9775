@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Trash2, Pencil } from 'lucide-react';
+import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Note {
@@ -48,26 +48,30 @@ export default function NotesPage() {
   };
 
   return (
-    <div className="mx-auto max-w-lg px-4 pt-12">
+    <div className="mx-auto max-w-lg px-4 pt-8 pb-24">
       <h1 className="mb-6 text-2xl font-bold text-foreground">Note</h1>
 
-      <div className="mb-6 flex gap-2">
+      <div className="mb-6 rounded-2xl border border-border bg-card p-4 space-y-3">
         <textarea
           value={text}
           onChange={e => setText(e.target.value)}
           placeholder="Scrivi una nota..."
-          rows={2}
-          className="flex-1 resize-none rounded-2xl border border-border bg-card px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          rows={3}
+          className="w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         />
-        <button onClick={add} className="self-end rounded-2xl bg-primary p-3 text-primary-foreground">
-          <Plus size={20} />
+        <button
+          onClick={add}
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          <Plus size={16} />
+          Aggiungi nota
         </button>
       </div>
 
       {loading ? (
         <p className="text-center text-muted-foreground">Caricamento...</p>
       ) : notes.length === 0 ? (
-        <p className="text-center text-muted-foreground">Nessuna nota</p>
+        <p className="text-center text-muted-foreground py-8">Nessuna nota</p>
       ) : (
         <div className="space-y-3">
           {notes.map(n => (
@@ -79,25 +83,33 @@ export default function NotesPage() {
                     onChange={e => setEditText(e.target.value)}
                     rows={3}
                     className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    autoFocus
                   />
                   <div className="flex gap-2">
-                    <button onClick={() => save(n.id)} className="rounded-xl bg-primary px-3 py-1 text-xs text-primary-foreground">Salva</button>
-                    <button onClick={() => setEditingId(null)} className="rounded-xl px-3 py-1 text-xs text-muted-foreground">Annulla</button>
+                    <button onClick={() => save(n.id)} className="flex items-center gap-1 rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">
+                      <Check size={12} /> Salva
+                    </button>
+                    <button onClick={() => setEditingId(null)} className="flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground">
+                      <X size={12} /> Annulla
+                    </button>
                   </div>
                 </div>
               ) : (
                 <div className="flex items-start gap-3">
                   <p className="flex-1 whitespace-pre-wrap text-sm text-foreground">{n.text}</p>
-                  <div className="flex gap-1">
-                    <button onClick={() => { setEditingId(n.id); setEditText(n.text); }} className="text-muted-foreground hover:text-foreground">
+                  <div className="flex gap-1 shrink-0">
+                    <button onClick={() => { setEditingId(n.id); setEditText(n.text); }} className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
                       <Pencil size={14} />
                     </button>
-                    <button onClick={() => remove(n.id)} className="text-muted-foreground hover:text-destructive">
+                    <button onClick={() => remove(n.id)} className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive hover:bg-secondary transition-colors">
                       <Trash2 size={14} />
                     </button>
                   </div>
                 </div>
               )}
+              <p className="mt-2 text-[10px] text-muted-foreground">
+                {new Date(n.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+              </p>
             </div>
           ))}
         </div>
