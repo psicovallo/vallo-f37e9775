@@ -1,7 +1,6 @@
 project_id = "rppjjgvfqhbhkhitgxff"
 
-[functions.generate-vapid-keys]
-verify_jwt = false
+[functions.subscribe-push]
 
 [functions.subscribe-push]
 verify_jwt = false
