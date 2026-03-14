@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { LogOut, Bell, BellOff, Clock, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
