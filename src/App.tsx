@@ -10,6 +10,7 @@ import RemindersPage from "@/pages/RemindersPage";
 import NotesPage from "@/pages/NotesPage";
 import MessagesPage from "@/pages/MessagesPage";
 import AdminPage from "@/pages/AdminPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<AuthPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route element={<AppLayout />}>
               <Route path="/home" element={<HomePage />} />
               <Route path="/reminders" element={<RemindersPage />} />
