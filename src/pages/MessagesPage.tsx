@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Send, Trash2 } from 'lucide-react';
+import { Send, Trash2, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
+import PhrasePicker from '@/components/PhrasePicker';
 
 interface Message {
   id: string;
