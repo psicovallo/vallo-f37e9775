@@ -121,7 +121,22 @@ export default function MessagesPage() {
         <div ref={bottomRef} />
       </div>
 
+      {showPhrases && (
+        <div className="mb-2">
+          <PhrasePicker
+            onSelect={(phrase) => setText(phrase)}
+            onClose={() => setShowPhrases(false)}
+          />
+        </div>
+      )}
+
       <div className="flex gap-2 pb-4">
+        <button
+          onClick={() => setShowPhrases(!showPhrases)}
+          className={`rounded-2xl p-3 transition-colors ${showPhrases ? 'bg-primary text-primary-foreground' : 'border border-border bg-card text-muted-foreground hover:text-foreground'}`}
+        >
+          <BookOpen size={20} />
+        </button>
         <input
           value={text}
           onChange={e => setText(e.target.value)}

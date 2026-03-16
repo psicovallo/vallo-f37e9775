@@ -268,11 +268,15 @@ export default function AdminPage() {
           <TabsTrigger value="broadcast" className="flex-1 gap-1 rounded-lg data-[state=active]:bg-card">
             <Radio size={14} /> Broadcast
           </TabsTrigger>
+          <TabsTrigger value="phrases" className="flex-1 gap-1 rounded-lg data-[state=active]:bg-card">
+            <BookOpen size={14} /> Frasi
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="users"><UsersTab /></TabsContent>
         <TabsContent value="messages"><MessagesTab /></TabsContent>
         <TabsContent value="broadcast"><BroadcastTab /></TabsContent>
+        <TabsContent value="phrases"><PhrasesManager /></TabsContent>
       </Tabs>
     </div>
   );
