@@ -3,8 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Send, Users, MessageSquare, Radio } from 'lucide-react';
+import { Send, Users, MessageSquare, Radio, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
+import PhrasesManager from '@/components/PhrasesManager';
 
 interface Profile {
   id: string;
