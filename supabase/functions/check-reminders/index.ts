@@ -57,7 +57,7 @@ serve(async (req) => {
 
     // Send push notifications per user
     for (const [userId, texts] of userReminders) {
-      const title = '⏰ Promemoria Levante';
+      const title = '⏰ Promemoria Vallo';
       const body = texts.length === 1 ? texts[0] : `Hai ${texts.length} promemoria:\n${texts.join('\n')}`;
 
       // Call send-push-notification function

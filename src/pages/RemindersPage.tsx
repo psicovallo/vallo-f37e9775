@@ -78,7 +78,7 @@ export default function RemindersPage() {
       const { data, error } = await supabase.functions.invoke('send-push-notification', {
         body: {
           user_ids: [user.id],
-          title: '🧪 Test Levante',
+          title: '🧪 Test Vallo',
           body: 'Le notifiche push funzionano!',
         },
       });

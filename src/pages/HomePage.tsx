@@ -39,7 +39,7 @@ export default function HomePage() {
   // Auto-request push permission after 2s on first visit
   useEffect(() => {
     if (!isSupported || isSubscribed || autoRequested.current) return;
-    const firstVisitKey = 'levante_first_visit_push';
+    const firstVisitKey = 'vallo_first_visit_push';
     if (localStorage.getItem(firstVisitKey)) return;
     autoRequested.current = true;
     const timer = setTimeout(async () => {

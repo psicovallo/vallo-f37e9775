@@ -45,7 +45,7 @@ serve(async (req) => {
 
     const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')!;
     const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')!;
-    const vapidSubject = Deno.env.get('VAPID_SUBJECT') || 'mailto:admin@levante.app';
+    const vapidSubject = Deno.env.get('VAPID_SUBJECT') || 'mailto:admin@vallo.app';
 
     const payload = JSON.stringify({ title, body, data: data || {} });
     const results: Array<{ endpoint: string; status: string; statusCode?: number }> = [];

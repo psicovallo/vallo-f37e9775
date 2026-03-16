@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-const PUSH_SUBSCRIBED_KEY = 'levante_push_subscribed';
+const PUSH_SUBSCRIBED_KEY = 'vallo_push_subscribed';
 
 export function usePushNotifications() {
   const { user } = useAuth();
