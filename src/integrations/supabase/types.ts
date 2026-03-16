@@ -62,6 +62,30 @@ export type Database = {
         }
         Relationships: []
       }
+      phrases: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          text: string
+          type: Database["public"]["Enums"]["phrase_type"]
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          text: string
+          type: Database["public"]["Enums"]["phrase_type"]
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          text?: string
+          type?: Database["public"]["Enums"]["phrase_type"]
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -177,6 +201,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "moderator" | "user"
       message_role: "user" | "admin"
+      phrase_type: "mantra" | "domanda"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -306,6 +331,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "moderator", "user"],
       message_role: ["user", "admin"],
+      phrase_type: ["mantra", "domanda"],
     },
   },
 } as const
