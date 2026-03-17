@@ -1,8 +1,6 @@
 project_id = "rppjjgvfqhbhkhitgxff"
 
 [functions.subscribe-push]
-
-[functions.subscribe-push]
 verify_jwt = false
 
 [functions.send-push-notification]
