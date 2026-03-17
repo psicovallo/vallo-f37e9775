@@ -11,6 +11,7 @@ import NotesPage from "@/pages/NotesPage";
 import MessagesPage from "@/pages/MessagesPage";
 import AdminPage from "@/pages/AdminPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
+import QuestionPage from "@/pages/QuestionPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
