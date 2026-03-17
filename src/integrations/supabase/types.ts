@@ -137,6 +137,72 @@ export type Database = {
         }
         Relationships: []
       }
+      question_answers: {
+        Row: {
+          answer_button: string
+          answer_text: string
+          created_at: string
+          id: string
+          question_index: number
+          question_text: string
+          user_id: string
+        }
+        Insert: {
+          answer_button: string
+          answer_text: string
+          created_at?: string
+          id?: string
+          question_index: number
+          question_text: string
+          user_id: string
+        }
+        Update: {
+          answer_button?: string
+          answer_text?: string
+          created_at?: string
+          id?: string
+          question_index?: number
+          question_text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      question_progress: {
+        Row: {
+          answer_button: string | null
+          answer_text: string | null
+          answered: boolean
+          answered_at: string | null
+          created_at: string
+          current_question_index: number
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answer_button?: string | null
+          answer_text?: string | null
+          answered?: boolean
+          answered_at?: string | null
+          created_at?: string
+          current_question_index?: number
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answer_button?: string | null
+          answer_text?: string | null
+          answered?: boolean
+          answered_at?: string | null
+          created_at?: string
+          current_question_index?: number
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       reminders: {
         Row: {
           active: boolean

@@ -45,22 +45,54 @@ serve(async (req) => {
       });
     }
 
-    // Group reminders by user_id
-    const userReminders = new Map<string, string[]>();
-    for (const r of reminders) {
-      const existing = userReminders.get(r.user_id) || [];
-      existing.push(r.text);
-      userReminders.set(r.user_id, existing);
-    }
-
+    // Get unique user_ids from reminders
+    const userIds = [...new Set(reminders.map(r => r.user_id))];
     let totalSent = 0;
 
-    // Send push notifications per user
-    for (const [userId, texts] of userReminders) {
-      const title = '⏰ Promemoria Vallo';
-      const body = texts.length === 1 ? texts[0] : `Hai ${texts.length} promemoria:\n${texts.join('\n')}`;
+    // For each user, check their question progress and send the current question
+    for (const userId of userIds) {
+      // Get or create progress
+      let { data: progress } = await supabase
+        .from('question_progress')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-      // Call send-push-notification function
+      if (!progress) {
+        const { data: newProgress } = await supabase
+          .from('question_progress')
+          .insert({ user_id: userId, current_question_index: 1, answered: false })
+          .select()
+          .single();
+        progress = newProgress;
+      }
+
+      if (!progress) continue;
+
+      // If current question is answered, advance
+      let qIndex = progress.current_question_index;
+      if (progress.answered) {
+        qIndex = qIndex + 1;
+        if (qIndex > 21) continue; // all done
+        await supabase
+          .from('question_progress')
+          .update({ current_question_index: qIndex, answered: false, answer_text: null, answer_button: null, answered_at: null })
+          .eq('user_id', userId);
+      }
+
+      // Fetch questions
+      const { data: questions } = await supabase
+        .from('phrases')
+        .select('text')
+        .eq('type', 'domanda')
+        .order('created_at', { ascending: true });
+
+      if (!questions || qIndex > questions.length) continue;
+
+      const questionText = questions[qIndex - 1].text;
+      const title = `🔥 Domanda ${qIndex}/21`;
+      const body = questionText;
+
       const sendUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-push-notification`;
       const response = await fetch(sendUrl, {
         method: 'POST',
@@ -72,7 +104,7 @@ serve(async (req) => {
           user_ids: [userId],
           title,
           body,
-          data: { url: '/reminders' },
+          data: { url: '/question' },
         }),
       });
 

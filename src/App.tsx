@@ -11,6 +11,7 @@ import NotesPage from "@/pages/NotesPage";
 import MessagesPage from "@/pages/MessagesPage";
 import AdminPage from "@/pages/AdminPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
+import QuestionPage from "@/pages/QuestionPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route element={<AppLayout />}>
               <Route path="/home" element={<HomePage />} />
+              <Route path="/question" element={<QuestionPage />} />
               <Route path="/reminders" element={<RemindersPage />} />
               <Route path="/notes" element={<NotesPage />} />
               <Route path="/messages" element={<MessagesPage />} />

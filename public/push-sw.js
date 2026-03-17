@@ -1,6 +1,6 @@
 // Push notification service worker for Levante
 self.addEventListener('push', (event) => {
-  let data = { title: 'Levante', body: 'Hai una nuova notifica', data: {} };
+  let data = { title: 'Vallo', body: 'Hai una nuova notifica', data: {} };
 
   if (event.data) {
     try {
