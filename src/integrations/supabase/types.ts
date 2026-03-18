@@ -167,6 +167,39 @@ export type Database = {
         }
         Relationships: []
       }
+      question_deliveries: {
+        Row: {
+          created_at: string
+          delivered_at: string
+          id: string
+          question_index: number
+          read_at: string | null
+          read_completed: boolean
+          read_duration_seconds: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivered_at?: string
+          id?: string
+          question_index: number
+          read_at?: string | null
+          read_completed?: boolean
+          read_duration_seconds?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivered_at?: string
+          id?: string
+          question_index?: number
+          read_at?: string | null
+          read_completed?: boolean
+          read_duration_seconds?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       question_progress: {
         Row: {
           answer_button: string | null
@@ -175,7 +208,14 @@ export type Database = {
           answered_at: string | null
           created_at: string
           current_question_index: number
+          daily_times: string[] | null
+          daily_times_date: string | null
           id: string
+          notification_window_end: string | null
+          notification_window_start: string | null
+          onboarding_completed: boolean
+          phase: string
+          questions_read_count: number
           updated_at: string
           user_id: string
         }
@@ -186,7 +226,14 @@ export type Database = {
           answered_at?: string | null
           created_at?: string
           current_question_index?: number
+          daily_times?: string[] | null
+          daily_times_date?: string | null
           id?: string
+          notification_window_end?: string | null
+          notification_window_start?: string | null
+          onboarding_completed?: boolean
+          phase?: string
+          questions_read_count?: number
           updated_at?: string
           user_id: string
         }
@@ -197,7 +244,14 @@ export type Database = {
           answered_at?: string | null
           created_at?: string
           current_question_index?: number
+          daily_times?: string[] | null
+          daily_times_date?: string | null
           id?: string
+          notification_window_end?: string | null
+          notification_window_start?: string | null
+          onboarding_completed?: boolean
+          phase?: string
+          questions_read_count?: number
           updated_at?: string
           user_id?: string
         }
