@@ -1,10 +1,9 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { supabase } from '@/integrations/supabase/client';
-import { LogOut, Bell, BellOff, Clock, ChevronRight } from 'lucide-react';
+import { LogOut, Clock, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { toast } from 'sonner';
+import OnboardingPage from '@/pages/OnboardingPage';
 
 interface Reminder {
   id: string;
@@ -22,11 +21,28 @@ function getGreeting(): string {
 
 export default function HomePage() {
   const { user, signOut } = useAuth();
-  const { isSupported, isSubscribed, requestPermission } = usePushNotifications();
   const [reminders, setReminders] = useState<Reminder[]>([]);
-  const autoRequested = useRef(false);
+  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
+
+  // Check onboarding status
+  useEffect(() => {
+    if (!user) return;
+
+    const checkOnboarding = async () => {
+      const { data } = await supabase
+        .from('question_progress')
+        .select('onboarding_completed')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      setOnboardingDone(data?.onboarding_completed ?? false);
+    };
+
+    checkOnboarding();
+  }, [user]);
 
   useEffect(() => {
+    if (!onboardingDone) return;
     supabase
       .from('reminders')
       .select('id, text, times, active')
@@ -34,33 +50,23 @@ export default function HomePage() {
       .order('created_at', { ascending: false })
       .limit(5)
       .then(({ data }) => setReminders(data || []));
-  }, []);
-
-  // Auto-request push permission after 2s on first visit
-  useEffect(() => {
-    if (!isSupported || isSubscribed || autoRequested.current) return;
-    const firstVisitKey = 'vallo_first_visit_push';
-    if (localStorage.getItem(firstVisitKey)) return;
-    autoRequested.current = true;
-    const timer = setTimeout(async () => {
-      localStorage.setItem(firstVisitKey, 'true');
-      const ok = await requestPermission();
-      if (ok) toast.success('Notifiche push attivate!');
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, [isSupported, isSubscribed, requestPermission]);
-
-  const handlePushToggle = async () => {
-    if (isSubscribed) {
-      toast.info('Notifiche già attive');
-      return;
-    }
-    const success = await requestPermission();
-    if (success) toast.success('Notifiche push attivate!');
-    else toast.error('Impossibile attivare le notifiche push');
-  };
+  }, [onboardingDone]);
 
   const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || '';
+
+  // Loading
+  if (onboardingDone === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  // Show onboarding
+  if (!onboardingDone) {
+    return <OnboardingPage onComplete={() => setOnboardingDone(true)} />;
+  }
 
   return (
     <div className="mx-auto max-w-lg px-4 pt-8 pb-24">
@@ -75,27 +81,18 @@ export default function HomePage() {
         </button>
       </div>
 
-      {/* Push notification banner */}
-      {isSupported && !isSubscribed && (
-        <button
-          onClick={handlePushToggle}
-          className="mb-6 flex w-full items-center gap-3 rounded-2xl border border-primary/30 bg-primary/10 p-4 text-left transition-colors hover:bg-primary/20"
-        >
-          <BellOff size={20} className="text-primary shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-foreground">Attiva le notifiche</p>
-            <p className="text-xs text-muted-foreground">Ricevi promemoria e messaggi in tempo reale</p>
-          </div>
-          <ChevronRight size={16} className="text-muted-foreground" />
-        </button>
-      )}
-
-      {isSupported && isSubscribed && (
-        <div className="mb-6 flex items-center gap-2 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3">
-          <Bell size={16} className="text-primary" />
-          <span className="text-sm text-primary font-medium">Notifiche push attive</span>
+      {/* Question CTA */}
+      <Link
+        to="/question"
+        className="mb-6 flex w-full items-center gap-3 rounded-2xl border border-primary/30 bg-primary/10 p-4 text-left transition-colors hover:bg-primary/20"
+      >
+        <span className="text-2xl">🔥</span>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-foreground">Domanda del giorno</p>
+          <p className="text-xs text-muted-foreground">Vai alla tua prossima domanda di sradicamento</p>
         </div>
-      )}
+        <ChevronRight size={16} className="text-muted-foreground" />
+      </Link>
 
       {/* Quick links */}
       <div className="mb-6 grid grid-cols-2 gap-3">
