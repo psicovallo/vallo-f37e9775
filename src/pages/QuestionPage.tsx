@@ -8,6 +8,7 @@ const BLOCKED_WORDS = ['non so', 'forse', 'domani', 'boh', 'non lo so', 'vedremo
 const MIN_CHARS = 50;
 const COUNTDOWN_SECONDS = 60;
 const READ_SECONDS = 15;
+const REQUIRED_READS = 9;
 
 const ANSWER_BUTTONS = [
   { id: 'ammetto', label: 'AMMETTO LA MENZOGNA', color: 'bg-destructive text-destructive-foreground' },
@@ -23,6 +24,7 @@ interface QuestionData {
 }
 
 interface ProgressData {
+  id: string;
   phase: string;
   questions_read_count: number;
   current_question_index: number;
@@ -38,20 +40,20 @@ export default function QuestionPage() {
   const [readTimer, setReadTimer] = useState(READ_SECONDS);
   const [isLocked, setIsLocked] = useState(true);
   const [readCompleted, setReadCompleted] = useState(false);
+  const [hasPendingDelivery, setHasPendingDelivery] = useState(false);
   const [selectedButton, setSelectedButton] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [allDone, setAllDone] = useState(false);
   const [textValid, setTextValid] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const readTimerRef = useRef<ReturnType<typeof setInterval>>();
   const deliveryIdRef = useRef<string | null>(null);
 
-  const isIncubation = progress?.phase === 'incubation';
+  const isIncubation = progress?.phase !== 'response';
+  const readsRemaining = Math.max(REQUIRED_READS - (progress?.questions_read_count ?? 0), 0);
 
-  // Start read timer (15s for incubation phase)
   const startReadTimer = useCallback(() => {
     setReadTimer(READ_SECONDS);
     setReadCompleted(false);
@@ -68,7 +70,6 @@ export default function QuestionPage() {
     }, 1000);
   }, []);
 
-  // Start answer countdown (60s for response phase)
   const startCountdown = useCallback((seconds = COUNTDOWN_SECONDS) => {
     setCountdown(seconds);
     setIsLocked(true);
@@ -85,37 +86,68 @@ export default function QuestionPage() {
     }, 1000);
   }, []);
 
-  // Load current question
   useEffect(() => {
     if (!user) return;
 
     const loadQuestion = async () => {
-      // Get or create progress
-      let { data: prog } = await supabase
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (readTimerRef.current) clearInterval(readTimerRef.current);
+
+      deliveryIdRef.current = null;
+      setHasPendingDelivery(false);
+      setReadCompleted(false);
+      setCompleted(false);
+      setAllDone(false);
+      setSelectedButton(null);
+      setAnswerText('');
+      setTextValid(false);
+      setValidationError(null);
+
+      let { data: prog, error: progError } = await supabase
         .from('question_progress')
         .select('*')
         .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
+      if (progError) {
+        toast.error(progError.message);
+        return;
+      }
+
       if (!prog) {
-        const { data: newProg } = await supabase
+        const { data: newProg, error: newProgError } = await supabase
           .from('question_progress')
-          .insert({ user_id: user.id, current_question_index: 1, answered: false })
+          .insert({
+            user_id: user.id,
+            current_question_index: 1,
+            answered: false,
+            phase: 'incubation',
+            questions_read_count: 0,
+            onboarding_completed: false,
+          })
           .select()
           .single();
+
+        if (newProgError) {
+          toast.error(newProgError.message);
+          return;
+        }
+
         prog = newProg;
       }
 
       if (!prog) return;
 
-      // If already answered, move to next
       if (prog.answered) {
         const nextIndex = prog.current_question_index + 1;
         if (nextIndex > 21) {
           setAllDone(true);
           return;
         }
-        await supabase
+
+        const { error: resetError } = await supabase
           .from('question_progress')
           .update({
             current_question_index: nextIndex,
@@ -123,25 +155,56 @@ export default function QuestionPage() {
             answer_text: null,
             answer_button: null,
             answered_at: null,
+            phase: 'incubation',
+            questions_read_count: 0,
           })
-          .eq('user_id', user.id);
-        prog.current_question_index = nextIndex;
-        prog.answered = false;
+          .eq('id', prog.id);
+
+        if (resetError) {
+          toast.error(resetError.message);
+          return;
+        }
+
+        prog = {
+          ...prog,
+          current_question_index: nextIndex,
+          answered: false,
+          answer_text: null,
+          answer_button: null,
+          answered_at: null,
+          phase: 'incubation',
+          questions_read_count: 0,
+        };
+      }
+
+      const normalizedReadCount = Math.max(0, prog.questions_read_count || 0);
+      const normalizedPhase = normalizedReadCount >= REQUIRED_READS ? 'response' : 'incubation';
+
+      if (prog.phase !== normalizedPhase) {
+        await supabase
+          .from('question_progress')
+          .update({ phase: normalizedPhase })
+          .eq('id', prog.id);
       }
 
       setProgress({
-        phase: prog.phase || 'incubation',
-        questions_read_count: prog.questions_read_count || 0,
+        id: prog.id,
+        phase: normalizedPhase,
+        questions_read_count: normalizedReadCount,
         current_question_index: prog.current_question_index,
         answered: prog.answered,
       });
 
-      // Fetch questions
-      const { data: questions } = await supabase
+      const { data: questions, error: questionsError } = await supabase
         .from('phrases')
         .select('*')
         .eq('type', 'domanda')
         .order('created_at', { ascending: true });
+
+      if (questionsError) {
+        toast.error(questionsError.message);
+        return;
+      }
 
       if (!questions || questions.length === 0) return;
 
@@ -154,8 +217,7 @@ export default function QuestionPage() {
       const q = questions[idx - 1];
       setQuestion({ index: idx, text: q.text, category: q.category });
 
-      // Check for existing unread delivery
-      const { data: delivery } = await supabase
+      const { data: delivery, error: deliveryError } = await supabase
         .from('question_deliveries')
         .select('id, read_completed')
         .eq('user_id', user.id)
@@ -165,54 +227,75 @@ export default function QuestionPage() {
         .limit(1)
         .maybeSingle();
 
-      if (delivery) {
-        deliveryIdRef.current = delivery.id;
+      if (deliveryError) {
+        toast.error(deliveryError.message);
+        return;
       }
 
-      // Start appropriate timer
-      if (prog.phase === 'incubation') {
-        startReadTimer();
-      } else {
+      deliveryIdRef.current = delivery?.id ?? null;
+      setHasPendingDelivery(Boolean(delivery));
+
+      if (normalizedPhase === 'response') {
         startCountdown();
+        return;
+      }
+
+      if (delivery) {
+        startReadTimer();
       }
     };
 
     loadQuestion();
+
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (readTimerRef.current) clearInterval(readTimerRef.current);
     };
   }, [user, startCountdown, startReadTimer]);
 
-  // Mark read completed (15s) and update progress
   useEffect(() => {
-    if (!readCompleted || !user || !question) return;
+    if (!readCompleted || !user || !question || !progress || !deliveryIdRef.current) return;
 
     const markRead = async () => {
-      // Update delivery if exists
-      if (deliveryIdRef.current) {
-        await supabase
-          .from('question_deliveries')
-          .update({ read_completed: true, read_at: new Date().toISOString(), read_duration_seconds: READ_SECONDS })
-          .eq('id', deliveryIdRef.current);
+      const activeDeliveryId = deliveryIdRef.current;
+      if (!activeDeliveryId) return;
+
+      const { error: deliveryError } = await supabase
+        .from('question_deliveries')
+        .update({
+          read_completed: true,
+          read_at: new Date().toISOString(),
+          read_duration_seconds: READ_SECONDS,
+        })
+        .eq('id', activeDeliveryId);
+
+      if (deliveryError) {
+        toast.error(deliveryError.message);
+        return;
       }
 
-      // Increment read count
-      const newCount = (progress?.questions_read_count || 0) + 1;
-      const shouldUnlockResponse = newCount >= 6;
+      const newCount = Math.min((progress.questions_read_count || 0) + 1, REQUIRED_READS);
+      const nextPhase = newCount >= REQUIRED_READS ? 'response' : 'incubation';
 
-      await supabase
+      const { error: progressError } = await supabase
         .from('question_progress')
         .update({
           questions_read_count: newCount,
-          ...(shouldUnlockResponse ? { phase: 'response' } : {}),
+          phase: nextPhase,
         })
-        .eq('user_id', user.id);
+        .eq('id', progress.id);
 
+      if (progressError) {
+        toast.error(progressError.message);
+        return;
+      }
+
+      deliveryIdRef.current = null;
+      setHasPendingDelivery(false);
       setProgress(prev => prev ? {
         ...prev,
         questions_read_count: newCount,
-        ...(shouldUnlockResponse ? { phase: 'response' } : {}),
+        phase: nextPhase,
       } : prev);
     };
 
@@ -223,29 +306,33 @@ export default function QuestionPage() {
     if (text.trim().length < MIN_CHARS) {
       return `La risposta deve contenere almeno ${MIN_CHARS} caratteri. Ne hai scritti ${text.trim().length}.`;
     }
+
     const lower = text.toLowerCase();
     for (const word of BLOCKED_WORDS) {
       if (lower.includes(word)) {
         return `La risposta contiene "${word.trim()}". Scava più a fondo. Non accettiamo scorciatoie mentali.`;
       }
     }
+
     return null;
   };
 
   const handleTextChange = (text: string) => {
     setAnswerText(text);
+    setSelectedButton(null);
     setValidationError(null);
     const error = validateText(text);
     setTextValid(error === null && text.trim().length >= MIN_CHARS);
   };
 
   const handleSubmit = async () => {
-    if (!user || !question || !selectedButton) return;
+    if (!user || !question || !selectedButton || !progress) return;
 
     const error = validateText(answerText);
     if (error) {
       setValidationError(error);
       setAnswerText('');
+      setSelectedButton(null);
       setTextValid(false);
       startCountdown();
       toast.error('Risposta rifiutata. Timer resettato.');
@@ -268,7 +355,7 @@ export default function QuestionPage() {
       return;
     }
 
-    await supabase
+    const { error: progressError } = await supabase
       .from('question_progress')
       .update({
         answered: true,
@@ -276,24 +363,29 @@ export default function QuestionPage() {
         answer_button: selectedButton,
         answered_at: new Date().toISOString(),
       })
-      .eq('user_id', user.id);
+      .eq('id', progress.id);
+
+    if (progressError) {
+      toast.error(progressError.message);
+      setSubmitting(false);
+      return;
+    }
 
     setCompleted(true);
     setSubmitting(false);
   };
 
-  const formatTime = (s: number) => {
-    const mins = Math.floor(s / 60);
-    const secs = s % 60;
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // All done
   if (allDone) {
     return (
-      <div className="mx-auto max-w-lg px-4 pt-16 pb-24 text-center">
-        <div className="text-6xl mb-6">🔥</div>
-        <h1 className="text-2xl font-bold text-foreground mb-4">Hai completato tutte le 21 domande</h1>
+      <div className="mx-auto max-w-lg px-4 pb-24 pt-16 text-center">
+        <div className="mb-6 text-6xl">🔥</div>
+        <h1 className="mb-4 text-2xl font-bold text-foreground">Hai completato tutte le 21 domande</h1>
         <p className="text-muted-foreground">
           Hai attraversato ogni singola domanda. Non sei più la stessa persona che ha iniziato.
         </p>
@@ -301,37 +393,34 @@ export default function QuestionPage() {
     );
   }
 
-  // Completed current question
   if (completed) {
     return (
-      <div className="mx-auto max-w-lg px-4 pt-16 pb-24 text-center">
-        <div className="text-6xl mb-6">⚡</div>
-        <h1 className="text-2xl font-bold text-foreground mb-4">Domanda attraversata</h1>
-        <p className="text-muted-foreground mb-2">
-          Hai scelto: <span className="text-primary font-semibold">{ANSWER_BUTTONS.find(b => b.id === selectedButton)?.label}</span>
+      <div className="mx-auto max-w-lg px-4 pb-24 pt-16 text-center">
+        <div className="mb-6 text-6xl">⚡</div>
+        <h1 className="mb-4 text-2xl font-bold text-foreground">Domanda attraversata</h1>
+        <p className="mb-2 text-muted-foreground">
+          Hai scelto: <span className="font-semibold text-primary">{ANSWER_BUTTONS.find(b => b.id === selectedButton)?.label}</span>
         </p>
         <p className="text-sm text-muted-foreground">
-          La prossima domanda arriverà con la tua prossima notifica.
+          Dalla prossima notifica inizierà la domanda successiva.
         </p>
       </div>
     );
   }
 
-  // Loading
   if (!question || !progress) {
     return (
-      <div className="mx-auto max-w-lg px-4 pt-16 pb-24 text-center">
+      <div className="mx-auto max-w-lg px-4 pb-24 pt-16 text-center">
         <p className="text-muted-foreground">Caricamento...</p>
       </div>
     );
   }
 
-  // PHASE A: Incubation (read only)
   if (isIncubation) {
     return (
-      <div className="mx-auto max-w-lg px-4 pt-8 pb-24">
+      <div className="mx-auto max-w-lg px-4 pb-24 pt-8">
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-xs font-medium text-primary uppercase tracking-wider">
+          <span className="text-xs font-medium uppercase tracking-wider text-primary">
             Domanda {question.index}/21
           </span>
           <span className="text-xs text-muted-foreground">{question.category}</span>
@@ -339,43 +428,48 @@ export default function QuestionPage() {
 
         <div className="mb-2">
           <span className="inline-block rounded-full bg-accent/20 px-3 py-1 text-xs font-medium text-primary">
-            Fase Incubazione · {progress.questions_read_count}/6 lette
+            Fase Osservazione · {progress.questions_read_count}/{REQUIRED_READS} letture
           </span>
         </div>
 
         <div className="mb-8 rounded-2xl border border-primary/30 bg-primary/5 p-6">
-          <p className="text-lg font-semibold text-foreground leading-relaxed">
-            {question.text}
-          </p>
+          <p className="text-lg font-semibold leading-relaxed text-foreground">{question.text}</p>
         </div>
 
-        {/* Read timer */}
         <div className="mb-6 text-center">
-          {!readCompleted ? (
+          {hasPendingDelivery && !readCompleted ? (
             <div className="inline-flex items-center gap-3 rounded-2xl border border-border bg-card px-6 py-4">
-              <Eye size={20} className="text-primary animate-pulse" />
+              <Eye size={20} className="animate-pulse text-primary" />
               <div>
-                <p className="text-2xl font-mono font-bold text-foreground">{formatTime(readTimer)}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Leggi con attenzione.<br />
-                  La domanda si sta incidendo nella tua mente.
+                <p className="text-2xl font-bold text-foreground font-mono">{formatTime(readTimer)}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Resta qui 15 secondi.<br />
+                  Solo così questa lettura verrà conteggiata.
                 </p>
               </div>
             </div>
-          ) : (
+          ) : readCompleted ? (
             <div className="rounded-2xl border border-primary/30 bg-primary/5 p-6">
-              <p className="text-sm text-foreground font-medium mb-2">
-                ✅ Domanda letta
-              </p>
+              <p className="mb-2 text-sm font-medium text-foreground">✅ Lettura registrata</p>
               <p className="text-xs text-muted-foreground">
-                Ottimo, continua così. Non puoi ancora rispondere.
-                Dormici sopra, scrivila su carta. La verità ha bisogno di tempo.
+                Ottimo, continua così. La stessa domanda tornerà finché non raggiungi tutte le osservazioni richieste.
               </p>
-              {progress.questions_read_count + 1 >= 6 && (
-                <p className="text-xs text-primary font-semibold mt-3">
-                  🔓 Hai raggiunto 6 letture! La prossima domanda sbloccherà la risposta.
+              {progress.questions_read_count >= REQUIRED_READS ? (
+                <p className="mt-3 text-xs font-semibold text-primary">
+                  🔓 Hai completato 9 letture. Alla prossima apertura partirà il minuto obbligatorio per rispondere.
+                </p>
+              ) : (
+                <p className="mt-3 text-xs font-semibold text-primary">
+                  Mancano {readsRemaining} letture da 15 secondi prima della risposta.
                 </p>
               )}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <p className="mb-2 text-sm font-medium text-foreground">Nessuna lettura attiva</p>
+              <p className="text-xs text-muted-foreground">
+                Aspetta la prossima notifica push o recupera una consegna non letta: la domanda continua a tornare finché non la completi davvero.
+              </p>
             </div>
           )}
         </div>
@@ -383,56 +477,55 @@ export default function QuestionPage() {
     );
   }
 
-  // PHASE B: Response
   return (
-    <div className="mx-auto max-w-lg px-4 pt-8 pb-24">
+    <div className="mx-auto max-w-lg px-4 pb-24 pt-8">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs font-medium text-primary uppercase tracking-wider">
+        <span className="text-xs font-medium uppercase tracking-wider text-primary">
           Domanda {question.index}/21
         </span>
         <span className="text-xs text-muted-foreground">{question.category}</span>
       </div>
 
-      <div className="mb-8 rounded-2xl border border-primary/30 bg-primary/5 p-6">
-        <p className="text-lg font-semibold text-foreground leading-relaxed">
-          {question.text}
-        </p>
+      <div className="mb-2">
+        <span className="inline-block rounded-full bg-accent/20 px-3 py-1 text-xs font-medium text-primary">
+          Fase Risposta · 10ª apertura
+        </span>
       </div>
 
-      {/* Countdown */}
+      <div className="mb-8 rounded-2xl border border-primary/30 bg-primary/5 p-6">
+        <p className="text-lg font-semibold leading-relaxed text-foreground">{question.text}</p>
+      </div>
+
       {isLocked && (
         <div className="mb-6 text-center">
           <div className="inline-flex items-center gap-3 rounded-2xl border border-border bg-card px-6 py-4">
-            <Timer size={20} className="text-primary animate-pulse" />
+            <Timer size={20} className="animate-pulse text-primary" />
             <div>
-              <p className="text-2xl font-mono font-bold text-foreground">{formatTime(countdown)}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Il tuo subconscio sta elaborando...<br />
-                non mentire ancora. Aspetta.
+              <p className="text-2xl font-bold text-foreground font-mono">{formatTime(countdown)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Sei alla 10ª apertura.<br />
+                Aspetta un minuto intero prima di rispondere.
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Validation error */}
       {validationError && (
         <div className="mb-4 flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-4">
-          <AlertTriangle size={18} className="text-destructive shrink-0 mt-0.5" />
+          <AlertTriangle size={18} className="mt-0.5 shrink-0 text-destructive" />
           <p className="text-sm text-destructive">{validationError}</p>
         </div>
       )}
 
-      {/* Answer textarea */}
       {!isLocked && (
         <div className="mb-6">
           <textarea
-            ref={textareaRef}
             value={answerText}
             onChange={e => handleTextChange(e.target.value)}
             placeholder="Scrivi la tua risposta sincera... (minimo 50 caratteri)"
             rows={5}
-            className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none transition-all"
+            className="w-full resize-none rounded-2xl border border-border bg-card px-4 py-3 text-foreground transition-all placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <p className={`mt-1 text-xs ${answerText.trim().length >= MIN_CHARS ? 'text-primary' : 'text-muted-foreground'}`}>
             {answerText.trim().length}/{MIN_CHARS} caratteri minimi
@@ -440,10 +533,9 @@ export default function QuestionPage() {
         </div>
       )}
 
-      {/* 4 answer buttons - only show when text is valid */}
       {!isLocked && textValid && (
         <div className="space-y-3">
-          <p className="text-xs text-muted-foreground mb-2">
+          <p className="mb-2 text-xs text-muted-foreground">
             Grazie per l'onestà. Scegli come ti senti ora per proseguire. Va tutto bene.
           </p>
           {ANSWER_BUTTONS.map(btn => (
@@ -462,7 +554,6 @@ export default function QuestionPage() {
         </div>
       )}
 
-      {/* Submit */}
       {selectedButton && !isLocked && textValid && (
         <button
           onClick={handleSubmit}

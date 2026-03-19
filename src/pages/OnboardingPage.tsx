@@ -3,10 +3,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { toast } from 'sonner';
-import { Flame, Clock, Bell, ChevronRight, Check } from 'lucide-react';
+import { Flame, Clock, Bell, ChevronRight } from 'lucide-react';
 
 const TIME_OPTIONS = Array.from({ length: 15 }, (_, i) => {
-  const h = i + 7; // 07:00 to 21:00
+  const h = i + 7;
   return `${h.toString().padStart(2, '0')}:00`;
 });
 
@@ -22,29 +22,37 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
 
   const handleActivate = async () => {
     if (!user) return;
+    if (windowEnd <= windowStart) {
+      toast.error('La fine della fascia deve essere successiva all’inizio.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Save onboarding data FIRST (before push, so progress is saved even if push fails)
-      const { data: existing } = await supabase
+      const { data: existing, error: existingError } = await supabase
         .from('question_progress')
         .select('id')
         .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
+      if (existingError) throw existingError;
+
       if (existing) {
-        await supabase
+        const { error: updateError } = await supabase
           .from('question_progress')
           .update({
             onboarding_completed: true,
             notification_window_start: windowStart,
             notification_window_end: windowEnd,
-            phase: 'incubation',
-            questions_read_count: 0,
           })
-          .eq('user_id', user.id);
+          .eq('id', existing.id);
+
+        if (updateError) throw updateError;
       } else {
-        await supabase
+        const { error: insertError } = await supabase
           .from('question_progress')
           .insert({
             user_id: user.id,
@@ -56,9 +64,10 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
             current_question_index: 1,
             answered: false,
           });
+
+        if (insertError) throw insertError;
       }
 
-      // Request push permission AFTER saving (non-blocking)
       if (isSupported) {
         const ok = await requestPermission();
         if (!ok) {
@@ -66,7 +75,7 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
         }
       }
 
-      toast.success('Percorso attivato! Le tue riflessioni stanno arrivando.');
+      toast.success('Percorso attivato. Da ora la stessa domanda tornerà finché non la completi.');
       onComplete();
     } catch (err) {
       toast.error('Errore durante l\'attivazione');
@@ -76,28 +85,23 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
   };
 
   return (
-    <div className="mx-auto max-w-lg px-4 pt-8 pb-24 min-h-screen flex flex-col">
+    <div className="mx-auto flex min-h-screen max-w-lg flex-col px-4 pb-24 pt-8">
       {step === 'contract' && (
-        <div className="flex-1 flex flex-col">
-          <div className="text-center mb-8">
-            <Flame size={48} className="text-primary mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-foreground mb-2">
-              Contratto di Consapevolezza
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Prima di iniziare, devi sapere cosa ti aspetta.
-            </p>
+        <div className="flex flex-1 flex-col">
+          <div className="mb-8 text-center">
+            <Flame size={48} className="mx-auto mb-4 text-primary" />
+            <h1 className="mb-2 text-2xl font-bold text-foreground">Contratto di Consapevolezza</h1>
+            <p className="text-sm text-muted-foreground">Prima di iniziare, devi sapere esattamente come funzionerà.</p>
           </div>
 
-          <div className="space-y-4 flex-1">
+          <div className="flex-1 space-y-4">
             <div className="rounded-2xl border border-border bg-card p-5">
               <div className="flex items-start gap-3">
-                <Bell size={20} className="text-primary shrink-0 mt-0.5" />
+                <Bell size={20} className="mt-0.5 shrink-0 text-primary" />
                 <div>
-                  <p className="font-semibold text-foreground text-sm">6 notifiche al giorno</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Riceverai 3 domande ripetute in 6 momenti random nella tua fascia oraria.
-                    Non puoi ignorarle.
+                  <p className="text-sm font-semibold text-foreground">6 notifiche al giorno</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    La stessa domanda tornerà nei 6 slot casuali della tua fascia oraria finché non l’hai davvero attraversata.
                   </p>
                 </div>
               </div>
@@ -105,12 +109,11 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
 
             <div className="rounded-2xl border border-border bg-card p-5">
               <div className="flex items-start gap-3">
-                <Clock size={20} className="text-primary shrink-0 mt-0.5" />
+                <Clock size={20} className="mt-0.5 shrink-0 text-primary" />
                 <div>
-                  <p className="font-semibold text-foreground text-sm">Fase Incubazione (2-3 giorni)</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Per le prime 6 domande dovrai solo leggerle. Non puoi rispondere.
-                    Dormici sopra, scrivile su carta. La verità ha bisogno di tempo.
+                  <p className="text-sm font-semibold text-foreground">Fase Osservazione</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Ogni domanda va guardata per 15 secondi almeno 9 volte. Se salti una lettura, il sistema continua a riproportela.
                   </p>
                 </div>
               </div>
@@ -118,28 +121,26 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
 
             <div className="rounded-2xl border border-border bg-card p-5">
               <div className="flex items-start gap-3">
-                <Flame size={20} className="text-primary shrink-0 mt-0.5" />
+                <Flame size={20} className="mt-0.5 shrink-0 text-primary" />
                 <div>
-                  <p className="font-semibold text-foreground text-sm">Fase Risposta</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Dopo aver letto 6 domande, si sblocca la risposta.
-                    60 secondi di attesa, minimo 50 caratteri, nessuna scorciatoia.
+                  <p className="text-sm font-semibold text-foreground">10ª apertura = risposta</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Alla 10ª apertura si sblocca 1 minuto di attesa, poi minimo 50 caratteri e infine scegli il bottone emotivo.
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5">
-              <p className="text-sm text-foreground font-medium text-center">
-                "Se il cibo è il tuo carceriere, queste domande sono la chiave.
-                Ma la chiave brucia."
+              <p className="text-center text-sm font-medium text-foreground">
+                "Se il cibo è il tuo carceriere, queste domande sono la chiave. Ma la chiave brucia."
               </p>
             </div>
           </div>
 
           <button
             onClick={() => setStep('window')}
-            className="mt-6 w-full flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Accetto il contratto
             <ChevronRight size={18} />
@@ -148,26 +149,22 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
       )}
 
       {step === 'window' && (
-        <div className="flex-1 flex flex-col">
-          <div className="text-center mb-8">
-            <Clock size={48} className="text-primary mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-foreground mb-2">
-              La tua finestra di riflessione
-            </h1>
+        <div className="flex flex-1 flex-col">
+          <div className="mb-8 text-center">
+            <Clock size={48} className="mx-auto mb-4 text-primary" />
+            <h1 className="mb-2 text-2xl font-bold text-foreground">La tua finestra di riflessione</h1>
             <p className="text-sm text-muted-foreground">
-              Scegli quando vuoi ricevere le notifiche. Il sistema invierà 6 notifiche random in questa fascia.
+              Scegli quando vuoi ricevere le notifiche. Il sistema userà 6 orari casuali dentro questa fascia.
             </p>
           </div>
 
-          <div className="space-y-6 flex-1">
+          <div className="flex-1 space-y-6">
             <div>
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
-                Inizio fascia
-              </label>
+              <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">Inizio fascia</label>
               <select
                 value={windowStart}
                 onChange={e => setWindowStart(e.target.value)}
-                className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {TIME_OPTIONS.map(t => (
                   <option key={t} value={t}>{t}</option>
@@ -176,13 +173,11 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
             </div>
 
             <div>
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
-                Fine fascia
-              </label>
+              <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">Fine fascia</label>
               <select
                 value={windowEnd}
                 onChange={e => setWindowEnd(e.target.value)}
-                className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {TIME_OPTIONS.map(t => (
                   <option key={t} value={t}>{t}</option>
@@ -192,14 +187,14 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
 
             <div className="rounded-2xl border border-border bg-card p-4 text-center">
               <p className="text-sm text-muted-foreground">
-                Le tue 6 notifiche arriveranno tra le <span className="text-primary font-semibold">{windowStart}</span> e le <span className="text-primary font-semibold">{windowEnd}</span>
+                Le tue 6 notifiche arriveranno tra le <span className="font-semibold text-primary">{windowStart}</span> e le <span className="font-semibold text-primary">{windowEnd}</span>
               </p>
             </div>
           </div>
 
           <button
             onClick={() => setStep('activate')}
-            className="mt-6 w-full flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Conferma orari
             <ChevronRight size={18} />
@@ -208,22 +203,19 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
       )}
 
       {step === 'activate' && (
-        <div className="flex-1 flex flex-col items-center justify-center">
-          <div className="text-center mb-8">
-            <div className="text-6xl mb-6">🔥</div>
-            <h1 className="text-2xl font-bold text-foreground mb-2">
-              Tutto pronto
-            </h1>
+        <div className="flex flex-1 flex-col items-center justify-center">
+          <div className="mb-8 text-center">
+            <div className="mb-6 text-6xl">🔥</div>
+            <h1 className="mb-2 text-2xl font-bold text-foreground">Tutto pronto</h1>
             <p className="text-sm text-muted-foreground">
-              Attiva le notifiche per ricevere le tue domande di sradicamento.
-              Senza notifiche, il percorso non può iniziare.
+              Attiva le notifiche per ricevere la tua domanda attiva 6 volte al giorno finché non la completi davvero.
             </p>
           </div>
 
           <button
             onClick={handleActivate}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
           >
             {loading ? (
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
@@ -236,7 +228,7 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
           </button>
 
           {!isSupported && (
-            <p className="mt-4 text-xs text-destructive text-center">
+            <p className="mt-4 text-center text-xs text-destructive">
               Il tuo browser non supporta le notifiche push. Prova con Chrome o Safari.
             </p>
           )}
