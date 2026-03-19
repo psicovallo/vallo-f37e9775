@@ -11,11 +11,12 @@ function generateRandomTimes(start: string, end: string, count: number): string[
   const [endH, endM] = end.split(':').map(Number);
   const startMinutes = startH * 60 + startM;
   const endMinutes = endH * 60 + endM;
-  
+
   if (endMinutes <= startMinutes) return [];
-  
+
   const times: Set<string> = new Set();
   let attempts = 0;
+
   while (times.size < count && attempts < 100) {
     const randomMin = startMinutes + Math.floor(Math.random() * (endMinutes - startMinutes));
     const h = Math.floor(randomMin / 60);
@@ -23,7 +24,7 @@ function generateRandomTimes(start: string, end: string, count: number): string[
     times.add(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
     attempts++;
   }
-  
+
   return [...times].sort();
 }
 
@@ -38,11 +39,15 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Get current time in Europe/Rome timezone
     const now = new Date();
-    const romeFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit' });
-    const romeDate = romeFormatter.format(now); // YYYY-MM-DD
-    
+    const romeFormatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Rome',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const romeDate = romeFormatter.format(now);
+
     const romeTime = now.toLocaleTimeString('it-IT', {
       timeZone: 'Europe/Rome',
       hour: '2-digit',
@@ -52,7 +57,19 @@ serve(async (req) => {
 
     console.log(`Check reminders at ${romeTime} on ${romeDate}`);
 
-    // Get all users with onboarding completed
+    const { data: questions, error: questionsError } = await supabase
+      .from('phrases')
+      .select('text')
+      .eq('type', 'domanda')
+      .order('created_at', { ascending: true });
+
+    if (questionsError) throw questionsError;
+    if (!questions?.length) {
+      return new Response(JSON.stringify({ checked: romeTime, users: 0, sent: 0 }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { data: allProgress, error: progressError } = await supabase
       .from('question_progress')
       .select('*')
@@ -60,7 +77,7 @@ serve(async (req) => {
 
     if (progressError) throw progressError;
     if (!allProgress?.length) {
-      return new Response(JSON.stringify({ checked: romeTime, users: 0 }), {
+      return new Response(JSON.stringify({ checked: romeTime, users: 0, sent: 0 }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -70,7 +87,6 @@ serve(async (req) => {
     for (const progress of allProgress) {
       const userId = progress.user_id;
 
-      // Generate daily times if not done today
       let dailyTimes: string[] = progress.daily_times || [];
       if (progress.daily_times_date !== romeDate) {
         dailyTimes = generateRandomTimes(
@@ -78,35 +94,22 @@ serve(async (req) => {
           progress.notification_window_end || '22:00',
           6
         );
+
         await supabase
           .from('question_progress')
           .update({ daily_times: dailyTimes, daily_times_date: romeDate })
-          .eq('user_id', userId);
+          .eq('id', progress.id);
+
         console.log(`Generated times for ${userId}: ${dailyTimes.join(', ')}`);
       }
 
-      // Check if current minute matches any scheduled time
       if (!dailyTimes.includes(romeTime)) continue;
 
-      // Chain logic: check if last delivery was read (15s+)
-      const { data: lastDelivery } = await supabase
-        .from('question_deliveries')
-        .select('*')
-        .eq('user_id', userId)
-        .order('delivered_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (lastDelivery && !lastDelivery.read_completed) {
-        console.log(`Skipping ${userId}: previous delivery not read`);
-        continue;
-      }
-
-      // Determine question index
       let qIndex = progress.current_question_index;
       if (progress.answered) {
         qIndex = qIndex + 1;
-        if (qIndex > 21) continue;
+        if (qIndex > questions.length) continue;
+
         await supabase
           .from('question_progress')
           .update({
@@ -115,21 +118,15 @@ serve(async (req) => {
             answer_text: null,
             answer_button: null,
             answered_at: null,
+            phase: 'incubation',
+            questions_read_count: 0,
           })
-          .eq('user_id', userId);
+          .eq('id', progress.id);
       }
 
-      // Fetch questions
-      const { data: questions } = await supabase
-        .from('phrases')
-        .select('text')
-        .eq('type', 'domanda')
-        .order('created_at', { ascending: true });
+      if (qIndex > questions.length) continue;
 
-      if (!questions || qIndex > questions.length) continue;
-
-      // Create delivery record
-      await supabase
+      const { error: deliveryError } = await supabase
         .from('question_deliveries')
         .insert({
           user_id: userId,
@@ -137,11 +134,15 @@ serve(async (req) => {
           delivered_at: now.toISOString(),
         });
 
+      if (deliveryError) {
+        console.error(`Failed to create delivery for ${userId}:`, deliveryError.message);
+        continue;
+      }
+
       const questionText = questions[qIndex - 1].text;
       const title = `🔥 Domanda ${qIndex}/21`;
       const body = questionText;
 
-      // Send push notification
       const sendUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-push-notification`;
       const response = await fetch(sendUrl, {
         method: 'POST',
@@ -153,7 +154,7 @@ serve(async (req) => {
           user_ids: [userId],
           title,
           body,
-          data: { url: '/question' },
+          data: { url: '/question', questionIndex: qIndex },
         }),
       });
 

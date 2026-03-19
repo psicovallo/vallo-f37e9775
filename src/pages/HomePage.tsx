@@ -24,16 +24,22 @@ export default function HomePage() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
 
-  // Check onboarding status
   useEffect(() => {
     if (!user) return;
 
     const checkOnboarding = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('question_progress')
-        .select('onboarding_completed')
+        .select('id, onboarding_completed')
         .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
+
+      if (error) {
+        setOnboardingDone(false);
+        return;
+      }
 
       setOnboardingDone(data?.onboarding_completed ?? false);
     };
@@ -54,7 +60,6 @@ export default function HomePage() {
 
   const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || '';
 
-  // Loading
   if (onboardingDone === null) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -63,38 +68,34 @@ export default function HomePage() {
     );
   }
 
-  // Show onboarding
   if (!onboardingDone) {
     return <OnboardingPage onComplete={() => setOnboardingDone(true)} />;
   }
 
   return (
     <div className="mx-auto max-w-lg px-4 pt-8 pb-24">
-      {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">{getGreeting()},</p>
           <h1 className="text-2xl font-bold text-foreground">{userName}</h1>
         </div>
-        <button onClick={signOut} className="rounded-2xl p-2 text-muted-foreground hover:text-foreground transition-colors">
+        <button onClick={signOut} className="rounded-2xl p-2 text-muted-foreground transition-colors hover:text-foreground">
           <LogOut size={20} />
         </button>
       </div>
 
-      {/* Question CTA */}
       <Link
         to="/question"
         className="mb-6 flex w-full items-center gap-3 rounded-2xl border border-primary/30 bg-primary/10 p-4 text-left transition-colors hover:bg-primary/20"
       >
         <span className="text-2xl">🔥</span>
         <div className="flex-1">
-          <p className="text-sm font-medium text-foreground">Domanda del giorno</p>
-          <p className="text-xs text-muted-foreground">Vai alla tua prossima domanda di sradicamento</p>
+          <p className="text-sm font-medium text-foreground">Domanda attiva</p>
+          <p className="text-xs text-muted-foreground">Apri la domanda che il sistema continuerà a riproporti finché non la completi</p>
         </div>
         <ChevronRight size={16} className="text-muted-foreground" />
       </Link>
 
-      {/* Quick links */}
       <div className="mb-6 grid grid-cols-3 gap-3">
         <Link
           to="/contract"
@@ -119,19 +120,18 @@ export default function HomePage() {
         </Link>
       </div>
 
-      {/* Active reminders */}
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Promemoria attivi</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Promemoria attivi</h2>
           <Link to="/reminders" className="text-xs text-primary hover:underline">Vedi tutti</Link>
         </div>
         {reminders.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground py-8">Nessun promemoria attivo</p>
+          <p className="py-8 text-center text-sm text-muted-foreground">Nessun promemoria attivo</p>
         ) : (
           <div className="space-y-2">
             {reminders.map(r => (
               <div key={r.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
-                <Clock size={16} className="text-primary shrink-0" />
+                <Clock size={16} className="shrink-0 text-primary" />
                 <span className="flex-1 text-sm text-foreground">{r.text}</span>
                 {r.times && r.times.length > 0 && (
                   <span className="text-xs text-muted-foreground">{r.times.join(', ')}</span>

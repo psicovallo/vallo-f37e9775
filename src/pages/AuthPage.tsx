@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,23 +10,26 @@ export default function AuthPage() {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'login' | 'forgot'>('login');
-  const { signIn, signUp } = useAuth();
+  const { user, loading: authLoading, signIn, signUp } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate('/home', { replace: true });
+    }
+  }, [authLoading, user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Try sign in first
       await signIn(email, password);
-      navigate('/home');
+      navigate('/home', { replace: true });
     } catch {
-      // If login fails, try to register
       try {
         await signUp(email, password, name || undefined);
-        // Auto-confirm is on, so sign in immediately after signup
         await signIn(email, password);
-        navigate('/home');
+        navigate('/home', { replace: true });
       } catch (err: any) {
         toast.error(err.message || 'Errore di autenticazione');
       }
@@ -51,6 +54,14 @@ export default function AuthPage() {
       setLoading(false);
     }
   };
+
+  if (authLoading || user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   if (mode === 'forgot') {
     return (
