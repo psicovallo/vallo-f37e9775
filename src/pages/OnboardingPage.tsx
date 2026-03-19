@@ -25,17 +25,7 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
     setLoading(true);
 
     try {
-      // Request push permission
-      if (isSupported) {
-        const ok = await requestPermission();
-        if (!ok) {
-          toast.error('Devi attivare le notifiche per continuare.');
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Save onboarding data
+      // Save onboarding data FIRST (before push, so progress is saved even if push fails)
       const { data: existing } = await supabase
         .from('question_progress')
         .select('id')
@@ -66,6 +56,14 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
             current_question_index: 1,
             answered: false,
           });
+      }
+
+      // Request push permission AFTER saving (non-blocking)
+      if (isSupported) {
+        const ok = await requestPermission();
+        if (!ok) {
+          toast.warning('Notifiche non attivate. Puoi attivarle dalle impostazioni del browser.');
+        }
       }
 
       toast.success('Percorso attivato! Le tue riflessioni stanno arrivando.');

@@ -16,8 +16,10 @@ self.addEventListener('push', (event) => {
     badge: '/pwa-icon-192.png',
     data: data.data || {},
     vibrate: [200, 100, 200],
-    tag: 'levante-notification',
+    tag: 'vallo-notification',
     renotify: true,
+    silent: false,
+    requireInteraction: true,
   };
 
   event.waitUntil(self.registration.showNotification(data.title, options));

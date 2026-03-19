@@ -95,20 +95,27 @@ export default function HomePage() {
       </Link>
 
       {/* Quick links */}
-      <div className="mb-6 grid grid-cols-2 gap-3">
+      <div className="mb-6 grid grid-cols-3 gap-3">
+        <Link
+          to="/contract"
+          className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary"
+        >
+          <span className="text-2xl">📜</span>
+          <span className="text-xs font-medium text-foreground text-center">Contratto</span>
+        </Link>
         <Link
           to="/reminders"
-          className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary"
+          className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary"
         >
           <span className="text-2xl">🔔</span>
-          <span className="text-sm font-medium text-foreground">Promemoria</span>
+          <span className="text-xs font-medium text-foreground text-center">Promemoria</span>
         </Link>
         <Link
           to="/notes"
-          className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary"
+          className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary"
         >
           <span className="text-2xl">📝</span>
-          <span className="text-sm font-medium text-foreground">Note</span>
+          <span className="text-xs font-medium text-foreground text-center">Note</span>
         </Link>
       </div>
 
