@@ -104,7 +104,7 @@ const PattoPage = () => {
 const [timer, setTimer] = useState(60);
 const { user } = useAuth();
 const navigate = useNavigate();
-useEffect(() => { if (timer > 0) { const t = setTimeout(() => setTimer(timer - 1), 1000); return () => clearTimeout(t); } }, [timer]);
+useEffect(() => { if (timer > 0) { const t = setTimeout(() => setTimer(timer - 1), 1000); return () => clearTimeout(timer); } }, [timer]);
 const next = async () => { await supabase.from('profiles').update({ onboarding_step: 1 }).eq('id', user?.id); navigate('/onboarding/identita'); };
 return (
 <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center p-6 font-sans">
