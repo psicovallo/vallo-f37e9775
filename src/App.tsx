@@ -13,6 +13,7 @@ import AdminPage from "@/pages/AdminPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import QuestionPage from "@/pages/QuestionPage";
 import ContractPage from "@/pages/ContractPage";
+import SfogoPage from "@/pages/SfogoPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
