@@ -1,16 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { LogOut, Clock, ChevronRight } from 'lucide-react';
+import { LogOut, ChevronRight, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import OnboardingPage from '@/pages/OnboardingPage';
-
-interface Reminder {
-  id: string;
-  text: string;
-  times: string[] | null;
-  active: boolean;
-}
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -19,27 +12,28 @@ function getGreeting(): string {
   return 'Buonasera';
 }
 
+interface ActiveQuestion {
+  question_text: string;
+  view_count: number;
+  sort_order: number;
+}
+
 export default function HomePage() {
   const { user, signOut } = useAuth();
-  const [reminders, setReminders] = useState<Reminder[]>([]);
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
+  const [activeQuestion, setActiveQuestion] = useState<ActiveQuestion | null>(null);
 
   useEffect(() => {
     if (!user) return;
 
     const checkOnboarding = async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('question_progress')
         .select('id, onboarding_completed')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-
-      if (error) {
-        setOnboardingDone(false);
-        return;
-      }
 
       setOnboardingDone(data?.onboarding_completed ?? false);
     };
@@ -48,15 +42,23 @@ export default function HomePage() {
   }, [user]);
 
   useEffect(() => {
-    if (!onboardingDone) return;
-    supabase
-      .from('reminders')
-      .select('id, text, times, active')
-      .eq('active', true)
-      .order('created_at', { ascending: false })
-      .limit(5)
-      .then(({ data }) => setReminders(data || []));
-  }, [onboardingDone]);
+    if (!onboardingDone || !user) return;
+
+    const loadActive = async () => {
+      const { data } = await supabase
+        .from('question_assignments')
+        .select('question_text, view_count, sort_order')
+        .eq('user_id', user.id)
+        .neq('status', 'risolta')
+        .order('sort_order', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      setActiveQuestion(data as ActiveQuestion | null);
+    };
+
+    loadActive();
+  }, [onboardingDone, user]);
 
   const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || '';
 
@@ -84,6 +86,7 @@ export default function HomePage() {
         </button>
       </div>
 
+      {/* Active question card */}
       <Link
         to="/question"
         className="mb-6 flex w-full items-center gap-3 rounded-2xl border border-primary/30 bg-primary/10 p-4 text-left transition-colors hover:bg-primary/20"
@@ -91,55 +94,44 @@ export default function HomePage() {
         <span className="text-2xl">🔥</span>
         <div className="flex-1">
           <p className="text-sm font-medium text-foreground">Domanda attiva</p>
-          <p className="text-xs text-muted-foreground">Apri la domanda che il sistema continuerà a riproporti finché non la completi</p>
+          {activeQuestion ? (
+            <>
+              <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{activeQuestion.question_text}</p>
+              <div className="mt-2 flex items-center gap-2">
+                <Eye size={12} className="text-primary" />
+                <span className="text-xs text-primary font-medium">{activeQuestion.view_count}/9 osservazioni</span>
+              </div>
+            </>
+          ) : (
+            <p className="text-xs text-muted-foreground">Tutte le domande completate!</p>
+          )}
         </div>
         <ChevronRight size={16} className="text-muted-foreground" />
       </Link>
 
+      {/* Quick links */}
       <div className="mb-6 grid grid-cols-3 gap-3">
         <Link
           to="/contract"
-          className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary"
+          className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary active:scale-[0.97]"
         >
           <span className="text-2xl">📜</span>
-          <span className="text-xs font-medium text-foreground text-center">Contratto</span>
-        </Link>
-        <Link
-          to="/reminders"
-          className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary"
-        >
-          <span className="text-2xl">🔔</span>
-          <span className="text-xs font-medium text-foreground text-center">Promemoria</span>
+          <span className="text-xs font-medium text-foreground text-center">Il Patto</span>
         </Link>
         <Link
           to="/notes"
-          className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary"
+          className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary active:scale-[0.97]"
         >
           <span className="text-2xl">📝</span>
           <span className="text-xs font-medium text-foreground text-center">Note</span>
         </Link>
-      </div>
-
-      <div>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Promemoria attivi</h2>
-          <Link to="/reminders" className="text-xs text-primary hover:underline">Vedi tutti</Link>
-        </div>
-        {reminders.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">Nessun promemoria attivo</p>
-        ) : (
-          <div className="space-y-2">
-            {reminders.map(r => (
-              <div key={r.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
-                <Clock size={16} className="shrink-0 text-primary" />
-                <span className="flex-1 text-sm text-foreground">{r.text}</span>
-                {r.times && r.times.length > 0 && (
-                  <span className="text-xs text-muted-foreground">{r.times.join(', ')}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+        <Link
+          to="/messages"
+          className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary active:scale-[0.97]"
+        >
+          <span className="text-2xl">💬</span>
+          <span className="text-xs font-medium text-foreground text-center">Messaggi</span>
+        </Link>
       </div>
     </div>
   );

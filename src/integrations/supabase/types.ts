@@ -91,21 +91,27 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          milestone_zero: string | null
           name: string | null
+          objective: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           email?: string | null
           id?: string
+          milestone_zero?: string | null
           name?: string | null
+          objective?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           email?: string | null
           id?: string
+          milestone_zero?: string | null
           name?: string | null
+          objective?: string | null
           user_id?: string
         }
         Relationships: []
@@ -167,6 +173,42 @@ export type Database = {
         }
         Relationships: []
       }
+      question_assignments: {
+        Row: {
+          created_at: string
+          id: string
+          is_seed_question: boolean
+          phase_b_unlock_at: string | null
+          question_text: string
+          sort_order: number
+          status: Database["public"]["Enums"]["assignment_status"]
+          user_id: string
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_seed_question?: boolean
+          phase_b_unlock_at?: string | null
+          question_text: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["assignment_status"]
+          user_id: string
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_seed_question?: boolean
+          phase_b_unlock_at?: string | null
+          question_text?: string
+          sort_order?: number
+          status?: Database["public"]["Enums"]["assignment_status"]
+          user_id?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       question_deliveries: {
         Row: {
           created_at: string
@@ -199,6 +241,76 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      question_notes: {
+        Row: {
+          assignment_id: string
+          created_at: string
+          id: string
+          text: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assignment_id: string
+          created_at?: string
+          id?: string
+          text?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assignment_id?: string
+          created_at?: string
+          id?: string
+          text?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_notes_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "question_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      question_official_answers: {
+        Row: {
+          answer_text: string
+          assignment_id: string
+          button_clicked: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          answer_text: string
+          assignment_id: string
+          button_clicked: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          answer_text?: string
+          assignment_id?: string
+          button_clicked?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_official_answers_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "question_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       question_progress: {
         Row: {
@@ -320,6 +432,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      assignment_status: "da_leggere" | "in_incubazione" | "risolta"
       message_role: "user" | "admin"
       phrase_type: "mantra" | "domanda"
     }
@@ -450,6 +563,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      assignment_status: ["da_leggere", "in_incubazione", "risolta"],
       message_role: ["user", "admin"],
       phrase_type: ["mantra", "domanda"],
     },

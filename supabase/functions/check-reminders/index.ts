@@ -57,19 +57,7 @@ serve(async (req) => {
 
     console.log(`Check reminders at ${romeTime} on ${romeDate}`);
 
-    const { data: questions, error: questionsError } = await supabase
-      .from('phrases')
-      .select('text')
-      .eq('type', 'domanda')
-      .order('created_at', { ascending: true });
-
-    if (questionsError) throw questionsError;
-    if (!questions?.length) {
-      return new Response(JSON.stringify({ checked: romeTime, users: 0, sent: 0 }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
+    // Get all users with completed onboarding
     const { data: allProgress, error: progressError } = await supabase
       .from('question_progress')
       .select('*')
@@ -87,6 +75,7 @@ serve(async (req) => {
     for (const progress of allProgress) {
       const userId = progress.user_id;
 
+      // Generate daily times if needed
       let dailyTimes: string[] = progress.daily_times || [];
       if (progress.daily_times_date !== romeDate) {
         dailyTimes = generateRandomTimes(
@@ -105,43 +94,55 @@ serve(async (req) => {
 
       if (!dailyTimes.includes(romeTime)) continue;
 
-      let qIndex = progress.current_question_index;
-      if (progress.answered) {
-        qIndex = qIndex + 1;
-        if (qIndex > questions.length) continue;
+      // Get active assignment for this user
+      const { data: assignments } = await supabase
+        .from('question_assignments')
+        .select('*')
+        .eq('user_id', userId)
+        .neq('status', 'risolta')
+        .order('sort_order', { ascending: true })
+        .limit(1);
 
-        await supabase
-          .from('question_progress')
-          .update({
-            current_question_index: qIndex,
-            answered: false,
-            answer_text: null,
-            answer_button: null,
-            answered_at: null,
-            phase: 'incubation',
-            questions_read_count: 0,
-          })
-          .eq('id', progress.id);
-      }
+      if (!assignments?.length) continue;
 
-      if (qIndex > questions.length) continue;
+      const assignment = assignments[0];
 
-      const { error: deliveryError } = await supabase
+      // Check max 2 views per day
+      const { data: todayDeliveries } = await supabase
         .from('question_deliveries')
-        .insert({
-          user_id: userId,
-          question_index: qIndex,
-          delivered_at: now.toISOString(),
-        });
+        .select('id')
+        .eq('user_id', userId)
+        .eq('question_index', assignment.sort_order)
+        .eq('read_completed', true)
+        .gte('delivered_at', `${romeDate}T00:00:00`)
+        .lte('delivered_at', `${romeDate}T23:59:59`);
 
-      if (deliveryError) {
-        console.error(`Failed to create delivery for ${userId}:`, deliveryError.message);
+      if ((todayDeliveries?.length || 0) >= 2) continue;
+
+      // Chain logic: check if there's an unread delivery
+      const { data: unreadDelivery } = await supabase
+        .from('question_deliveries')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('read_completed', false)
+        .limit(1)
+        .maybeSingle();
+
+      if (unreadDelivery) {
+        console.log(`Skipping ${userId}: has unread delivery`);
         continue;
       }
 
-      const questionText = questions[qIndex - 1].text;
-      const title = `🔥 Domanda ${qIndex}/21`;
-      const body = questionText;
+      // Create delivery
+      await supabase.from('question_deliveries').insert({
+        user_id: userId,
+        question_index: assignment.sort_order,
+        delivered_at: now.toISOString(),
+      });
+
+      // Send push notification
+      const title = `🔥 Domanda ${assignment.sort_order}`;
+      const body = assignment.question_text.slice(0, 100) + (assignment.question_text.length > 100 ? '...' : '');
 
       const sendUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-push-notification`;
       const response = await fetch(sendUrl, {
@@ -154,13 +155,13 @@ serve(async (req) => {
           user_ids: [userId],
           title,
           body,
-          data: { url: '/question', questionIndex: qIndex },
+          data: { url: '/question' },
         }),
       });
 
       const result = await response.json();
       totalSent += result.sent || 0;
-      console.log(`Sent to ${userId}: question ${qIndex}, result: ${JSON.stringify(result)}`);
+      console.log(`Sent to ${userId}: question ${assignment.sort_order}, views: ${assignment.view_count}/9`);
     }
 
     return new Response(JSON.stringify({
