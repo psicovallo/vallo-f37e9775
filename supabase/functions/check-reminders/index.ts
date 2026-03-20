@@ -12,16 +12,29 @@ function generateRandomTimes(start: string, end: string, count: number): string[
   const startMinutes = startH * 60 + startM;
   const endMinutes = endH * 60 + endM;
 
-  if (endMinutes <= startMinutes) return [];
+  if (endMinutes <= startMinutes || count < 2) return [];
+
+  const fmt = (min: number) => {
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+  };
 
   const times: Set<string> = new Set();
-  let attempts = 0;
 
-  while (times.size < count && attempts < 100) {
+  // First notification: within the first 60 minutes of the window
+  const firstEnd = Math.min(startMinutes + 60, endMinutes);
+  times.add(fmt(startMinutes + Math.floor(Math.random() * (firstEnd - startMinutes))));
+
+  // Last notification: within the last 60 minutes of the window
+  const lastStart = Math.max(endMinutes - 60, startMinutes);
+  times.add(fmt(lastStart + Math.floor(Math.random() * (endMinutes - lastStart))));
+
+  // Remaining 4 notifications: random in the middle zone
+  let attempts = 0;
+  while (times.size < count && attempts < 200) {
     const randomMin = startMinutes + Math.floor(Math.random() * (endMinutes - startMinutes));
-    const h = Math.floor(randomMin / 60);
-    const m = randomMin % 60;
-    times.add(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+    times.add(fmt(randomMin));
     attempts++;
   }
 

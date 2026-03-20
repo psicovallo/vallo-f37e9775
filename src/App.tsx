@@ -13,6 +13,7 @@ import AdminPage from "@/pages/AdminPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import QuestionPage from "@/pages/QuestionPage";
 import ContractPage from "@/pages/ContractPage";
+import SfogoPage from "@/pages/SfogoPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
               <Route path="/home" element={<HomePage />} />
               <Route path="/question" element={<QuestionPage />} />
               <Route path="/contract" element={<ContractPage />} />
+              <Route path="/sfogo" element={<SfogoPage />} />
               <Route path="/reminders" element={<RemindersPage />} />
               <Route path="/notes" element={<NotesPage />} />
               <Route path="/messages" element={<MessagesPage />} />
