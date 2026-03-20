@@ -110,7 +110,15 @@ export default function HomePage() {
       </Link>
 
       {/* Quick links */}
-      <div className="mb-6 grid grid-cols-3 gap-3">
+      <div className="mb-6 grid grid-cols-2 gap-3">
+        <Link
+          to="/sfogo"
+          className="flex flex-col items-center gap-2 rounded-2xl border border-primary/30 bg-primary/5 p-4 transition-colors hover:border-primary active:scale-[0.97]"
+        >
+          <span className="text-2xl">✍️</span>
+          <span className="text-xs font-medium text-foreground text-center">Area Sfogo</span>
+          <span className="text-[10px] text-muted-foreground text-center">Scrivi e rifletti</span>
+        </Link>
         <Link
           to="/contract"
           className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary active:scale-[0.97]"
