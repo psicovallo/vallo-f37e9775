@@ -38,6 +38,7 @@ export default function SfogoPage() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Session timer
   useEffect(() => {
     if (!sessionStart) return;
     const interval = setInterval(() => {
@@ -101,6 +102,7 @@ export default function SfogoPage() {
     if (!sessionStart) setSessionStart(Date.now());
 
     try {
+      // Save sfogo/round note
       const tag = round === 1 ? '[SFOGO]' : `[SFOGO-ROUND-${round}]`;
       await supabase.from('notes').insert({
         user_id: user.id,
@@ -114,10 +116,7 @@ export default function SfogoPage() {
         .maybeSingle();
 
       const { data, error } = await supabase.functions.invoke('generate-sfogo-questions', {
-        body: {
-          sfogotext: inputText,
-          objective: profile?.objective || 'Dimagrimento',
-        },
+        body: { sfogo_text: inputText, objective: profile?.objective || 'Dimagrimento' },
       });
 
       if (error) throw error;
@@ -143,8 +142,10 @@ export default function SfogoPage() {
 
   const currentQuestion = questions[currentQIndex] || null;
 
+  // Question timer
   useEffect(() => {
     if (phase !== 'reflect' || !currentQuestion || currentQuestion.timerDone) return;
+
     let remaining = currentQuestion.timerSeconds;
     timerRef.current = setInterval(() => {
       remaining--;
@@ -153,23 +154,30 @@ export default function SfogoPage() {
         setQuestions(prev => prev.map((q, i) => i === currentQIndex ? { ...q, timerDone: true } : q));
       }
     }, 1000);
+
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [phase, currentQIndex, currentQuestion?.timerDone]);
 
   const saveCurrentNoteAndContinue = async () => {
     if (!user || !currentQuestion) return;
+
     const hasNote = currentQuestion.note.trim().length > 0;
+
+    // Save reflection note
     if (hasNote) {
       await supabase.from('notes').insert({
         user_id: user.id,
         text: `[SFOGO-RIFLESSIONE] Q: ${currentQuestion.text}\nA: ${currentQuestion.note}`,
       });
     }
+
     const newEmptyCount = hasNote ? 0 : emptyNoteCount + 1;
     setEmptyNoteCount(newEmptyCount);
+
     if (currentQIndex < questions.length - 1) {
       setCurrentQIndex(prev => prev + 1);
     } else {
+      // End of batch — check if we should continue or go back to write
       if (newEmptyCount >= MAX_EMPTY_NOTES) {
         setPhase('write');
         setSfogoText('');
@@ -177,6 +185,8 @@ export default function SfogoPage() {
         toast.info('Prova a scrivere di nuovo i tuoi pensieri. Gli appunti aiutano il sistema ad aiutarti nel percorso.');
         return;
       }
+
+      // Use notes as context for next round
       const notesContext = collectNotesContext();
       if (notesContext.length > 10) {
         setRound(prev => prev + 1);
@@ -198,15 +208,18 @@ export default function SfogoPage() {
           <p className="text-sm text-muted-foreground">
             Ora è meglio che fai una pausa. Rifletti su tutto questo. Torna più tardi.
           </p>
-          <Button className="mt-4" onClick={() => {
-            setSessionExpired(false);
-            setSessionStart(null);
-            setPhase('write');
-            setSfogoText('');
-            setQuestions([]);
-            setRound(1);
-            setEmptyNoteCount(0);
-          }}>
+          <Button
+            className="mt-4"
+            onClick={() => {
+              setSessionExpired(false);
+              setSessionStart(null);
+              setPhase('write');
+              setSfogoText('');
+              setQuestions([]);
+              setRound(1);
+              setEmptyNoteCount(0);
+            }}
+          >
             Ricomincia più tardi
           </Button>
         </div>
@@ -267,11 +280,13 @@ export default function SfogoPage() {
               <p className="text-xs text-muted-foreground">
                 Domanda {currentQIndex + 1} di {questions.length} · Round {round}
               </p>
+
               <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4">
                 <p className="text-sm font-medium text-foreground leading-relaxed">
                   {currentQuestion.text}
                 </p>
               </div>
+
               {!currentQuestion.timerDone ? (
                 <p className="text-center text-xs text-muted-foreground animate-pulse">
                   Rileggi la domanda. Il tempo è necessario per la comprensione.
@@ -290,8 +305,18 @@ export default function SfogoPage() {
                     placeholder="I tuoi pensieri su questa domanda..."
                     className="min-h-[100px] rounded-2xl border-border bg-card text-foreground"
                   />
-                  <Button onClick={saveCurrentNoteAndContinue} disabled={loading} className="w-full rounded-2xl">
-                    {loading ? <Loader2 className="animate-spin" size={16} /> : currentQIndex < questions.length - 1 ? 'Continua →' : 'Avanti'}
+                  <Button
+                    onClick={saveCurrentNoteAndContinue}
+                    disabled={loading}
+                    className="w-full rounded-2xl"
+                  >
+                    {loading ? (
+                      <Loader2 className="animate-spin" size={16} />
+                    ) : currentQIndex < questions.length - 1 ? (
+                      'Continua →'
+                    ) : (
+                      'Avanti'
+                    )}
                   </Button>
                 </div>
               )}
@@ -305,7 +330,9 @@ export default function SfogoPage() {
               <Loader2 className="animate-spin mx-auto text-muted-foreground" size={24} />
             </div>
           ) : history.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground py-8">Nessuno sfogo registrato ancora.</p>
+            <p className="text-center text-sm text-muted-foreground py-8">
+              Nessuno sfogo registrato ancora.
+            </p>
           ) : (
             <div className="space-y-6">
               {history.map((session) => (
@@ -315,7 +342,9 @@ export default function SfogoPage() {
                   </h3>
                   {session.entries.map((entry, i) => (
                     <div key={i} className="rounded-xl border border-border bg-card p-3">
-                      <span className={`inline-block text-[10px] font-bold uppercase tracking-wider mb-1 ${entry.tag.includes('RIFLESSIONE') ? 'text-primary' : 'text-muted-foreground'}`}>
+                      <span className={`inline-block text-[10px] font-bold uppercase tracking-wider mb-1 ${
+                        entry.tag.includes('RIFLESSIONE') ? 'text-primary' : 'text-muted-foreground'
+                      }`}>
                         {entry.tag.includes('RIFLESSIONE') ? '💭 Riflessione' : entry.tag.includes('ROUND') ? `📝 Round ${entry.tag.match(/\d+/)?.[0]}` : '📝 Sfogo'}
                       </span>
                       <p className="text-sm text-foreground whitespace-pre-wrap">{entry.text}</p>
