@@ -1,43 +1,51 @@
+# Piano: Miglioramenti UX Question Page + Area Sfogo
+
+## 1. Avviso parole vietate in tempo reale (Question Page - Fase B)
+
+Attualmente l'errore appare solo al submit. Invece: mostrare un alert rosso **in tempo reale** mentre l'utente digita, evidenziando quale parola è bloccata. L'alert appare sopra la textarea e scompare quando la parola viene rimossa.
+
+**File**: `QuestionPage.tsx` — modificare `handleTextChange` per mostrare `validationError` live durante la digitazione (non solo al submit).
+
+## 2. Timer reset con avviso "Rileggi"
+
+Quando il timer (Fase A o Fase B) riparte perché l'utente non ha prestato attenzione, mostrare un messaggio: **"Rileggi più volte la domanda. Il timer è ricominciato. Con serenità lascia il tempo alla tua mente."**
+
+**File**: `QuestionPage.tsx` — aggiungere stato `timerRestarted` e messaggio visibile sotto il countdown.
+
+## 3. Bottoni: click diretto = attraversamento
+
+Rimuovere il bottone separato "ATTRAVERSA QUESTA DOMANDA". Quando l'utente clicca uno dei 4 bottoni, il sistema salva immediatamente e chiude. Messaggio sopra i bottoni: **"Scegli quello che pensi si addica di più a cosa hai scritto. Non ti preoccupare, tutto va bene. Scegline uno."**
+
+**File**: `QuestionPage.tsx` — nel click del bottone, chiamare direttamente `handleSubmit` con il bottone selezionato. Rimuovere lo stato `selectedButton` separato e il bottone finale.
+
+## 4. Bottoni randomizzati ad ogni apertura
+
+I 4 bottoni sono già randomizzati dal pool (`useMemo` con `shuffleArray`). Verificare che il `useMemo` si ricalcoli ad ogni nuova apertura di Fase B (dipendenza su `assignment?.id`). Questo è già implementato correttamente.
+
+## 5. Area Sfogo: loop continuo di domande basate su appunti
+
+Riscrivere il flusso reflect in `SfogoPage.tsx`:
+
+- Dopo che l'utente risponde alle prime domande AI, **usare gli appunti scritti** come input per generare la batch successiva di domande (non il testo originale dello sfogo).  
+Togliere il tasto salva appunti si salvano automaticamente quando clicca su continua
+- Il ciclo continua finché la sessione di 30 min è attiva.
+- Se l'utente non scrive appunti per 5 domande consecutive, riportarlo alla fase "write" per scrivere un nuovo sfogo.
+- Salvare tutto su DB (`notes` tabella) con tag `[SFOGO-ROUND-N]`.  
+Informare l'utente che gli appunti servono per aiutarlo nel percorso.
+
+## 6. Storico sfoghi consultabile
+
+Aggiungere una sezione "I tuoi sfoghi" nella pagina Sfogo:
+
+- Un toggle/tab per passare tra "Scrivi" e "Storico".
+- Lo storico mostra tutte le note taggate `[SFOGO]` e `[SFOGO-RIFLESSIONE]` ordinate per data, raggruppate per sessione.
+
+**File**: `SfogoPage.tsx` — aggiungere tab "Storico" che carica da `notes` con filtro sul prefisso.
+
+## File da modificare
 
 
-# Piano: Notifiche Randomizzate + Area Sfogo Interattiva
-
-## 1. Notifiche con distribuzione intelligente
-
-**Problema**: gli orari sono fissi alle ore intere. Serve randomizzazione vera con prima notifica entro la prima ora e ultima entro l'ultima ora della fascia.
-
-**Soluzione** in `check-reminders/index.ts`:
-- Modificare `generateRandomTimes()`: la prima notifica cade nei primi 60 min della fascia, l'ultima negli ultimi 60 min, le 4 restanti distribuite random nel mezzo.
-- Ogni giorno orari completamente diversi (già funziona così, ma ora con vincolo prima/ultima ora).
-
-## 2. Area Sfogo con domande AI reattive
-
-**Nuova pagina `SfogoPage.tsx`**:
-- Textarea libera dove l'utente scrive senza limiti di caratteri o parole bloccate.
-- Bottone **"Aiutami a riflettere"**: invia il testo dello sfogo a una nuova Edge Function che genera 3-5 domande di riflessione legate a ciò che ha scritto, usando il Consiglio dei 12 Maestri ma con tono più empatico/guidato.
-- Le domande generate appaiono una alla volta, con area appunti sotto ciascuna (stesso pattern Fase A: timer breve 7-10s, poi textarea).
-- **Timer sessione 30 minuti**: dopo 30 min dall'inizio della sessione sfogo, il sistema mostra un messaggio: "Ora è meglio che fai una pausa. Rifletti su tutto questo." e blocca l'interazione. L'utente può tornare più tardi.
-- Tutto viene salvato nella tabella `notes` (sfogo) e `question_notes` (appunti sulle domande generate).
-
-**Nuova Edge Function `generate-sfogo-questions/index.ts`**:
-- Riceve il testo dello sfogo + l'obiettivo dell'utente (dal profilo).
-- Usa Lovable AI (Gemini 2.5 Pro) con prompt dei 12 Maestri adattato: genera domande di riflessione contestuali allo sfogo, legate al topic (es. dimagrimento).
-- Ritorna 3-5 domande in formato JSON.
-
-## 3. Integrazione nell'app
-
-- **App.tsx**: aggiungere rotta `/sfogo`.
-- **BottomNav.tsx**: aggiungere tab "Sfogo" con icona `PenLine`.
-- **HomePage.tsx**: aggiungere card "Area Sfogo" con link.
-
-## File da modificare/creare
-
-| File | Azione |
-|------|--------|
-| `supabase/functions/check-reminders/index.ts` | Randomizzazione prima/ultima ora |
-| `src/pages/SfogoPage.tsx` | Nuova pagina sfogo completa |
-| `supabase/functions/generate-sfogo-questions/index.ts` | Nuova edge function per domande reattive |
-| `src/App.tsx` | Rotta `/sfogo` |
-| `src/components/BottomNav.tsx` | Tab Sfogo |
-| `src/pages/HomePage.tsx` | Card link sfogo |
-
+| File               | Modifiche                                                                                                             |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `QuestionPage.tsx` | Alert parole vietate live, rimuovere bottone finale (click diretto), messaggio timer restart, messaggio sopra bottoni |
+| `SfogoPage.tsx`    | Loop domande basato su appunti, storico sfoghi, gestione round multipli                                               |
