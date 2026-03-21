@@ -115,9 +115,20 @@ export default function SfogoPage() {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      const { data, error } = await supabase.functions.invoke('generate-sfogo-questions', {
-        body: { sfogo_text: inputText, objective: profile?.objective || 'Dimagrimento' },
-      });
+     // Recupera dati passati (usa contro utente)
+const { data: risposte } = await supabase.from('questionanswers').select('answertext').eq('userid', user.id).limit(10);
+const { data: appunti } = await supabase.from('questionnotes').select('text').eq('userid', user.id).limit(10);
+
+const data, error = await supabase.functions.invoke('generate-sfogo-questions', {
+  body: { 
+    sfogotext: inputText, 
+    risposte_precedenti: risposte?.map(r => r.answertext).join('\n') || '',
+    appunti_sfogo: appunti?.map(n => n.text).join('\n') || '',
+    objective: profile?.objective || "Dimagrimento",
+    maestri_prompt: "IL CONSIGLIO DEI MAESTRI: " + maestri.join('; ')  // dal tuo file
+  }
+});
+
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
