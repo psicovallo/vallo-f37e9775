@@ -503,6 +503,15 @@ export default function QuestionPage() {
           <p className="mt-2 text-xs text-muted-foreground">
             I tuoi appunti aiutano il sistema a generare domande più mirate per te.
           </p>
+          <button
+            onClick={async () => {
+              if (noteText.trim()) await saveNote(noteText);
+              toast.success('Appunti salvati ✓');
+            }}
+            className="mt-4 w-full rounded-2xl bg-primary px-4 py-3.5 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.97]"
+          >
+            Invia appunti
+          </button>
         </div>
       )}
     </div>
