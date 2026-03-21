@@ -38,7 +38,7 @@ interface Assignment {
 }
 
 function getRandomTimer(): number {
-  return Math.floor(Math.random() * 11) + 7; // 7-17 seconds
+  return Math.floor(Math.random() * 11) + 7;
 }
 
 function shuffleArray<T>(arr: T[]): T[] {
@@ -51,10 +51,14 @@ function shuffleArray<T>(arr: T[]): T[] {
 }
 
 function shouldUnlockPhaseB(viewCount: number): boolean {
-  if (viewCount >= MAX_VIEWS - 1) return true; // 9th view (0-indexed: 8) = mandatory
+  if (viewCount >= MAX_VIEWS - 1) return true;
   if (viewCount < 1) return false;
-  // Random chance between views 1-7
   return Math.random() < 0.15;
+}
+
+function findBlockedWords(text: string): string[] {
+  const lower = text.toLowerCase();
+  return BLOCKED_WORDS.filter(w => lower.includes(w.trim()));
 }
 
 export default function QuestionPage() {
@@ -68,13 +72,14 @@ export default function QuestionPage() {
   const [readSeconds, setReadSeconds] = useState(0);
   const [isLocked, setIsLocked] = useState(true);
   const [readCompleted, setReadCompleted] = useState(false);
-  const [selectedButton, setSelectedButton] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [completedButton, setCompletedButton] = useState<string | null>(null);
   const [allDone, setAllDone] = useState(false);
   const [textValid, setTextValid] = useState(false);
   const [noteId, setNoteId] = useState<string | null>(null);
+  const [timerRestarted, setTimerRestarted] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const readTimerRef = useRef<ReturnType<typeof setInterval>>();
   const noteSaveRef = useRef<ReturnType<typeof setTimeout>>();
@@ -118,7 +123,6 @@ export default function QuestionPage() {
     }, 1000);
   }, []);
 
-  // Load assignment
   useEffect(() => {
     if (!user) return;
 
@@ -126,8 +130,8 @@ export default function QuestionPage() {
       if (timerRef.current) clearInterval(timerRef.current);
       if (readTimerRef.current) clearInterval(readTimerRef.current);
       setCompleted(false);
+      setCompletedButton(null);
       setAllDone(false);
-      setSelectedButton(null);
       setAnswerText('');
       setNoteText('');
       setNoteId(null);
@@ -135,8 +139,8 @@ export default function QuestionPage() {
       setValidationError(null);
       setPhaseB(false);
       setReadCompleted(false);
+      setTimerRestarted(false);
 
-      // Get current active assignment (not resolved, lowest sort_order)
       const { data: assignments, error } = await supabase
         .from('question_assignments')
         .select('*')
@@ -158,7 +162,6 @@ export default function QuestionPage() {
       const a = assignments[0] as Assignment;
       setAssignment(a);
 
-      // Check today's view count (max 2 per day)
       const today = new Date().toISOString().slice(0, 10);
       const { data: todayDeliveries } = await supabase
         .from('question_deliveries')
@@ -171,7 +174,6 @@ export default function QuestionPage() {
 
       const todayViews = todayDeliveries?.length || 0;
 
-      // Load existing note
       const { data: existingNote } = await supabase
         .from('question_notes')
         .select('id, text')
@@ -186,12 +188,10 @@ export default function QuestionPage() {
         setNoteText(existingNote.text || '');
       }
 
-      // Determine if this is Phase B
       const isPhaseB = a.phase_b_unlock_at !== null || shouldUnlockPhaseB(a.view_count);
       setPhaseB(isPhaseB);
 
       if (isPhaseB) {
-        // Mark phase_b_unlock_at if not already
         if (!a.phase_b_unlock_at) {
           await supabase
             .from('question_assignments')
@@ -200,7 +200,6 @@ export default function QuestionPage() {
         }
         startCountdown();
       } else if (todayViews < 2) {
-        // Phase A: start read timer
         const seconds = getRandomTimer();
         startReadTimer(seconds);
       }
@@ -214,7 +213,6 @@ export default function QuestionPage() {
     };
   }, [user, startCountdown, startReadTimer]);
 
-  // When read timer completes, mark view
   useEffect(() => {
     if (!readCompleted || !user || !assignment) return;
 
@@ -227,7 +225,6 @@ export default function QuestionPage() {
         .update({ view_count: newCount, status: newStatus as any })
         .eq('id', assignment.id);
 
-      // Also create a delivery record
       await supabase.from('question_deliveries').insert({
         user_id: user.id,
         question_index: assignment.sort_order,
@@ -242,7 +239,6 @@ export default function QuestionPage() {
     markView();
   }, [readCompleted, user, assignment?.id]);
 
-  // Auto-save notes (debounced)
   const saveNote = useCallback(async (text: string) => {
     if (!user || !assignment) return;
     if (noteId) {
@@ -263,49 +259,38 @@ export default function QuestionPage() {
     noteSaveRef.current = setTimeout(() => saveNote(text), 1000);
   };
 
-  const validateText = (text: string): string | null => {
-    if (text.trim().length < MIN_CHARS) {
-      return `Minimo ${MIN_CHARS} caratteri. Ne hai scritti ${text.trim().length}.`;
-    }
-    const lower = text.toLowerCase();
-    for (const word of BLOCKED_WORDS) {
-      if (lower.includes(word.trim())) {
-        return `Stai usando scuse ("${word.trim()}"). Riscrivi.`;
-      }
-    }
-    return null;
-  };
-
   const handleTextChange = (text: string) => {
     setAnswerText(text);
-    setSelectedButton(null);
-    setValidationError(null);
-    const error = validateText(text);
-    setTextValid(error === null && text.trim().length >= MIN_CHARS);
+    const blocked = findBlockedWords(text);
+    if (blocked.length > 0) {
+      setValidationError(`Stai usando scuse ("${blocked.join('", "')}"). Riscrivi.`);
+      setTextValid(false);
+    } else if (text.trim().length < MIN_CHARS) {
+      setValidationError(null);
+      setTextValid(false);
+    } else {
+      setValidationError(null);
+      setTextValid(true);
+    }
   };
 
-  const handleSubmit = async () => {
-    if (!user || !assignment || !selectedButton) return;
+  const handleButtonClick = async (buttonLabel: string) => {
+    if (!user || !assignment || submitting) return;
 
-    const error = validateText(answerText);
-    if (error) {
-      setValidationError(error);
-      setAnswerText('');
-      setSelectedButton(null);
-      setTextValid(false);
-      startCountdown();
-      toast.error('Risposta rifiutata. Timer resettato.');
+    const blocked = findBlockedWords(answerText);
+    if (blocked.length > 0 || answerText.trim().length < MIN_CHARS) {
+      setValidationError('Risposta non valida. Controlla il testo.');
       return;
     }
 
     setSubmitting(true);
+    setCompletedButton(buttonLabel);
 
-    // Save official answer
     const { error: insertError } = await supabase.from('question_official_answers').insert({
       assignment_id: assignment.id,
       user_id: user.id,
       answer_text: answerText.trim(),
-      button_clicked: selectedButton,
+      button_clicked: buttonLabel,
     });
 
     if (insertError) {
@@ -314,19 +299,17 @@ export default function QuestionPage() {
       return;
     }
 
-    // Mark assignment as resolved
     await supabase
       .from('question_assignments')
       .update({ status: 'risolta' as any })
       .eq('id', assignment.id);
 
-    // Also save to legacy question_answers for compatibility
     await supabase.from('question_answers').insert({
       user_id: user.id,
       question_index: assignment.sort_order,
       question_text: assignment.question_text,
       answer_text: answerText.trim(),
-      answer_button: selectedButton,
+      answer_button: buttonLabel,
     });
 
     setCompleted(true);
@@ -357,7 +340,7 @@ export default function QuestionPage() {
         <div className="mb-6 text-6xl">⚡</div>
         <h1 className="mb-4 text-2xl font-bold text-foreground">Domanda attraversata</h1>
         <p className="mb-2 text-muted-foreground">
-          Hai scelto: <span className="font-semibold text-primary">{selectedButton}</span>
+          Hai scelto: <span className="font-semibold text-primary">{completedButton}</span>
         </p>
         <p className="text-sm text-muted-foreground">
           La prossima domanda è in arrivo.
@@ -376,7 +359,7 @@ export default function QuestionPage() {
 
   const viewsRemaining = MAX_VIEWS - assignment.view_count;
 
-  // PHASE B: Response
+  // PHASE B
   if (phaseB) {
     return (
       <div className="mx-auto max-w-lg px-4 pb-24 pt-8">
@@ -400,9 +383,15 @@ export default function QuestionPage() {
               <div>
                 <p className="text-2xl font-bold text-foreground font-mono">{formatTime(countdown)}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Il tuo subconscio sta elaborando.<br />
-                  Non mentire ancora. Aspetta.
+                  Rileggi più volte la domanda.<br />
+                  Il tuo subconscio sta elaborando.
                 </p>
+                {timerRestarted && (
+                  <p className="mt-2 text-xs font-medium text-destructive">
+                    Rileggi più volte la domanda. Il timer è ricominciato.<br />
+                    Con serenità lascia il tempo alla tua mente.
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -432,39 +421,26 @@ export default function QuestionPage() {
 
         {!isLocked && textValid && (
           <div className="space-y-3">
-            <p className="mb-2 text-xs text-muted-foreground">
-              Grazie per l'onestà. Scegli come ti senti ora per proseguire.
+            <p className="mb-2 text-sm text-muted-foreground leading-relaxed">
+              Scegli quello che pensi si addica di più a cosa hai scritto. Non ti preoccupare, tutto va bene. Scegline uno.
             </p>
             {randomButtons.map((btn) => (
               <button
                 key={btn.label}
-                onClick={() => setSelectedButton(btn.label)}
-                className={`w-full rounded-2xl px-4 py-3.5 text-sm font-bold uppercase tracking-wide transition-all active:scale-[0.97] ${
-                  selectedButton === btn.label
-                    ? 'ring-2 ring-primary ring-offset-2 ring-offset-background ' + btn.color
-                    : btn.color + ' hover:opacity-80'
-                }`}
+                onClick={() => handleButtonClick(btn.label)}
+                disabled={submitting}
+                className={`w-full rounded-2xl px-4 py-3.5 text-sm font-bold uppercase tracking-wide transition-all active:scale-[0.97] disabled:opacity-50 ${btn.color} hover:opacity-80`}
               >
-                {btn.label}
+                {submitting ? 'Invio...' : btn.label}
               </button>
             ))}
           </div>
-        )}
-
-        {selectedButton && !isLocked && textValid && (
-          <button
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="mt-6 w-full rounded-2xl bg-primary px-4 py-4 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 active:scale-[0.97]"
-          >
-            {submitting ? 'Invio...' : 'ATTRAVERSA QUESTA DOMANDA'}
-          </button>
         )}
       </div>
     );
   }
 
-  // PHASE A: Incubation
+  // PHASE A
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-8">
       <div className="mb-2 flex items-center justify-between">
@@ -487,9 +463,15 @@ export default function QuestionPage() {
             <div>
               <p className="text-2xl font-bold text-foreground font-mono">{formatTime(readTimer)}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Rileggi la domanda.<br />
+                Rileggi più volte la domanda.<br />
                 Il tempo è necessario per la comprensione.
               </p>
+              {timerRestarted && (
+                <p className="mt-2 text-xs font-medium text-destructive">
+                  Il timer è ricominciato.<br />
+                  Con serenità lascia il tempo alla tua mente.
+                </p>
+              )}
             </div>
           </div>
         ) : (
@@ -504,7 +486,6 @@ export default function QuestionPage() {
         )}
       </div>
 
-      {/* Private notes area — appears after read timer completes */}
       {readCompleted && (
         <div className="mb-6">
           <div className="mb-2 flex items-center gap-2">
@@ -520,7 +501,7 @@ export default function QuestionPage() {
             className="w-full resize-none rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <p className="mt-2 text-xs text-muted-foreground">
-            Il sistema di risposta ufficiale è bloccato. La risposta finale si sbloccherà quando sarai pronto.
+            I tuoi appunti aiutano il sistema a generare domande più mirate per te.
           </p>
         </div>
       )}
