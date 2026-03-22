@@ -120,6 +120,14 @@ export default function HomePage() {
           <span className="text-[10px] text-muted-foreground text-center">Scrivi e rifletti</span>
         </Link>
         <Link
+          to="/sos-conflitti"
+          className="flex flex-col items-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 p-4 transition-colors hover:border-destructive active:scale-[0.97]"
+        >
+          <span className="text-2xl">⚔️</span>
+          <span className="text-xs font-medium text-foreground text-center">SOS Conflitti</span>
+          <span className="text-[10px] text-muted-foreground text-center">Decostruzione</span>
+        </Link>
+        <Link
           to="/contract"
           className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary active:scale-[0.97]"
         >
