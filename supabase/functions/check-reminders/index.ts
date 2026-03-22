@@ -132,19 +132,30 @@ serve(async (req) => {
 
       if ((todayDeliveries?.length || 0) >= 2) continue;
 
-      // Chain logic: check if there's an unread delivery
+      // Chain logic: check if there's an unread delivery FROM TODAY
+      // Old unread deliveries should not block new ones
       const { data: unreadDelivery } = await supabase
         .from('question_deliveries')
         .select('id')
         .eq('user_id', userId)
         .eq('read_completed', false)
+        .gte('delivered_at', `${romeDate}T00:00:00`)
+        .lte('delivered_at', `${romeDate}T23:59:59`)
         .limit(1)
         .maybeSingle();
 
       if (unreadDelivery) {
-        console.log(`Skipping ${userId}: has unread delivery`);
+        console.log(`Skipping ${userId}: has unread delivery today`);
         continue;
       }
+
+      // Clean up old unread deliveries (mark them as read so they don't accumulate)
+      await supabase
+        .from('question_deliveries')
+        .update({ read_completed: true, read_at: now.toISOString() })
+        .eq('user_id', userId)
+        .eq('read_completed', false)
+        .lt('delivered_at', `${romeDate}T00:00:00`);
 
       // Create delivery
       await supabase.from('question_deliveries').insert({
