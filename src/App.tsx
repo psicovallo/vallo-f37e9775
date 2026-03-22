@@ -14,6 +14,7 @@ import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import QuestionPage from "@/pages/QuestionPage";
 import ContractPage from "@/pages/ContractPage";
 import SfogoPage from "@/pages/SfogoPage";
+import SOSConflittiPage from "@/pages/SOSConflittiPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
