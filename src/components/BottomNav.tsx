@@ -1,11 +1,12 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Bell, StickyNote, MessageSquare, Shield, Flame, PenLine } from 'lucide-react';
+import { Home, Bell, StickyNote, MessageSquare, Shield, Flame, PenLine, Swords } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const tabs = [
   { to: '/home', label: 'Home', icon: Home },
   { to: '/question', label: 'Domanda', icon: Flame },
   { to: '/sfogo', label: 'Sfogo', icon: PenLine },
+  { to: '/sos-conflitti', label: 'SOS', icon: Swords },
   { to: '/reminders', label: 'Promemoria', icon: Bell },
   { to: '/messages', label: 'Messaggi', icon: MessageSquare },
 ];
