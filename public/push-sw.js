@@ -1,4 +1,4 @@
-// Push notification service worker for Levante
+// Push notification service worker for Vallo
 self.addEventListener('push', (event) => {
   let data = { title: 'Vallo', body: 'Hai una nuova notifica', data: {} };
 
@@ -10,13 +10,17 @@ self.addEventListener('push', (event) => {
     }
   }
 
+  // Determine notification type from data
+  const isQuestion = data.data?.url === '/question';
+  const tag = isQuestion ? 'vallo-question' : 'vallo-reminder';
+
   const options = {
     body: data.body,
-    icon: '/pwa-icon-192.png',
-    badge: '/pwa-icon-192.png',
+    icon: '/notification-icon.png',
+    badge: '/notification-icon.png',
     data: data.data || {},
-    vibrate: [200, 100, 200],
-    tag: 'vallo-notification',
+    vibrate: isQuestion ? [300, 100, 300, 100, 300] : [200, 100, 200],
+    tag,
     renotify: true,
     silent: false,
     requireInteraction: true,
