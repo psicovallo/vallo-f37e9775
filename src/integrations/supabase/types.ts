@@ -14,6 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      conflict_profiles: {
+        Row: {
+          created_at: string
+          failure_history: string
+          id: string
+          name: string
+          profile_description: string
+          relationship: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          failure_history?: string
+          id?: string
+          name?: string
+          profile_description?: string
+          relationship?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          failure_history?: string
+          id?: string
+          name?: string
+          profile_description?: string
+          relationship?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      conflict_questions: {
+        Row: {
+          adjustment_notes: string | null
+          conflict_profile_id: string
+          created_at: string
+          id: string
+          maestri_used: string
+          question_text: string
+          status: string
+          user_id: string
+          validation_text: string
+        }
+        Insert: {
+          adjustment_notes?: string | null
+          conflict_profile_id: string
+          created_at?: string
+          id?: string
+          maestri_used?: string
+          question_text?: string
+          status?: string
+          user_id: string
+          validation_text?: string
+        }
+        Update: {
+          adjustment_notes?: string | null
+          conflict_profile_id?: string
+          created_at?: string
+          id?: string
+          maestri_used?: string
+          question_text?: string
+          status?: string
+          user_id?: string
+          validation_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conflict_questions_conflict_profile_id_fkey"
+            columns: ["conflict_profile_id"]
+            isOneToOne: false
+            referencedRelation: "conflict_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           created_at: string
