@@ -22,15 +22,12 @@ function generateRandomTimes(start: string, end: string, count: number): string[
 
   const times: Set<string> = new Set();
 
-  // First notification: within the first 60 minutes of the window
   const firstEnd = Math.min(startMinutes + 60, endMinutes);
   times.add(fmt(startMinutes + Math.floor(Math.random() * (firstEnd - startMinutes))));
 
-  // Last notification: within the last 60 minutes of the window
   const lastStart = Math.max(endMinutes - 60, startMinutes);
   times.add(fmt(lastStart + Math.floor(Math.random() * (endMinutes - lastStart))));
 
-  // Remaining 4 notifications: random in the middle zone
   let attempts = 0;
   while (times.size < count && attempts < 200) {
     const randomMin = startMinutes + Math.floor(Math.random() * (endMinutes - startMinutes));
@@ -39,6 +36,46 @@ function generateRandomTimes(start: string, end: string, count: number): string[
   }
 
   return [...times].sort();
+}
+
+async function sendPushNotification(
+  userId: string,
+  title: string,
+  body: string,
+  data: Record<string, string>,
+) {
+  const sendUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-push-notification`;
+  const response = await fetch(sendUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+    },
+    body: JSON.stringify({
+      user_ids: [userId],
+      title,
+      body,
+      data,
+    }),
+  });
+
+  const resultText = await response.text();
+  let result: { sent?: number } = {};
+
+  try {
+    result = JSON.parse(resultText);
+  } catch {
+    console.error(`Invalid push response for ${userId}:`, resultText);
+  }
+
+  if (!response.ok) {
+    console.error(`Push failed for ${userId}:`, resultText);
+  }
+
+  return {
+    response,
+    sent: Number(result.sent || 0),
+  };
 }
 
 serve(async (req) => {
@@ -70,25 +107,19 @@ serve(async (req) => {
 
     console.log(`Check reminders at ${romeTime} on ${romeDate}`);
 
-    // Get all users with completed onboarding
     const { data: allProgress, error: progressError } = await supabase
       .from('question_progress')
       .select('*')
       .eq('onboarding_completed', true);
 
     if (progressError) throw progressError;
-    if (!allProgress?.length) {
-      return new Response(JSON.stringify({ checked: romeTime, users: 0, sent: 0 }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
 
     let totalSent = 0;
+    let reminderSent = 0;
 
-    for (const progress of allProgress) {
+    for (const progress of allProgress || []) {
       const userId = progress.user_id;
 
-      // Generate daily times if needed
       let dailyTimes: string[] = progress.daily_times || [];
       if (progress.daily_times_date !== romeDate) {
         dailyTimes = generateRandomTimes(
@@ -107,7 +138,6 @@ serve(async (req) => {
 
       if (!dailyTimes.includes(romeTime)) continue;
 
-      // Get active assignment for this user
       const { data: assignments } = await supabase
         .from('question_assignments')
         .select('*')
@@ -120,7 +150,6 @@ serve(async (req) => {
 
       const assignment = assignments[0];
 
-      // Check max 2 views per day
       const { data: todayDeliveries } = await supabase
         .from('question_deliveries')
         .select('id')
@@ -132,22 +161,6 @@ serve(async (req) => {
 
       if ((todayDeliveries?.length || 0) >= 2) continue;
 
-      // Chain logic: allow up to 2 unread deliveries per day
-      // This prevents total blockage if the user misses a notification
-      const { data: unreadDeliveries } = await supabase
-        .from('question_deliveries')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('read_completed', false)
-        .gte('delivered_at', `${romeDate}T00:00:00`)
-        .lte('delivered_at', `${romeDate}T23:59:59`);
-
-      if ((unreadDeliveries?.length || 0) >= 2) {
-        console.log(`Skipping ${userId}: has ${unreadDeliveries?.length} unread deliveries today`);
-        continue;
-      }
-
-      // Clean up old unread deliveries (mark them as read so they don't accumulate)
       await supabase
         .from('question_deliveries')
         .update({ read_completed: true, read_at: now.toISOString() })
@@ -155,42 +168,63 @@ serve(async (req) => {
         .eq('read_completed', false)
         .lt('delivered_at', `${romeDate}T00:00:00`);
 
-      // Create delivery
-      await supabase.from('question_deliveries').insert({
-        user_id: userId,
-        question_index: assignment.sort_order,
-        delivered_at: now.toISOString(),
-      });
+      const { data: pendingDelivery } = await supabase
+        .from('question_deliveries')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('question_index', assignment.sort_order)
+        .eq('read_completed', false)
+        .gte('delivered_at', `${romeDate}T00:00:00`)
+        .lte('delivered_at', `${romeDate}T23:59:59`)
+        .limit(1)
+        .maybeSingle();
 
-      // Send push notification
+      if (!pendingDelivery) {
+        await supabase.from('question_deliveries').insert({
+          user_id: userId,
+          question_index: assignment.sort_order,
+          delivered_at: now.toISOString(),
+        });
+      } else {
+        console.log(`Resending pending question ${assignment.sort_order} to ${userId}`);
+      }
+
       const title = `🔥 Domanda ${assignment.sort_order}`;
       const body = assignment.question_text.slice(0, 100) + (assignment.question_text.length > 100 ? '...' : '');
+      const pushResult = await sendPushNotification(userId, title, body, { url: '/question' });
 
-      const sendUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-push-notification`;
-      const response = await fetch(sendUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-        },
-        body: JSON.stringify({
-          user_ids: [userId],
-          title,
-          body,
-          data: { url: '/question' },
-        }),
-      });
+      totalSent += pushResult.sent;
+      console.log(`Question push for ${userId}: status=${pushResult.response.status} sent=${pushResult.sent}`);
+    }
 
-      const result = await response.json();
-      totalSent += result.sent || 0;
-      console.log(`Sent to ${userId}: question ${assignment.sort_order}, views: ${assignment.view_count}/9`);
+    const { data: scheduledReminders, error: remindersError } = await supabase
+      .from('reminders')
+      .select('id, user_id, text')
+      .eq('active', true)
+      .contains('times', [romeTime]);
+
+    if (remindersError) throw remindersError;
+
+    for (const reminder of scheduledReminders || []) {
+      const pushResult = await sendPushNotification(
+        reminder.user_id,
+        '⏰ Promemoria',
+        reminder.text,
+        { url: '/reminders' }
+      );
+
+      reminderSent += pushResult.sent;
+      console.log(`Reminder push for ${reminder.user_id}: status=${pushResult.response.status} sent=${pushResult.sent}`);
     }
 
     return new Response(JSON.stringify({
       checked: romeTime,
       date: romeDate,
-      users: allProgress.length,
-      sent: totalSent,
+      users: allProgress?.length || 0,
+      sent: totalSent + reminderSent,
+      question_sent: totalSent,
+      reminder_sent: reminderSent,
+      reminders_checked: scheduledReminders?.length || 0,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
