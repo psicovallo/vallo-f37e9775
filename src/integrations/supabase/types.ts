@@ -22,8 +22,10 @@ export type Database = {
           name: string
           profile_description: string
           relationship: string
+          scenario: string
           updated_at: string
           user_id: string
+          user_style: string
         }
         Insert: {
           created_at?: string
@@ -32,8 +34,10 @@ export type Database = {
           name?: string
           profile_description?: string
           relationship?: string
+          scenario?: string
           updated_at?: string
           user_id: string
+          user_style?: string
         }
         Update: {
           created_at?: string
@@ -42,8 +46,10 @@ export type Database = {
           name?: string
           profile_description?: string
           relationship?: string
+          scenario?: string
           updated_at?: string
           user_id?: string
+          user_style?: string
         }
         Relationships: []
       }
@@ -58,6 +64,7 @@ export type Database = {
           status: string
           user_id: string
           validation_text: string
+          velo_number: number
         }
         Insert: {
           adjustment_notes?: string | null
@@ -69,6 +76,7 @@ export type Database = {
           status?: string
           user_id: string
           validation_text?: string
+          velo_number?: number
         }
         Update: {
           adjustment_notes?: string | null
@@ -80,6 +88,7 @@ export type Database = {
           status?: string
           user_id?: string
           validation_text?: string
+          velo_number?: number
         }
         Relationships: [
           {
