@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Plus, Swords, ChevronDown, ChevronUp, Check, PenLine, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Swords, ChevronDown, ChevronUp, Check, PenLine, Trash2, Loader2, RotateCcw, MessageSquarePlus, Eye } from 'lucide-react';
 
 const RELATIONSHIP_OPTIONS = [
   'Compagna', 'Moglie', 'Fidanzata', 'Figlio', 'Figlia', 'Amica',
@@ -34,6 +34,8 @@ interface ConflictQuestion {
   created_at: string;
 }
 
+type SessionMode = 'choose' | 'last_questions' | 'new_event' | 'generating';
+
 export default function SOSConflittiPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('profili');
@@ -44,12 +46,16 @@ export default function SOSConflittiPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [adjustingQuestionId, setAdjustingQuestionId] = useState<string | null>(null);
   const [language, setLanguage] = useState('italiano');
   const [sessionQuestions, setSessionQuestions] = useState<ConflictQuestion[]>([]);
   const [archiveQuestions, setArchiveQuestions] = useState<ConflictQuestion[]>([]);
   const [expandedValidation, setExpandedValidation] = useState<Record<string, boolean>>({});
   const [adjustingId, setAdjustingId] = useState<string | null>(null);
   const [adjustmentText, setAdjustmentText] = useState('');
+  const [sessionMode, setSessionMode] = useState<SessionMode>('choose');
+  const [newEventText, setNewEventText] = useState('');
+  const [lastQuestions, setLastQuestions] = useState<ConflictQuestion[]>([]);
 
   const loadProfiles = useCallback(async () => {
     if (!user) return;
@@ -73,6 +79,18 @@ export default function SOSConflittiPage() {
     setArchiveQuestions((data as ConflictQuestion[]) || []);
   }, [user, selectedProfile]);
 
+  const loadLastQuestions = useCallback(async () => {
+    if (!user || !selectedProfile) return;
+    const { data } = await supabase
+      .from('conflict_questions')
+      .select('*')
+      .eq('conflict_profile_id', selectedProfile.id)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(3);
+    setLastQuestions((data as ConflictQuestion[]) || []);
+  }, [user, selectedProfile]);
+
   useEffect(() => { loadProfiles(); }, [loadProfiles]);
   useEffect(() => { if (activeTab === 'archivio') loadArchive(); }, [activeTab, loadArchive]);
 
@@ -80,13 +98,7 @@ export default function SOSConflittiPage() {
     if (!user) return;
     setLoading(true);
     const rel = formData.relationship === 'Altro' ? formData.customRelationship : formData.relationship;
-    const payload = {
-      user_id: user.id,
-      name: formData.name,
-      relationship: rel,
-      profile_description: formData.profile_description,
-      failure_history: formData.failure_history,
-    };
+    const payload = { user_id: user.id, name: formData.name, relationship: rel, profile_description: formData.profile_description, failure_history: formData.failure_history };
 
     if (editingId) {
       await supabase.from('conflict_profiles').update(payload).eq('id', editingId);
@@ -122,41 +134,138 @@ export default function SOSConflittiPage() {
     setShowForm(true);
   };
 
-  const handleSelectProfile = (p: ConflictProfile) => {
+  const handleSelectProfile = async (p: ConflictProfile) => {
     setSelectedProfile(p);
     setSessionQuestions([]);
+    setSessionMode('choose');
     setActiveTab('sessione');
   };
 
-  const handleConvoca = async () => {
+  const handleConvoca = async (newEvent?: string) => {
     if (!selectedProfile || !user) return;
     setGenerating(true);
+    setSessionMode('generating');
     try {
-      const { data, error } = await supabase.functions.invoke('generate-conflict-questions', {
-        body: { conflict_profile_id: selectedProfile.id, language },
-      });
+      const body: any = { conflict_profile_id: selectedProfile.id, language };
+      if (newEvent) body.new_event = newEvent;
+      const { data, error } = await supabase.functions.invoke('generate-conflict-questions', { body });
       if (error) throw error;
       setSessionQuestions(data.questions || []);
     } catch (e: any) {
       toast.error(e.message || 'Errore nella generazione');
+      setSessionMode('choose');
     }
     setGenerating(false);
   };
 
+  const handleViewLastQuestions = async () => {
+    await loadLastQuestions();
+    setSessionMode('last_questions');
+  };
+
+  const handleNewEvent = () => {
+    setNewEventText('');
+    setSessionMode('new_event');
+  };
+
+  const handleSubmitNewEvent = () => {
+    if (!newEventText.trim()) return;
+    handleConvoca(newEventText.trim());
+  };
+
   const handleValida = async (q: ConflictQuestion) => {
     await supabase.from('conflict_questions').update({ status: 'validated' }).eq('id', q.id);
-    setSessionQuestions(prev => prev.map(x => x.id === q.id ? { ...x, status: 'validated' } : x));
+    const updateList = (list: ConflictQuestion[]) => list.map(x => x.id === q.id ? { ...x, status: 'validated' } : x);
+    setSessionQuestions(updateList);
+    setLastQuestions(updateList);
     toast.success('Domanda validata e archiviata');
   };
 
   const handleAggiusta = async (q: ConflictQuestion) => {
     if (!adjustmentText.trim()) return;
-    await supabase.from('conflict_questions').update({ status: 'adjusted', adjustment_notes: adjustmentText }).eq('id', q.id);
-    setSessionQuestions(prev => prev.map(x => x.id === q.id ? { ...x, status: 'adjusted', adjustment_notes: adjustmentText } : x));
+    setAdjustingQuestionId(q.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('adjust-conflict-question', {
+        body: { question_id: q.id, adjustment_notes: adjustmentText, language },
+      });
+      if (error) throw error;
+      const updated = data.question;
+      const updateList = (list: ConflictQuestion[]) => list.map(x => x.id === q.id ? updated : x);
+      setSessionQuestions(updateList);
+      setLastQuestions(updateList);
+      toast.success('Il Consiglio ha riformulato la domanda');
+    } catch (e: any) {
+      toast.error(e.message || 'Errore nella riformulazione');
+    }
     setAdjustingId(null);
     setAdjustmentText('');
-    toast.success('Domanda aggiustata e archiviata');
+    setAdjustingQuestionId(null);
   };
+
+  const renderQuestionCard = (q: ConflictQuestion, i: number) => (
+    <div key={q.id} className="rounded-xl border border-border bg-card p-4 space-y-3">
+      <p className="text-xs text-muted-foreground font-medium">Domanda {i + 1}</p>
+      <p className="text-sm text-foreground font-medium leading-relaxed">"{q.question_text}"</p>
+
+      <button
+        onClick={() => setExpandedValidation(prev => ({ ...prev, [q.id]: !prev[q.id] }))}
+        className="flex items-center gap-1 text-xs text-primary"
+      >
+        {expandedValidation[q.id] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        Validazione del Consiglio
+      </button>
+
+      {expandedValidation[q.id] && (
+        <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
+          <p>{q.validation_text}</p>
+          <p className="text-primary font-medium">Maestri: {q.maestri_used}</p>
+        </div>
+      )}
+
+      {q.status === 'generated' && (
+        <div className="flex gap-2">
+          <Button size="sm" onClick={() => handleValida(q)} className="gap-1">
+            <Check size={14} /> VALIDA
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => { setAdjustingId(q.id); setAdjustmentText(''); }}
+            className="gap-1"
+            disabled={adjustingQuestionId === q.id}
+          >
+            {adjustingQuestionId === q.id ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
+            AGGIUSTA
+          </Button>
+        </div>
+      )}
+
+      {q.status !== 'generated' && (
+        <p className="text-xs text-primary font-medium">
+          ✓ {q.status === 'validated' ? 'Validata' : 'Aggiustata'}
+        </p>
+      )}
+
+      {adjustingId === q.id && (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">Spiega cosa non va e come vorresti la domanda. Il Consiglio la riformulerà.</p>
+          <Textarea
+            value={adjustmentText}
+            onChange={e => setAdjustmentText(e.target.value)}
+            placeholder="Es: troppo lunga, il tono è sbagliato, voglio che punti più sulla colpa..."
+            rows={3}
+          />
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => handleAggiusta(q)} disabled={adjustingQuestionId === q.id || !adjustmentText.trim()} className="gap-1">
+              {adjustingQuestionId === q.id ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
+              Riformula dal Consiglio
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setAdjustingId(null)}>Annulla</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="mx-auto max-w-lg px-4 pt-6 pb-24">
@@ -188,11 +297,7 @@ export default function SOSConflittiPage() {
               </div>
               <div>
                 <Label>Relazione</Label>
-                <select
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={formData.relationship}
-                  onChange={e => setFormData(p => ({ ...p, relationship: e.target.value }))}
-                >
+                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.relationship} onChange={e => setFormData(p => ({ ...p, relationship: e.target.value }))}>
                   {RELATIONSHIP_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
                 {formData.relationship === 'Altro' && (
@@ -258,11 +363,7 @@ export default function SOSConflittiPage() {
 
               <div>
                 <Label>Lingua delle domande</Label>
-                <select
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={language}
-                  onChange={e => setLanguage(e.target.value)}
-                >
+                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={language} onChange={e => setLanguage(e.target.value)}>
                   <option value="italiano">Italiano</option>
                   <option value="inglese">English</option>
                   <option value="spagnolo">Español</option>
@@ -271,68 +372,73 @@ export default function SOSConflittiPage() {
                 </select>
               </div>
 
-              <Button onClick={handleConvoca} disabled={generating} className="w-full gap-2 text-base py-6">
-                {generating ? <Loader2 size={20} className="animate-spin" /> : <Swords size={20} />}
-                {generating ? 'Il Consiglio sta deliberando...' : 'CONVOCA IL CONSIGLIO'}
-              </Button>
+              {/* SCELTA INIZIALE */}
+              {sessionMode === 'choose' && (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground text-center">Cosa vuoi fare?</p>
+                  <Button onClick={handleViewLastQuestions} variant="outline" className="w-full gap-2 py-5">
+                    <Eye size={18} /> Vedi ultime domande
+                  </Button>
+                  <Button onClick={handleNewEvent} variant="outline" className="w-full gap-2 py-5">
+                    <MessageSquarePlus size={18} /> Descrivi cosa è successo
+                  </Button>
+                  <Button onClick={() => handleConvoca()} className="w-full gap-2 py-5 text-base">
+                    <Swords size={18} /> CONVOCA IL CONSIGLIO
+                  </Button>
+                </div>
+              )}
 
-              {/* Display della Trinità */}
-              {sessionQuestions.length > 0 && (
+              {/* DESCRIVI COSA È SUCCESSO */}
+              {sessionMode === 'new_event' && (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">Racconta cosa è successo. Il Consiglio preparerà domande basate su questo evento e sullo storico.</p>
+                  <Textarea
+                    value={newEventText}
+                    onChange={e => setNewEventText(e.target.value)}
+                    placeholder="Descrivi l'evento, il conflitto, cosa è stato detto..."
+                    rows={6}
+                    autoFocus
+                  />
+                  <div className="flex gap-2">
+                    <Button onClick={handleSubmitNewEvent} disabled={!newEventText.trim()} className="flex-1 gap-2">
+                      <Swords size={16} /> CONVOCA IL CONSIGLIO
+                    </Button>
+                    <Button variant="ghost" onClick={() => setSessionMode('choose')}>Indietro</Button>
+                  </div>
+                </div>
+              )}
+
+              {/* GENERAZIONE IN CORSO */}
+              {sessionMode === 'generating' && (
+                <div className="flex flex-col items-center gap-3 py-8">
+                  <Loader2 size={32} className="animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">Il Consiglio sta deliberando...</p>
+                </div>
+              )}
+
+              {/* ULTIME DOMANDE */}
+              {sessionMode === 'last_questions' && (
                 <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">La Trinità</h3>
-                  {sessionQuestions.map((q, i) => (
-                    <div key={q.id} className="rounded-xl border border-border bg-card p-4 space-y-3">
-                      <p className="text-xs text-muted-foreground font-medium">Domanda {i + 1}</p>
-                      <p className="text-sm text-foreground font-medium leading-relaxed">"{q.question_text}"</p>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Ultime domande</h3>
+                    <Button size="sm" variant="ghost" onClick={() => setSessionMode('choose')}>← Indietro</Button>
+                  </div>
+                  {lastQuestions.length === 0 ? (
+                    <p className="text-center text-sm text-muted-foreground py-6">Nessuna domanda generata per questo profilo.</p>
+                  ) : (
+                    lastQuestions.map((q, i) => renderQuestionCard(q, i))
+                  )}
+                </div>
+              )}
 
-                      <button
-                        onClick={() => setExpandedValidation(prev => ({ ...prev, [q.id]: !prev[q.id] }))}
-                        className="flex items-center gap-1 text-xs text-primary"
-                      >
-                        {expandedValidation[q.id] ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                        Validazione del Consiglio
-                      </button>
-
-                      {expandedValidation[q.id] && (
-                        <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
-                          <p>{q.validation_text}</p>
-                          <p className="text-primary font-medium">Maestri: {q.maestri_used}</p>
-                        </div>
-                      )}
-
-                      {q.status === 'generated' && (
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={() => handleValida(q)} className="gap-1">
-                            <Check size={14} /> VALIDA
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => { setAdjustingId(q.id); setAdjustmentText(''); }} className="gap-1">
-                            <PenLine size={14} /> AGGIUSTA
-                          </Button>
-                        </div>
-                      )}
-
-                      {q.status !== 'generated' && (
-                        <p className="text-xs text-primary font-medium">
-                          ✓ {q.status === 'validated' ? 'Validata' : 'Aggiustata'}
-                        </p>
-                      )}
-
-                      {adjustingId === q.id && (
-                        <div className="space-y-2">
-                          <Textarea
-                            value={adjustmentText}
-                            onChange={e => setAdjustmentText(e.target.value)}
-                            placeholder="Note per ricalibrazione..."
-                            rows={3}
-                          />
-                          <div className="flex gap-2">
-                            <Button size="sm" onClick={() => handleAggiusta(q)}>Salva</Button>
-                            <Button size="sm" variant="ghost" onClick={() => setAdjustingId(null)}>Annulla</Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+              {/* RISULTATI NUOVA GENERAZIONE */}
+              {!generating && sessionQuestions.length > 0 && sessionMode !== 'choose' && sessionMode !== 'new_event' && sessionMode !== 'last_questions' && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">La Trinità</h3>
+                    <Button size="sm" variant="ghost" onClick={() => setSessionMode('choose')}>← Indietro</Button>
+                  </div>
+                  {sessionQuestions.map((q, i) => renderQuestionCard(q, i))}
                 </div>
               )}
 
