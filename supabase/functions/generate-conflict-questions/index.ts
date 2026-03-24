@@ -80,11 +80,14 @@ PROTOCOLLO:
 3. TRINITÀ: Genera 3 domande con sfumature diverse ma obiettivo unico: portare l'altro a Zero.
 4. VALIDAZIONE TECNICA: Per ogni domanda, spiega QUALE maestro l'ha ispirata e PERCHÉ quella leva scardinerà il conflitto.
 
-REGOLE:
+REGOLE FONDAMENTALI:
 - Le domande devono essere in ${language}.
+- BREVITÀ ASSOLUTA: ogni domanda deve avere MASSIMO 15-20 parole. Deve essere facile da ricordare a memoria.
+- La domanda deve poter essere detta guardando negli occhi il bersaglio, senza leggere da un foglio.
+- NO frasi elaborate, accademiche o con subordinate complesse. Linguaggio DIRETTO, quotidiano ma tagliente.
 - NO domande che permettono risposte a monosillabi.
 - NO domande che offrono scuse implicite.
-- Ogni domanda deve essere TAGLIENTE e SPIETATA ma INTELLIGENTE.
+- Ogni domanda deve essere TAGLIENTE e SPIETATA ma INTELLIGENTE e CONCISA.
 - Le domande sono fatte per essere POSTE AL BERSAGLIO dall'utente.
 
 RISPONDI SOLO con un JSON valido (array di 3 oggetti):
