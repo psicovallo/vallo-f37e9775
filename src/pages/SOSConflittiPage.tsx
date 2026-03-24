@@ -7,11 +7,28 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Plus, Swords, ChevronDown, ChevronUp, Check, PenLine, Trash2, Loader2, RotateCcw, MessageSquarePlus, Eye } from 'lucide-react';
+import {
+  Plus, Swords, ChevronDown, ChevronUp, Check, PenLine, Trash2, Loader2,
+  RotateCcw, MessageSquarePlus, Eye, HelpCircle, X, Layers, Shield,
+  Heart, Briefcase, MessageCircle, Crosshair, Sparkles, Brain
+} from 'lucide-react';
 
 const RELATIONSHIP_OPTIONS = [
   'Compagna', 'Moglie', 'Fidanzata', 'Figlio', 'Figlia', 'Amica',
   'Padre', 'Madre', 'Nonna', 'Collega', 'Capo', 'Dipendente', 'Assistente', 'Altro',
+];
+
+const SCENARIOS = [
+  { id: 'conflitto', label: 'Conflitto', icon: Swords, description: 'Guerra interpersonale. Smonta le difese.' },
+  { id: 'eros', label: 'Eros & Tabù', icon: Heart, description: 'Osa di più. Smonta i blocchi intimi.' },
+  { id: 'business', label: 'Power Business', icon: Briefcase, description: 'Negoziazione. Aumenti, contratti, forza.' },
+  { id: 'whatsapp', label: 'WhatsApp Shield', icon: MessageCircle, description: 'Rispondi a messaggi manipolatori.' },
+];
+
+const DNA_STYLES = [
+  { id: 'chirurgico', label: 'Chirurgico', icon: Crosshair, description: 'Freddo, preciso, senza emozione. Solo lama.' },
+  { id: 'persuasivo', label: 'Persuasivo', icon: Sparkles, description: 'Seduce prima di colpire. Devastazione nascosta.' },
+  { id: 'logico', label: 'Logico', icon: Brain, description: 'Ragionamento inattaccabile. Nessuna leva emotiva.' },
 ];
 
 interface ConflictProfile {
@@ -20,6 +37,8 @@ interface ConflictProfile {
   relationship: string;
   profile_description: string;
   failure_history: string;
+  scenario: string;
+  user_style: string;
   created_at: string;
 }
 
@@ -31,10 +50,11 @@ interface ConflictQuestion {
   status: string;
   adjustment_notes: string | null;
   maestri_used: string;
+  velo_number: number;
   created_at: string;
 }
 
-type SessionMode = 'choose' | 'last_questions' | 'new_event' | 'generating';
+type SessionMode = 'choose' | 'last_questions' | 'new_event' | 'generating' | 'whatsapp_input' | 'results' | 'soften_confirm';
 
 export default function SOSConflittiPage() {
   const { user } = useAuth();
@@ -42,20 +62,28 @@ export default function SOSConflittiPage() {
   const [profiles, setProfiles] = useState<ConflictProfile[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<ConflictProfile | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ name: '', relationship: 'Compagna', customRelationship: '', profile_description: '', failure_history: '' });
+  const [formData, setFormData] = useState({
+    name: '', relationship: 'Compagna', customRelationship: '',
+    profile_description: '', failure_history: '',
+    scenario: 'conflitto', user_style: 'chirurgico',
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [adjustingQuestionId, setAdjustingQuestionId] = useState<string | null>(null);
   const [language, setLanguage] = useState('italiano');
   const [sessionQuestions, setSessionQuestions] = useState<ConflictQuestion[]>([]);
   const [archiveQuestions, setArchiveQuestions] = useState<ConflictQuestion[]>([]);
   const [expandedValidation, setExpandedValidation] = useState<Record<string, boolean>>({});
   const [adjustingId, setAdjustingId] = useState<string | null>(null);
   const [adjustmentText, setAdjustmentText] = useState('');
+  const [adjustingQuestionId, setAdjustingQuestionId] = useState<string | null>(null);
   const [sessionMode, setSessionMode] = useState<SessionMode>('choose');
   const [newEventText, setNewEventText] = useState('');
   const [lastQuestions, setLastQuestions] = useState<ConflictQuestion[]>([]);
+  const [whatsappMessage, setWhatsappMessage] = useState('');
+  const [currentVelo, setCurrentVelo] = useState(1);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [softenQuestionId, setSoftenQuestionId] = useState<string | null>(null);
 
   const loadProfiles = useCallback(async () => {
     if (!user) return;
@@ -91,14 +119,33 @@ export default function SOSConflittiPage() {
     setLastQuestions((data as ConflictQuestion[]) || []);
   }, [user, selectedProfile]);
 
+  const loadCurrentVelo = useCallback(async () => {
+    if (!user || !selectedProfile) return;
+    const { data } = await supabase
+      .from('conflict_questions')
+      .select('velo_number')
+      .eq('conflict_profile_id', selectedProfile.id)
+      .in('status', ['validated', 'adjusted'])
+      .order('velo_number', { ascending: false })
+      .limit(1);
+    setCurrentVelo(data?.length ? (data[0] as any).velo_number + 1 : 1);
+  }, [user, selectedProfile]);
+
   useEffect(() => { loadProfiles(); }, [loadProfiles]);
   useEffect(() => { if (activeTab === 'archivio') loadArchive(); }, [activeTab, loadArchive]);
+  useEffect(() => {
+    if (selectedProfile) loadCurrentVelo();
+  }, [selectedProfile, loadCurrentVelo]);
 
   const handleSaveProfile = async () => {
     if (!user) return;
     setLoading(true);
     const rel = formData.relationship === 'Altro' ? formData.customRelationship : formData.relationship;
-    const payload = { user_id: user.id, name: formData.name, relationship: rel, profile_description: formData.profile_description, failure_history: formData.failure_history };
+    const payload = {
+      user_id: user.id, name: formData.name, relationship: rel,
+      profile_description: formData.profile_description, failure_history: formData.failure_history,
+      scenario: formData.scenario, user_style: formData.user_style,
+    };
 
     if (editingId) {
       await supabase.from('conflict_profiles').update(payload).eq('id', editingId);
@@ -108,7 +155,7 @@ export default function SOSConflittiPage() {
       toast.success('Profilo creato');
     }
 
-    setFormData({ name: '', relationship: 'Compagna', customRelationship: '', profile_description: '', failure_history: '' });
+    setFormData({ name: '', relationship: 'Compagna', customRelationship: '', profile_description: '', failure_history: '', scenario: 'conflitto', user_style: 'chirurgico' });
     setShowForm(false);
     setEditingId(null);
     await loadProfiles();
@@ -129,28 +176,41 @@ export default function SOSConflittiPage() {
       customRelationship: RELATIONSHIP_OPTIONS.includes(p.relationship) ? '' : p.relationship,
       profile_description: p.profile_description,
       failure_history: p.failure_history,
+      scenario: p.scenario || 'conflitto',
+      user_style: p.user_style || 'chirurgico',
     });
     setEditingId(p.id);
     setShowForm(true);
   };
 
-  const handleSelectProfile = async (p: ConflictProfile) => {
+  const handleSelectProfile = (p: ConflictProfile) => {
     setSelectedProfile(p);
     setSessionQuestions([]);
     setSessionMode('choose');
     setActiveTab('sessione');
   };
 
-  const handleConvoca = async (newEvent?: string) => {
+  const handleConvoca = async (opts: { newEvent?: string; whatsapp?: string; soften?: boolean; veloOverride?: number } = {}) => {
     if (!selectedProfile || !user) return;
     setGenerating(true);
     setSessionMode('generating');
     try {
-      const body: any = { conflict_profile_id: selectedProfile.id, language };
-      if (newEvent) body.new_event = newEvent;
+      const velo = opts.veloOverride ?? currentVelo;
+      const body: any = {
+        conflict_profile_id: selectedProfile.id,
+        language,
+        scenario: selectedProfile.scenario || 'conflitto',
+        user_style: selectedProfile.user_style || 'chirurgico',
+        velo_number: velo,
+      };
+      if (opts.newEvent) body.new_event = opts.newEvent;
+      if (opts.whatsapp) body.whatsapp_message = opts.whatsapp;
+      if (opts.soften) body.soften = true;
+
       const { data, error } = await supabase.functions.invoke('generate-conflict-questions', { body });
       if (error) throw error;
       setSessionQuestions(data.questions || []);
+      setSessionMode('results');
     } catch (e: any) {
       toast.error(e.message || 'Errore nella generazione');
       setSessionMode('choose');
@@ -158,54 +218,76 @@ export default function SOSConflittiPage() {
     setGenerating(false);
   };
 
-  const handleViewLastQuestions = async () => {
-    await loadLastQuestions();
-    setSessionMode('last_questions');
-  };
-
-  const handleNewEvent = () => {
-    setNewEventText('');
-    setSessionMode('new_event');
-  };
-
-  const handleSubmitNewEvent = () => {
-    if (!newEventText.trim()) return;
-    handleConvoca(newEventText.trim());
-  };
-
   const handleValida = async (q: ConflictQuestion) => {
     await supabase.from('conflict_questions').update({ status: 'validated' }).eq('id', q.id);
     const updateList = (list: ConflictQuestion[]) => list.map(x => x.id === q.id ? { ...x, status: 'validated' } : x);
     setSessionQuestions(updateList);
     setLastQuestions(updateList);
-    toast.success('Domanda validata e archiviata');
+    toast.success('Validata e archiviata');
+    loadCurrentVelo();
   };
 
-  const handleAggiusta = async (q: ConflictQuestion) => {
-    if (!adjustmentText.trim()) return;
+  const handleAggiusta = async (q: ConflictQuestion, soften = false) => {
+    if (!adjustmentText.trim() && !soften) return;
     setAdjustingQuestionId(q.id);
     try {
       const { data, error } = await supabase.functions.invoke('adjust-conflict-question', {
-        body: { question_id: q.id, adjustment_notes: adjustmentText, language },
+        body: { question_id: q.id, adjustment_notes: soften ? 'Abbassa il calibro ma mantieni la strategia' : adjustmentText, language, soften },
       });
       if (error) throw error;
       const updated = data.question;
       const updateList = (list: ConflictQuestion[]) => list.map(x => x.id === q.id ? updated : x);
       setSessionQuestions(updateList);
       setLastQuestions(updateList);
-      toast.success('Il Consiglio ha riformulato la domanda');
+      toast.success('Il Consiglio ha riformulato');
     } catch (e: any) {
-      toast.error(e.message || 'Errore nella riformulazione');
+      toast.error(e.message || 'Errore');
     }
     setAdjustingId(null);
     setAdjustmentText('');
     setAdjustingQuestionId(null);
+    setSoftenQuestionId(null);
+  };
+
+  const handleSoftenRequest = (q: ConflictQuestion) => {
+    setSoftenQuestionId(q.id);
+  };
+
+  const handleConfirmSoften = (q: ConflictQuestion) => {
+    handleAggiusta(q, true);
+  };
+
+  const handleNextVelo = () => {
+    setCurrentVelo(prev => prev + 1);
+    handleConvoca({ veloOverride: currentVelo + 1 });
+  };
+
+  const scenarioIcon = (id: string) => {
+    const s = SCENARIOS.find(s => s.id === id);
+    if (!s) return <Swords size={14} />;
+    const Icon = s.icon;
+    return <Icon size={14} />;
   };
 
   const renderQuestionCard = (q: ConflictQuestion, i: number) => (
     <div key={q.id} className="rounded-xl border border-border bg-card p-4 space-y-3">
-      <p className="text-xs text-muted-foreground font-medium">Domanda {i + 1}</p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground font-medium">
+          {selectedProfile?.scenario === 'whatsapp' ? `Risposta ${i + 1}` : `Velo ${q.velo_number} — Frase ${i + 1}`}
+        </p>
+        <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-primary">
+          {DNA_STYLES.find(s => s.id === (selectedProfile?.user_style || 'chirurgico'))?.label}
+        </span>
+      </div>
+
       <p className="text-sm text-foreground font-medium leading-relaxed">"{q.question_text}"</p>
+
+      {/* CIPOLLA INSTRUCTION */}
+      <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3">
+        <p className="text-xs text-destructive font-medium">
+          ⚠️ NON TOCCARE LA FRASE. Ripetila mentalmente 5 volte per caricarla nel tuo sistema nervoso. Una volta detta, aspetta la reazione e torna qui per il Velo successivo.
+        </p>
+      </div>
 
       <button
         onClick={() => setExpandedValidation(prev => ({ ...prev, [q.id]: !prev[q.id] }))}
@@ -223,42 +305,55 @@ export default function SOSConflittiPage() {
       )}
 
       {q.status === 'generated' && (
-        <div className="flex gap-2">
-          <Button size="sm" onClick={() => handleValida(q)} className="gap-1">
-            <Check size={14} /> VALIDA
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => { setAdjustingId(q.id); setAdjustmentText(''); }}
-            className="gap-1"
-            disabled={adjustingQuestionId === q.id}
-          >
-            {adjustingQuestionId === q.id ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
-            AGGIUSTA
-          </Button>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => handleValida(q)} className="gap-1">
+              <Check size={14} /> VALIDA
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => { setAdjustingId(q.id); setAdjustmentText(''); }} disabled={adjustingQuestionId === q.id} className="gap-1">
+              {adjustingQuestionId === q.id ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
+              AGGIUSTA
+            </Button>
+          </div>
+
+          {/* È TROPPO PER ME */}
+          {softenQuestionId !== q.id && (
+            <button onClick={() => handleSoftenRequest(q)} className="text-xs text-muted-foreground hover:text-destructive transition-colors">
+              È troppo per me →
+            </button>
+          )}
+
+          {softenQuestionId === q.id && (
+            <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-3 space-y-2">
+              <p className="text-xs text-destructive font-bold">
+                Admin, l'altro è stato inadeguato. Se rispondi con debolezza, non sei un amico o un partner, sei una nullità ai suoi occhi e gli stai dando il permesso di metterti i piedi in testa.
+              </p>
+              <p className="text-xs text-destructive">Sei sicuro di voler abbassare il calibro?</p>
+              <div className="flex gap-2">
+                <Button size="sm" variant="destructive" onClick={() => handleConfirmSoften(q)} className="text-xs">
+                  Sì, abbassa
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setSoftenQuestionId(null)} className="text-xs">
+                  Hai ragione, tengo
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {q.status !== 'generated' && (
-        <p className="text-xs text-primary font-medium">
-          ✓ {q.status === 'validated' ? 'Validata' : 'Aggiustata'}
-        </p>
+        <p className="text-xs text-primary font-medium">✓ {q.status === 'validated' ? 'Validata' : 'Aggiustata'}</p>
       )}
 
       {adjustingId === q.id && (
         <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">Spiega cosa non va e come vorresti la domanda. Il Consiglio la riformulerà.</p>
-          <Textarea
-            value={adjustmentText}
-            onChange={e => setAdjustmentText(e.target.value)}
-            placeholder="Es: troppo lunga, il tono è sbagliato, voglio che punti più sulla colpa..."
-            rows={3}
-          />
+          <p className="text-xs text-muted-foreground">Spiega cosa non va. Il Consiglio riformulerà.</p>
+          <Textarea value={adjustmentText} onChange={e => setAdjustmentText(e.target.value)} placeholder="Es: troppo lunga, tono sbagliato, voglio più colpa..." rows={3} />
           <div className="flex gap-2">
             <Button size="sm" onClick={() => handleAggiusta(q)} disabled={adjustingQuestionId === q.id || !adjustmentText.trim()} className="gap-1">
               {adjustingQuestionId === q.id ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
-              Riformula dal Consiglio
+              Riformula
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setAdjustingId(null)}>Annulla</Button>
           </div>
@@ -267,11 +362,70 @@ export default function SOSConflittiPage() {
     </div>
   );
 
+  // WELCOME SCREEN
+  if (showWelcome) {
+    return (
+      <div className="mx-auto max-w-lg px-4 pt-6 pb-24">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-xl font-bold text-foreground">Il Consiglio dei 15</h1>
+          <button onClick={() => setShowWelcome(false)} className="p-2 text-muted-foreground hover:text-foreground"><X size={20} /></button>
+        </div>
+        <div className="space-y-6">
+          <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 space-y-3">
+            <h2 className="text-base font-bold text-primary">Chi siamo</h2>
+            <p className="text-sm text-foreground leading-relaxed">
+              Siamo il Consiglio dei 15 Maestri — 15 geni della psicologia, persuasione e comunicazione strategica. 
+              Bandler, Ellis, Freud, Jung, Frankl, Erickson, Watzlawick, Cialdini, Carnegie, Aurelius, Peterson, 
+              Machiavelli, Socrate, Nietzsche e Allen Carr. Lavoriamo come un unico organismo analitico.
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+            <h2 className="text-base font-bold text-foreground">Perché la Cipolla</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              La verità e il risultato sono sotto strati di bugie sociali. Ogni "Velo" penetra più in profondità 
+              nella psiche del bersaglio. Non puoi saltare i veli. Ogni livello prepara il successivo. 
+              Il crollo avviene quando tutti gli strati sono stati dissolti.
+            </p>
+          </div>
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-5 space-y-3">
+            <h2 className="text-base font-bold text-destructive">La Regola d'Oro</h2>
+            <p className="text-sm text-foreground leading-relaxed font-medium">
+              Se modifichi la frase, l'arma esplode nelle tue mani. Fidati dei Maestri. 
+              Ripeti la frase 5 volte nella tua mente prima di usarla. Poi aspetta la reazione.
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+            <h2 className="text-base font-bold text-foreground">Scenari</h2>
+            <div className="space-y-2">
+              {SCENARIOS.map(s => {
+                const Icon = s.icon;
+                return (
+                  <div key={s.id} className="flex items-start gap-3">
+                    <Icon size={16} className="text-primary mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{s.label}</p>
+                      <p className="text-xs text-muted-foreground">{s.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-lg px-4 pt-6 pb-24">
-      <div className="mb-6 flex items-center gap-3">
-        <Swords size={24} className="text-primary" />
-        <h1 className="text-xl font-bold text-foreground">SOS Conflitti</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Swords size={24} className="text-primary" />
+          <h1 className="text-xl font-bold text-foreground">SOS DNA</h1>
+        </div>
+        <button onClick={() => setShowWelcome(true)} className="p-2 text-muted-foreground hover:text-primary transition-colors">
+          <HelpCircle size={20} />
+        </button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -304,9 +458,57 @@ export default function SOSConflittiPage() {
                   <Input className="mt-2" value={formData.customRelationship} onChange={e => setFormData(p => ({ ...p, customRelationship: e.target.value }))} placeholder="Specifica relazione" />
                 )}
               </div>
+
+              {/* SCENARIO SELECTOR */}
+              <div>
+                <Label>Scenario</Label>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  {SCENARIOS.map(s => {
+                    const Icon = s.icon;
+                    const active = formData.scenario === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setFormData(p => ({ ...p, scenario: s.id }))}
+                        className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-colors ${active ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card text-muted-foreground hover:border-primary/50'}`}
+                      >
+                        <Icon size={16} />
+                        <span className="text-xs font-medium">{s.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* DNA STYLE SELECTOR */}
+              <div>
+                <Label>Il tuo DNA (Stile)</Label>
+                <div className="grid grid-cols-3 gap-2 mt-1">
+                  {DNA_STYLES.map(s => {
+                    const Icon = s.icon;
+                    const active = formData.user_style === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setFormData(p => ({ ...p, user_style: s.id }))}
+                        className={`flex flex-col items-center gap-1 rounded-lg border p-3 transition-colors ${active ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card text-muted-foreground hover:border-primary/50'}`}
+                      >
+                        <Icon size={16} />
+                        <span className="text-[10px] font-medium">{s.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  {DNA_STYLES.find(s => s.id === formData.user_style)?.description}
+                </p>
+              </div>
+
               <div>
                 <Label>Descrizione Profilo</Label>
-                <Textarea value={formData.profile_description} onChange={e => setFormData(p => ({ ...p, profile_description: e.target.value }))} placeholder="Carattere, punti deboli, pattern comportamentali..." rows={4} />
+                <Textarea value={formData.profile_description} onChange={e => setFormData(p => ({ ...p, profile_description: e.target.value }))} placeholder="Carattere, punti deboli, pattern..." rows={4} />
               </div>
               <div>
                 <Label>Storico Fallimenti</Label>
@@ -328,18 +530,25 @@ export default function SOSConflittiPage() {
               onClick={() => handleSelectProfile(p)}
             >
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">{p.name}</p>
-                  <p className="text-xs text-muted-foreground">{p.relationship}</p>
+                <div className="flex items-center gap-2">
+                  {scenarioIcon(p.scenario)}
+                  <div>
+                    <p className="font-medium text-foreground">{p.name}</p>
+                    <p className="text-xs text-muted-foreground">{p.relationship}</p>
+                  </div>
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={e => { e.stopPropagation(); handleEditProfile(p); }} className="rounded-lg p-2 text-muted-foreground hover:text-foreground">
-                    <PenLine size={14} />
-                  </button>
-                  <button onClick={e => { e.stopPropagation(); handleDeleteProfile(p.id); }} className="rounded-lg p-2 text-muted-foreground hover:text-destructive">
-                    <Trash2 size={14} />
-                  </button>
+                  <button onClick={e => { e.stopPropagation(); handleEditProfile(p); }} className="rounded-lg p-2 text-muted-foreground hover:text-foreground"><PenLine size={14} /></button>
+                  <button onClick={e => { e.stopPropagation(); handleDeleteProfile(p.id); }} className="rounded-lg p-2 text-muted-foreground hover:text-destructive"><Trash2 size={14} /></button>
                 </div>
+              </div>
+              <div className="mt-2 flex gap-2">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-primary">
+                  {SCENARIOS.find(s => s.id === p.scenario)?.label || 'Conflitto'}
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                  {DNA_STYLES.find(s => s.id === p.user_style)?.label || 'Chirurgico'}
+                </span>
               </div>
               {p.profile_description && (
                 <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{p.profile_description}</p>
@@ -356,13 +565,22 @@ export default function SOSConflittiPage() {
         <TabsContent value="sessione" className="space-y-4">
           {selectedProfile && (
             <>
-              <div className="rounded-xl border border-primary/30 bg-primary/5 p-3">
-                <p className="text-sm font-medium text-foreground">{selectedProfile.name}</p>
-                <p className="text-xs text-muted-foreground">{selectedProfile.relationship}</p>
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {scenarioIcon(selectedProfile.scenario)}
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{selectedProfile.name}</p>
+                    <p className="text-xs text-muted-foreground">{selectedProfile.relationship}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Layers size={14} className="text-primary" />
+                  <span className="text-xs text-primary font-medium">Velo {currentVelo}</span>
+                </div>
               </div>
 
               <div>
-                <Label>Lingua delle domande</Label>
+                <Label>Lingua</Label>
                 <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={language} onChange={e => setLanguage(e.target.value)}>
                   <option value="italiano">Italiano</option>
                   <option value="inglese">English</option>
@@ -376,31 +594,53 @@ export default function SOSConflittiPage() {
               {sessionMode === 'choose' && (
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground text-center">Cosa vuoi fare?</p>
-                  <Button onClick={handleViewLastQuestions} variant="outline" className="w-full gap-2 py-5">
-                    <Eye size={18} /> Vedi ultime domande
+                  <Button onClick={() => { loadLastQuestions(); setSessionMode('last_questions'); }} variant="outline" className="w-full gap-2 py-5">
+                    <Eye size={18} /> Vedi ultime frasi
                   </Button>
-                  <Button onClick={handleNewEvent} variant="outline" className="w-full gap-2 py-5">
+                  <Button onClick={() => { setNewEventText(''); setSessionMode('new_event'); }} variant="outline" className="w-full gap-2 py-5">
                     <MessageSquarePlus size={18} /> Descrivi cosa è successo
                   </Button>
+                  {selectedProfile.scenario === 'whatsapp' && (
+                    <Button onClick={() => { setWhatsappMessage(''); setSessionMode('whatsapp_input'); }} variant="outline" className="w-full gap-2 py-5">
+                      <MessageCircle size={18} /> Incolla messaggio WhatsApp
+                    </Button>
+                  )}
                   <Button onClick={() => handleConvoca()} className="w-full gap-2 py-5 text-base">
-                    <Swords size={18} /> CONVOCA IL CONSIGLIO
+                    <Swords size={18} /> CONVOCA IL CONSIGLIO — Velo {currentVelo}
                   </Button>
+                </div>
+              )}
+
+              {/* WHATSAPP INPUT */}
+              {sessionMode === 'whatsapp_input' && (
+                <div className="space-y-3">
+                  <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-2">
+                    <p className="text-sm font-medium text-primary">📱 WhatsApp Shield</p>
+                    <p className="text-xs text-muted-foreground">Incolla il messaggio ricevuto. Il Consiglio analizzerà il sottotesto e genererà la risposta perfetta.</p>
+                  </div>
+                  <Textarea
+                    value={whatsappMessage}
+                    onChange={e => setWhatsappMessage(e.target.value)}
+                    placeholder="Incolla qui il messaggio che hai ricevuto..."
+                    rows={6}
+                    autoFocus
+                  />
+                  <div className="flex gap-2">
+                    <Button onClick={() => handleConvoca({ whatsapp: whatsappMessage.trim() })} disabled={!whatsappMessage.trim()} className="flex-1 gap-2">
+                      <Shield size={16} /> ANALIZZA E RISPONDI
+                    </Button>
+                    <Button variant="ghost" onClick={() => setSessionMode('choose')}>Indietro</Button>
+                  </div>
                 </div>
               )}
 
               {/* DESCRIVI COSA È SUCCESSO */}
               {sessionMode === 'new_event' && (
                 <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground">Racconta cosa è successo. Il Consiglio preparerà domande basate su questo evento e sullo storico.</p>
-                  <Textarea
-                    value={newEventText}
-                    onChange={e => setNewEventText(e.target.value)}
-                    placeholder="Descrivi l'evento, il conflitto, cosa è stato detto..."
-                    rows={6}
-                    autoFocus
-                  />
+                  <p className="text-sm text-muted-foreground">Racconta cosa è successo. Il Consiglio preparerà frasi basate su questo evento.</p>
+                  <Textarea value={newEventText} onChange={e => setNewEventText(e.target.value)} placeholder="Descrivi l'evento, il conflitto, cosa è stato detto..." rows={6} autoFocus />
                   <div className="flex gap-2">
-                    <Button onClick={handleSubmitNewEvent} disabled={!newEventText.trim()} className="flex-1 gap-2">
+                    <Button onClick={() => handleConvoca({ newEvent: newEventText.trim() })} disabled={!newEventText.trim()} className="flex-1 gap-2">
                       <Swords size={16} /> CONVOCA IL CONSIGLIO
                     </Button>
                     <Button variant="ghost" onClick={() => setSessionMode('choose')}>Indietro</Button>
@@ -412,7 +652,8 @@ export default function SOSConflittiPage() {
               {sessionMode === 'generating' && (
                 <div className="flex flex-col items-center gap-3 py-8">
                   <Loader2 size={32} className="animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground">Il Consiglio sta deliberando...</p>
+                  <p className="text-sm text-muted-foreground">Il Consiglio dei 15 sta deliberando...</p>
+                  <p className="text-xs text-muted-foreground italic">Analisi incrociata in corso — Velo {currentVelo}</p>
                 </div>
               )}
 
@@ -420,25 +661,34 @@ export default function SOSConflittiPage() {
               {sessionMode === 'last_questions' && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Ultime domande</h3>
+                    <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Ultime frasi</h3>
                     <Button size="sm" variant="ghost" onClick={() => setSessionMode('choose')}>← Indietro</Button>
                   </div>
                   {lastQuestions.length === 0 ? (
-                    <p className="text-center text-sm text-muted-foreground py-6">Nessuna domanda generata per questo profilo.</p>
+                    <p className="text-center text-sm text-muted-foreground py-6">Nessuna frase generata per questo profilo.</p>
                   ) : (
                     lastQuestions.map((q, i) => renderQuestionCard(q, i))
                   )}
                 </div>
               )}
 
-              {/* RISULTATI NUOVA GENERAZIONE */}
-              {!generating && sessionQuestions.length > 0 && sessionMode !== 'choose' && sessionMode !== 'new_event' && sessionMode !== 'last_questions' && (
+              {/* RISULTATI */}
+              {sessionMode === 'results' && sessionQuestions.length > 0 && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">La Trinità</h3>
+                    <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+                      {selectedProfile.scenario === 'whatsapp' ? 'Risposte Shield' : `La Trinità — Velo ${sessionQuestions[0]?.velo_number || currentVelo}`}
+                    </h3>
                     <Button size="sm" variant="ghost" onClick={() => setSessionMode('choose')}>← Indietro</Button>
                   </div>
                   {sessionQuestions.map((q, i) => renderQuestionCard(q, i))}
+
+                  {/* NEXT VELO BUTTON */}
+                  {selectedProfile.scenario !== 'whatsapp' && (
+                    <Button onClick={handleNextVelo} className="w-full gap-2 mt-4" variant="outline">
+                      <Layers size={16} /> Vai al Velo {currentVelo + 1} — Penetra più in profondità
+                    </Button>
+                  )}
                 </div>
               )}
 
@@ -456,17 +706,18 @@ export default function SOSConflittiPage() {
               <p className="text-sm font-medium text-foreground">Archivio: {selectedProfile.name}</p>
             </div>
           )}
-
           {archiveQuestions.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground py-8">Nessuna domanda validata per questo profilo.</p>
+            <p className="text-center text-sm text-muted-foreground py-8">Nessuna frase validata per questo profilo.</p>
           )}
-
           {archiveQuestions.map((q, i) => (
             <div key={q.id} className="rounded-xl border border-border bg-card p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">
-                  {new Date(q.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })}
-                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Velo {q.velo_number}</span>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(q.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </p>
+                </div>
                 <span className={`text-[10px] px-2 py-0.5 rounded-full ${q.status === 'validated' ? 'bg-primary/20 text-primary' : 'bg-accent text-accent-foreground'}`}>
                   {q.status === 'validated' ? 'Validata' : 'Aggiustata'}
                 </span>

@@ -124,8 +124,8 @@ export default function HomePage() {
           className="flex flex-col items-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 p-4 transition-colors hover:border-destructive active:scale-[0.97]"
         >
           <span className="text-2xl">⚔️</span>
-          <span className="text-xs font-medium text-foreground text-center">SOS Conflitti</span>
-          <span className="text-[10px] text-muted-foreground text-center">Decostruzione</span>
+          <span className="text-xs font-medium text-foreground text-center">SOS DNA</span>
+          <span className="text-[10px] text-muted-foreground text-center">Il Consiglio dei 15</span>
         </Link>
         <Link
           to="/contract"
