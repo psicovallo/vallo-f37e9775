@@ -58,7 +58,11 @@ function shouldUnlockPhaseB(viewCount: number): boolean {
 
 function findBlockedWords(text: string): string[] {
   const lower = text.toLowerCase();
-  return BLOCKED_WORDS.filter(w => lower.includes(w.trim()));
+  return BLOCKED_WORDS.filter(w => {
+    const word = w.trim();
+    const regex = new RegExp(`(^|[\\s.,;:!?'"()\\-])${word}([\\s.,;:!?'"()\\-]|$)`, 'i');
+    return regex.test(lower);
+  });
 }
 
 export default function QuestionPage() {
