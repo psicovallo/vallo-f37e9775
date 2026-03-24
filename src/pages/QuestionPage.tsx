@@ -511,6 +511,21 @@ export default function QuestionPage() {
             onClick={async () => {
               if (noteText.trim()) await saveNote(noteText);
               toast.success('Appunti salvati ✓');
+              // Check for next assignment
+              const { data: nextAssignments } = await supabase
+                .from('question_assignments')
+                .select('id')
+                .eq('user_id', user!.id)
+                .neq('status', 'risolta')
+                .neq('id', assignment!.id)
+                .order('sort_order', { ascending: true })
+                .limit(1);
+              if (nextAssignments && nextAssignments.length > 0) {
+                // Reload to show next question
+                window.location.reload();
+              } else {
+                setAllDone(true);
+              }
             }}
             className="mt-4 w-full rounded-2xl bg-primary px-4 py-3.5 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.97]"
           >
