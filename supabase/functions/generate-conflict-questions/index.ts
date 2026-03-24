@@ -28,7 +28,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { conflict_profile_id, language = "italiano" } = await req.json();
+    const { conflict_profile_id, language = "italiano", new_event = "" } = await req.json();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -60,6 +60,8 @@ serve(async (req) => {
       ? prevQuestions.map((q: any, i: number) => `${i + 1}. ${q.question_text} (Maestri: ${q.maestri_used})`).join("\n")
       : "";
 
+    const eventContext = new_event ? `\nNUOVO EVENTO APPENA ACCADUTO (usa questo come contesto principale per le domande):\n"${new_event}"\n` : "";
+
     const systemPrompt = `SEI IL CONSIGLIO DEI 15 MAESTRI. Lavorate TUTTI INSIEME come un unico organismo analitico.
 Il vostro scopo: generare 3 DOMANDE LETALI che l'utente potrà usare nel conflitto con il bersaglio.
 
@@ -68,7 +70,7 @@ BERSAGLIO:
 - Relazione: ${profile.relationship}
 - Profilo psicologico: ${profile.profile_description}
 - Storico fallimenti: ${profile.failure_history}
-
+${eventContext}
 ${prevText ? `DOMANDE GIÀ VALIDATE (cambia strategia, usa leve diverse):\n${prevText}` : ""}
 
 I 15 MAESTRI:
@@ -80,11 +82,14 @@ PROTOCOLLO:
 3. TRINITÀ: Genera 3 domande con sfumature diverse ma obiettivo unico: portare l'altro a Zero.
 4. VALIDAZIONE TECNICA: Per ogni domanda, spiega QUALE maestro l'ha ispirata e PERCHÉ quella leva scardinerà il conflitto.
 
-REGOLE:
+REGOLE FONDAMENTALI:
 - Le domande devono essere in ${language}.
+- BREVITÀ ASSOLUTA: ogni domanda deve avere MASSIMO 15-20 parole. Deve essere facile da ricordare a memoria.
+- La domanda deve poter essere detta guardando negli occhi il bersaglio, senza leggere da un foglio.
+- NO frasi elaborate, accademiche o con subordinate complesse. Linguaggio DIRETTO, quotidiano ma tagliente.
 - NO domande che permettono risposte a monosillabi.
 - NO domande che offrono scuse implicite.
-- Ogni domanda deve essere TAGLIENTE e SPIETATA ma INTELLIGENTE.
+- Ogni domanda deve essere TAGLIENTE e SPIETATA ma INTELLIGENTE e CONCISA.
 - Le domande sono fatte per essere POSTE AL BERSAGLIO dall'utente.
 
 RISPONDI SOLO con un JSON valido (array di 3 oggetti):
