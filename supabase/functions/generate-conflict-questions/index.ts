@@ -60,6 +60,8 @@ serve(async (req) => {
       ? prevQuestions.map((q: any, i: number) => `${i + 1}. ${q.question_text} (Maestri: ${q.maestri_used})`).join("\n")
       : "";
 
+    const eventContext = new_event ? `\nNUOVO EVENTO APPENA ACCADUTO (usa questo come contesto principale per le domande):\n"${new_event}"\n` : "";
+
     const systemPrompt = `SEI IL CONSIGLIO DEI 15 MAESTRI. Lavorate TUTTI INSIEME come un unico organismo analitico.
 Il vostro scopo: generare 3 DOMANDE LETALI che l'utente potrà usare nel conflitto con il bersaglio.
 
@@ -68,7 +70,7 @@ BERSAGLIO:
 - Relazione: ${profile.relationship}
 - Profilo psicologico: ${profile.profile_description}
 - Storico fallimenti: ${profile.failure_history}
-
+${eventContext}
 ${prevText ? `DOMANDE GIÀ VALIDATE (cambia strategia, usa leve diverse):\n${prevText}` : ""}
 
 I 15 MAESTRI:
