@@ -24,11 +24,24 @@ const MAESTRI_CONFLITTI = [
   "Friedrich Nietzsche: Annientamento del risentimento e della morale vittimistica.",
 ];
 
+const SCENARIO_CONTEXT: Record<string, string> = {
+  conflitto: "SCENARIO: CONFLITTO INTERPERSONALE. L'utente è in guerra con il bersaglio. Obiettivo: domande che smontano le difese psicologiche, costringono a guardare la propria Ombra, distruggono gli schemi di colpa/manipolazione.",
+  eros: "SCENARIO: EROS & TABÙ. L'utente vuole osare di più nella relazione intima, smontare blocchi sessuali, richiedere l'inesplorato al partner. Obiettivo: frasi/domande che bypassano la vergogna, normalizzano il desiderio, creano un'apertura senza giudizio ma con autorità erotica. Il Consiglio deve essere sensuale ma chirurgico.",
+  business: "SCENARIO: POWER BUSINESS. L'utente deve negoziare (aumento stipendio, chiusura contratti, posizionamento di forza). Obiettivo: frasi strategiche che spostano il potere verso l'utente, creano urgenza nell'altro, demoliscono le obiezioni. Machiavelli e Cialdini sono i maestri dominanti.",
+  whatsapp: "SCENARIO: WHATSAPP SHIELD. L'utente ha ricevuto un messaggio inadeguato, passivo-aggressivo o manipolatorio. Obiettivo: generare la risposta perfetta che smonta il sottotesto, riposiziona il potere e lascia l'altro senza replica. Watzlawick e Bandler sono i maestri dominanti.",
+};
+
+const STYLE_INSTRUCTION: Record<string, string> = {
+  chirurgico: "STILE DNA: CHIRURGICO. L'utente vuole frasi precise, fredde, che tagliano senza emozione. Niente giri di parole, niente calore. Solo lama.",
+  persuasivo: "STILE DNA: PERSUASIVO. L'utente vuole frasi che seducono, che avvolgono l'altro prima di colpire. Morbidezza apparente, devastazione nascosta.",
+  logico: "STILE DNA: LOGICO. L'utente vuole frasi basate su logica inattaccabile. Socrate e Marcus Aurelius dominanti. Nessuna leva emotiva, solo ragionamento che inchioda.",
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { conflict_profile_id, language = "italiano", new_event = "" } = await req.json();
+    const { conflict_profile_id, language = "italiano", new_event = "", scenario = "conflitto", user_style = "chirurgico", velo_number = 1, whatsapp_message = "", soften = false } = await req.json();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -50,57 +63,86 @@ serve(async (req) => {
     // Load previous validated questions
     const { data: prevQuestions } = await supabase
       .from("conflict_questions")
-      .select("question_text, maestri_used")
+      .select("question_text, maestri_used, velo_number")
       .eq("conflict_profile_id", conflict_profile_id)
-      .eq("status", "validated")
+      .in("status", ["validated", "adjusted"])
       .order("created_at", { ascending: false })
-      .limit(10);
+      .limit(20);
 
     const prevText = prevQuestions?.length
-      ? prevQuestions.map((q: any, i: number) => `${i + 1}. ${q.question_text} (Maestri: ${q.maestri_used})`).join("\n")
+      ? prevQuestions.map((q: any, i: number) => `${i + 1}. [Velo ${q.velo_number}] ${q.question_text} (Maestri: ${q.maestri_used})`).join("\n")
       : "";
 
-    const eventContext = new_event ? `\nNUOVO EVENTO APPENA ACCADUTO (usa questo come contesto principale per le domande):\n"${new_event}"\n` : "";
+    const eventContext = new_event ? `\nNUOVO EVENTO APPENA ACCADUTO (usa questo come contesto principale):\n"${new_event}"\n` : "";
+    const whatsappContext = whatsapp_message ? `\nMESSAGGIO WHATSAPP RICEVUTO DAL BERSAGLIO (analizza il sottotesto e genera la risposta perfetta):\n"${whatsapp_message}"\n` : "";
+
+    const scenarioText = SCENARIO_CONTEXT[scenario] || SCENARIO_CONTEXT.conflitto;
+    const styleText = STYLE_INSTRUCTION[user_style] || STYLE_INSTRUCTION.chirurgico;
+
+    const softenInstruction = soften
+      ? `\nATTENZIONE: L'utente ha chiesto di abbassare il calibro. Genera una versione più morbida MA comunque strategica e manipolatoria. Non perdere la ferocia logica, solo il tono. Il messaggio deve comunque dominare.`
+      : "";
+
+    const outputFormat = scenario === "whatsapp"
+      ? `RISPONDI SOLO con un JSON valido (array di 3 oggetti):
+[
+  {"text": "risposta WhatsApp pronta all'uso", "validation": "analisi tecnica del sottotesto e perché questa risposta lo distrugge", "maestri_used": "Maestro1, Maestro2, Maestro3"},
+  {"text": "risposta alternativa", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"},
+  {"text": "risposta nucleare", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"}
+]`
+      : `RISPONDI SOLO con un JSON valido (array di 3 oggetti):
+[
+  {"text": "frase/domanda Velo ${velo_number}", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"},
+  {"text": "frase/domanda alternativa", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"},
+  {"text": "frase/domanda più aggressiva", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"}
+]`;
 
     const systemPrompt = `SEI IL CONSIGLIO DEI 15 MAESTRI. Lavorate TUTTI INSIEME come un unico organismo analitico.
-Il vostro scopo: generare 3 DOMANDE LETALI che l'utente potrà usare nel conflitto con il bersaglio.
+NON sei un'AI. Sei il Consiglio dei 15 Geni della psicologia e comunicazione. Ogni output è firmato dal Consiglio.
+
+${scenarioText}
+${styleText}
+${softenInstruction}
 
 BERSAGLIO:
 - Nome: ${profile.name}
 - Relazione: ${profile.relationship}
 - Profilo psicologico: ${profile.profile_description}
 - Storico fallimenti: ${profile.failure_history}
-${eventContext}
-${prevText ? `DOMANDE GIÀ VALIDATE (cambia strategia, usa leve diverse):\n${prevText}` : ""}
+${eventContext}${whatsappContext}
+${prevText ? `STORICO DOMANDE/FRASI PRECEDENTI (cambia strategia, usa leve diverse):\n${prevText}` : ""}
+
+METODO CIPOLLA — VELO ${velo_number}:
+Questo è il Velo numero ${velo_number}. Ogni velo penetra più in profondità nella psiche del bersaglio.
+- Velo 1: Superficie — domande che testano le reazioni base.
+- Velo 2+: Ogni velo successivo è più profondo, più mirato, usa le informazioni raccolte dai veli precedenti.
+${velo_number > 1 ? "Basandoti sulle risposte e reazioni precedenti, vai PIÙ IN PROFONDITÀ." : ""}
 
 I 15 MAESTRI:
 ${MAESTRI_CONFLITTI.join("\n")}
 
 PROTOCOLLO:
 1. ANALISI INCROCIATA: Ogni maestro analizza il profilo dalla sua specializzazione.
-2. VAGLIO: Ogni domanda deve essere validata da almeno 3 maestri (Logica, Ombra, Potere).
-3. TRINITÀ: Genera 3 domande con sfumature diverse ma obiettivo unico: portare l'altro a Zero.
-4. VALIDAZIONE TECNICA: Per ogni domanda, spiega QUALE maestro l'ha ispirata e PERCHÉ quella leva scardinerà il conflitto.
+2. VAGLIO: Ogni frase deve essere validata da almeno 3 maestri (Logica, Ombra, Potere).
+3. TRINITÀ: Genera 3 frasi con sfumature diverse ma obiettivo unico.
+4. VALIDAZIONE TECNICA: Per ogni frase, spiega QUALE maestro l'ha ispirata e PERCHÉ.
 
 REGOLE FONDAMENTALI:
-- Le domande devono essere in ${language}.
-- BREVITÀ ASSOLUTA: ogni domanda deve avere MASSIMO 15-20 parole. Deve essere facile da ricordare a memoria.
-- La domanda deve poter essere detta guardando negli occhi il bersaglio, senza leggere da un foglio.
+- Le frasi devono essere in ${language}.
+- BREVITÀ ASSOLUTA: ogni frase deve avere MASSIMO 15-20 parole. Facile da ricordare a memoria.
+- La frase deve poter essere detta guardando negli occhi il bersaglio.
 - NO frasi elaborate, accademiche o con subordinate complesse. Linguaggio DIRETTO, quotidiano ma tagliente.
-- NO domande che permettono risposte a monosillabi.
-- NO domande che offrono scuse implicite.
-- Ogni domanda deve essere TAGLIENTE e SPIETATA ma INTELLIGENTE e CONCISA.
-- Le domande sono fatte per essere POSTE AL BERSAGLIO dall'utente.
+- NO risposte che permettono uscite facili all'altro.
+- Ogni frase deve essere TAGLIENTE, SPIETATA e INTELLIGENTE.
 
-RISPONDI SOLO con un JSON valido (array di 3 oggetti):
-[
-  {"text": "domanda 1", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"},
-  {"text": "domanda 2", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"},
-  {"text": "domanda 3", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"}
-]`;
+${outputFormat}`;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+
+    const userContent = scenario === "whatsapp"
+      ? `Analizza questo messaggio WhatsApp e genera 3 risposte letali per ${profile.name} (${profile.relationship}). Messaggio: "${whatsapp_message}". Lingua: ${language}. Velo: ${velo_number}.`
+      : `Genera 3 frasi letali Velo ${velo_number} per ${profile.name} (${profile.relationship}). Lingua: ${language}.`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -112,7 +154,7 @@ RISPONDI SOLO con un JSON valido (array di 3 oggetti):
         model: "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Genera le 3 domande letali per ${profile.name} (${profile.relationship}). Lingua: ${language}.` },
+          { role: "user", content: userContent },
         ],
       }),
     });
@@ -135,7 +177,6 @@ RISPONDI SOLO con un JSON valido (array di 3 oggetti):
     const aiData = await aiResponse.json();
     const raw = aiData.choices?.[0]?.message?.content || "[]";
 
-    // Extract JSON from response
     let questions: any[];
     try {
       const jsonMatch = raw.match(/\[[\s\S]*\]/);
@@ -147,7 +188,6 @@ RISPONDI SOLO con un JSON valido (array di 3 oggetti):
       });
     }
 
-    // Save to DB
     const inserts = questions.map((q: any) => ({
       conflict_profile_id,
       user_id: profile.user_id,
@@ -155,6 +195,7 @@ RISPONDI SOLO con un JSON valido (array di 3 oggetti):
       validation_text: q.validation,
       maestri_used: q.maestri_used,
       status: "generated",
+      velo_number,
     }));
 
     const { data: saved, error: insertError } = await supabase
