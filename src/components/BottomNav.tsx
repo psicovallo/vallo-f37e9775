@@ -6,7 +6,7 @@ const tabs = [
   { to: '/home', label: 'Home', icon: Home },
   { to: '/question', label: 'Domanda', icon: Flame },
   { to: '/sfogo', label: 'Sfogo', icon: PenLine },
-  { to: '/sos-conflitti', label: 'SOS', icon: Swords },
+  { to: '/sos-conflitti', label: 'SOS DNA', icon: Swords },
   { to: '/reminders', label: 'Promemoria', icon: Bell },
   { to: '/messages', label: 'Messaggi', icon: MessageSquare },
 ];
