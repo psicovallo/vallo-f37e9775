@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import {
   Plus, Swords, ChevronDown, ChevronUp, Check, PenLine, Trash2, Loader2,
   RotateCcw, MessageSquarePlus, Eye, HelpCircle, X, Layers, Shield,
-  Heart, Briefcase, MessageCircle, Crosshair, Sparkles, Brain
+  Heart, Briefcase, MessageCircle, Crosshair, Sparkles, Brain, Zap, Target, Info
 } from 'lucide-react';
 
 const RELATIONSHIP_OPTIONS = [
@@ -30,6 +30,8 @@ const DNA_STYLES = [
   { id: 'persuasivo', label: 'Persuasivo', icon: Sparkles, description: 'Seduce prima di colpire. Devastazione nascosta.' },
   { id: 'logico', label: 'Logico', icon: Brain, description: 'Ragionamento inattaccabile. Nessuna leva emotiva.' },
 ];
+
+const PASSIVE_WORDS = ['spero', 'capisca', 'provare', 'magari', 'forse', 'vorrei', 'speriamo', 'cercherò'];
 
 interface ConflictProfile {
   id: string;
@@ -54,7 +56,7 @@ interface ConflictQuestion {
   created_at: string;
 }
 
-type SessionMode = 'choose' | 'last_questions' | 'new_event' | 'generating' | 'whatsapp_input' | 'results' | 'soften_confirm';
+type SessionMode = 'choose' | 'last_questions' | 'new_event' | 'generating' | 'whatsapp_input' | 'results' | 'focus12';
 
 export default function SOSConflittiPage() {
   const { user } = useAuth();
@@ -67,10 +69,11 @@ export default function SOSConflittiPage() {
     profile_description: '', failure_history: '',
     scenario: 'conflitto', user_style: 'chirurgico',
   });
+  const [objectiveText, setObjectiveText] = useState('');
+  const [objectiveWarning, setObjectiveWarning] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [language, setLanguage] = useState('italiano');
   const [sessionQuestions, setSessionQuestions] = useState<ConflictQuestion[]>([]);
   const [archiveQuestions, setArchiveQuestions] = useState<ConflictQuestion[]>([]);
   const [expandedValidation, setExpandedValidation] = useState<Record<string, boolean>>({});
@@ -84,61 +87,92 @@ export default function SOSConflittiPage() {
   const [currentVelo, setCurrentVelo] = useState(1);
   const [showWelcome, setShowWelcome] = useState(false);
   const [softenQuestionId, setSoftenQuestionId] = useState<string | null>(null);
+  const [quantumEnabled, setQuantumEnabled] = useState(false);
+  const [focus12Timer, setFocus12Timer] = useState(30);
+  const [pendingConvokeArgs, setPendingConvokeArgs] = useState<any>(null);
+  const [linguaMadre, setLinguaMadre] = useState('italiano');
+
+  // Load quantum & lingua from profile
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('profiles').select('quantum_enabled, lingua_madre').eq('user_id', user.id).maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setQuantumEnabled((data as any).quantum_enabled || false);
+          setLinguaMadre((data as any).lingua_madre || 'italiano');
+        }
+      });
+  }, [user]);
 
   const loadProfiles = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
-      .from('conflict_profiles')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+      .from('conflict_profiles').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
     setProfiles((data as ConflictProfile[]) || []);
   }, [user]);
 
   const loadArchive = useCallback(async () => {
     if (!user || !selectedProfile) return;
     const { data } = await supabase
-      .from('conflict_questions')
-      .select('*')
-      .eq('conflict_profile_id', selectedProfile.id)
-      .eq('user_id', user.id)
-      .in('status', ['validated', 'adjusted'])
-      .order('created_at', { ascending: false });
+      .from('conflict_questions').select('*').eq('conflict_profile_id', selectedProfile.id).eq('user_id', user.id)
+      .in('status', ['validated', 'adjusted']).order('created_at', { ascending: false });
     setArchiveQuestions((data as ConflictQuestion[]) || []);
   }, [user, selectedProfile]);
 
   const loadLastQuestions = useCallback(async () => {
     if (!user || !selectedProfile) return;
     const { data } = await supabase
-      .from('conflict_questions')
-      .select('*')
-      .eq('conflict_profile_id', selectedProfile.id)
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(3);
+      .from('conflict_questions').select('*').eq('conflict_profile_id', selectedProfile.id).eq('user_id', user.id)
+      .order('created_at', { ascending: false }).limit(3);
     setLastQuestions((data as ConflictQuestion[]) || []);
   }, [user, selectedProfile]);
 
   const loadCurrentVelo = useCallback(async () => {
     if (!user || !selectedProfile) return;
     const { data } = await supabase
-      .from('conflict_questions')
-      .select('velo_number')
-      .eq('conflict_profile_id', selectedProfile.id)
-      .in('status', ['validated', 'adjusted'])
-      .order('velo_number', { ascending: false })
-      .limit(1);
+      .from('conflict_questions').select('velo_number').eq('conflict_profile_id', selectedProfile.id)
+      .in('status', ['validated', 'adjusted']).order('velo_number', { ascending: false }).limit(1);
     setCurrentVelo(data?.length ? (data[0] as any).velo_number + 1 : 1);
   }, [user, selectedProfile]);
 
   useEffect(() => { loadProfiles(); }, [loadProfiles]);
   useEffect(() => { if (activeTab === 'archivio') loadArchive(); }, [activeTab, loadArchive]);
+  useEffect(() => { if (selectedProfile) loadCurrentVelo(); }, [selectedProfile, loadCurrentVelo]);
+
+  // Focus 12 timer countdown
   useEffect(() => {
-    if (selectedProfile) loadCurrentVelo();
-  }, [selectedProfile, loadCurrentVelo]);
+    if (sessionMode !== 'focus12') return;
+    if (focus12Timer <= 0) {
+      // Timer done, proceed to actual convoke
+      if (pendingConvokeArgs) {
+        doConvoca(pendingConvokeArgs);
+        setPendingConvokeArgs(null);
+      }
+      return;
+    }
+    const t = setTimeout(() => setFocus12Timer(prev => prev - 1), 1000);
+    return () => clearTimeout(t);
+  }, [sessionMode, focus12Timer]);
+
+  // Objective coaching
+  const validateObjective = (text: string) => {
+    const lower = text.toLowerCase();
+    const found = PASSIVE_WORDS.find(w => lower.includes(w));
+    if (found) {
+      setObjectiveWarning(
+        `Il Consiglio dei Maestri rileva un intento debole. L'universo non risponde a desideri passivi. Cosa deve accadere esattamente nel mondo fisico perché tu possa dire di aver vinto questa partita? Riformula l'obiettivo come un ordine alla realtà.`
+      );
+    } else {
+      setObjectiveWarning('');
+    }
+  };
 
   const handleSaveProfile = async () => {
     if (!user) return;
+    if (!objectiveText.trim()) {
+      toast.error("L'Obiettivo Finale è obbligatorio.");
+      return;
+    }
     setLoading(true);
     const rel = formData.relationship === 'Altro' ? formData.customRelationship : formData.relationship;
     const payload = {
@@ -156,6 +190,8 @@ export default function SOSConflittiPage() {
     }
 
     setFormData({ name: '', relationship: 'Compagna', customRelationship: '', profile_description: '', failure_history: '', scenario: 'conflitto', user_style: 'chirurgico' });
+    setObjectiveText('');
+    setObjectiveWarning('');
     setShowForm(false);
     setEditingId(null);
     await loadProfiles();
@@ -174,10 +210,8 @@ export default function SOSConflittiPage() {
       name: p.name,
       relationship: RELATIONSHIP_OPTIONS.includes(p.relationship) ? p.relationship : 'Altro',
       customRelationship: RELATIONSHIP_OPTIONS.includes(p.relationship) ? '' : p.relationship,
-      profile_description: p.profile_description,
-      failure_history: p.failure_history,
-      scenario: p.scenario || 'conflitto',
-      user_style: p.user_style || 'chirurgico',
+      profile_description: p.profile_description, failure_history: p.failure_history,
+      scenario: p.scenario || 'conflitto', user_style: p.user_style || 'chirurgico',
     });
     setEditingId(p.id);
     setShowForm(true);
@@ -190,7 +224,17 @@ export default function SOSConflittiPage() {
     setActiveTab('sessione');
   };
 
-  const handleConvoca = async (opts: { newEvent?: string; whatsapp?: string; soften?: boolean; veloOverride?: number } = {}) => {
+  const startConvoca = (opts: any = {}) => {
+    if (quantumEnabled) {
+      setFocus12Timer(30);
+      setPendingConvokeArgs(opts);
+      setSessionMode('focus12');
+    } else {
+      doConvoca(opts);
+    }
+  };
+
+  const doConvoca = async (opts: { newEvent?: string; whatsapp?: string; soften?: boolean; veloOverride?: number } = {}) => {
     if (!selectedProfile || !user) return;
     setGenerating(true);
     setSessionMode('generating');
@@ -198,10 +242,12 @@ export default function SOSConflittiPage() {
       const velo = opts.veloOverride ?? currentVelo;
       const body: any = {
         conflict_profile_id: selectedProfile.id,
-        language,
+        language: linguaMadre,
         scenario: selectedProfile.scenario || 'conflitto',
         user_style: selectedProfile.user_style || 'chirurgico',
         velo_number: velo,
+        objective: objectiveText || undefined,
+        quantum: quantumEnabled,
       };
       if (opts.newEvent) body.new_event = opts.newEvent;
       if (opts.whatsapp) body.whatsapp_message = opts.whatsapp;
@@ -232,7 +278,7 @@ export default function SOSConflittiPage() {
     setAdjustingQuestionId(q.id);
     try {
       const { data, error } = await supabase.functions.invoke('adjust-conflict-question', {
-        body: { question_id: q.id, adjustment_notes: soften ? 'Abbassa il calibro ma mantieni la strategia' : adjustmentText, language, soften },
+        body: { question_id: q.id, adjustment_notes: soften ? 'Abbassa il calibro ma mantieni la strategia' : adjustmentText, language: linguaMadre, soften },
       });
       if (error) throw error;
       const updated = data.question;
@@ -259,7 +305,7 @@ export default function SOSConflittiPage() {
 
   const handleNextVelo = () => {
     setCurrentVelo(prev => prev + 1);
-    handleConvoca({ veloOverride: currentVelo + 1 });
+    startConvoca({ veloOverride: currentVelo + 1 });
   };
 
   const scenarioIcon = (id: string) => {
@@ -282,7 +328,6 @@ export default function SOSConflittiPage() {
 
       <p className="text-sm text-foreground font-medium leading-relaxed">"{q.question_text}"</p>
 
-      {/* CIPOLLA INSTRUCTION */}
       <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3">
         <p className="text-xs text-destructive font-medium">
           ⚠️ NON TOCCARE LA FRASE. Ripetila mentalmente 5 volte per caricarla nel tuo sistema nervoso. Una volta detta, aspetta la reazione e torna qui per il Velo successivo.
@@ -316,25 +361,26 @@ export default function SOSConflittiPage() {
             </Button>
           </div>
 
-          {/* È TROPPO PER ME */}
+          {/* SOFTEN - Warning di Resistenza */}
           {softenQuestionId !== q.id && (
             <button onClick={() => handleSoftenRequest(q)} className="text-xs text-muted-foreground hover:text-destructive transition-colors">
-              È troppo per me →
+              Ritarara / È troppo per me →
             </button>
           )}
 
           {softenQuestionId === q.id && (
             <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-3 space-y-2">
-              <p className="text-xs text-destructive font-bold">
-                Admin, l'altro è stato inadeguato. Se rispondi con debolezza, non sei un amico o un partner, sei una nullità ai suoi occhi e gli stai dando il permesso di metterti i piedi in testa.
+              <p className="text-xs text-destructive font-bold leading-relaxed">
+                Ogni volta che cerchi una via d'uscita morbida, nutri la tua identità da nullità. 
+                Il Consiglio ti sta offrendo il potere, ma tu stai scegliendo la sottomissione. 
+                Vuoi davvero ritarare o vuoi finalmente dominare la tua realtà?
               </p>
-              <p className="text-xs text-destructive">Sei sicuro di voler abbassare il calibro?</p>
               <div className="flex gap-2">
                 <Button size="sm" variant="destructive" onClick={() => handleConfirmSoften(q)} className="text-xs">
-                  Sì, abbassa
+                  Sì, ritara
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => setSoftenQuestionId(null)} className="text-xs">
-                  Hai ragione, tengo
+                  Hai ragione, domino
                 </Button>
               </div>
             </div>
@@ -362,7 +408,7 @@ export default function SOSConflittiPage() {
     </div>
   );
 
-  // WELCOME SCREEN
+  // WELCOME / INFO SCREEN
   if (showWelcome) {
     return (
       <div className="mx-auto max-w-lg px-4 pt-6 pb-24">
@@ -411,6 +457,14 @@ export default function SOSConflittiPage() {
               })}
             </div>
           </div>
+          {/* DNA INFO FOOTER */}
+          <div className="rounded-xl border border-muted bg-muted/30 p-5 space-y-2">
+            <h2 className="text-base font-bold text-foreground">DNA — Decoding & Neural Adaptation</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              La comunicazione è lo specchio del tuo DNA. Se vuoi passare dalla reazione alla creazione olografica, 
+              vai nel Menu Hamburger → Settings e attiva la Modalità Quantum.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -422,6 +476,7 @@ export default function SOSConflittiPage() {
         <div className="flex items-center gap-3">
           <Swords size={24} className="text-primary" />
           <h1 className="text-xl font-bold text-foreground">SOS DNA</h1>
+          {quantumEnabled && <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-primary flex items-center gap-1"><Zap size={10} /> Quantum</span>}
         </div>
         <button onClick={() => setShowWelcome(true)} className="p-2 text-muted-foreground hover:text-primary transition-colors">
           <HelpCircle size={20} />
@@ -467,14 +522,9 @@ export default function SOSConflittiPage() {
                     const Icon = s.icon;
                     const active = formData.scenario === s.id;
                     return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => setFormData(p => ({ ...p, scenario: s.id }))}
-                        className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-colors ${active ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card text-muted-foreground hover:border-primary/50'}`}
-                      >
-                        <Icon size={16} />
-                        <span className="text-xs font-medium">{s.label}</span>
+                      <button key={s.id} type="button" onClick={() => setFormData(p => ({ ...p, scenario: s.id }))}
+                        className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-colors ${active ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card text-muted-foreground hover:border-primary/50'}`}>
+                        <Icon size={16} /><span className="text-xs font-medium">{s.label}</span>
                       </button>
                     );
                   })}
@@ -489,14 +539,9 @@ export default function SOSConflittiPage() {
                     const Icon = s.icon;
                     const active = formData.user_style === s.id;
                     return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => setFormData(p => ({ ...p, user_style: s.id }))}
-                        className={`flex flex-col items-center gap-1 rounded-lg border p-3 transition-colors ${active ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card text-muted-foreground hover:border-primary/50'}`}
-                      >
-                        <Icon size={16} />
-                        <span className="text-[10px] font-medium">{s.label}</span>
+                      <button key={s.id} type="button" onClick={() => setFormData(p => ({ ...p, user_style: s.id }))}
+                        className={`flex flex-col items-center gap-1 rounded-lg border p-3 transition-colors ${active ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card text-muted-foreground hover:border-primary/50'}`}>
+                        <Icon size={16} /><span className="text-[10px] font-medium">{s.label}</span>
                       </button>
                     );
                   })}
@@ -504,6 +549,30 @@ export default function SOSConflittiPage() {
                 <p className="text-[10px] text-muted-foreground mt-1">
                   {DNA_STYLES.find(s => s.id === formData.user_style)?.description}
                 </p>
+              </div>
+
+              {/* OBIETTIVO FINALE — OBBLIGATORIO */}
+              <div>
+                <Label className="flex items-center gap-1">
+                  <Target size={14} /> L'Obiettivo Finale <span className="text-destructive">*</span>
+                </Label>
+                <Textarea 
+                  value={objectiveText} 
+                  onChange={e => { setObjectiveText(e.target.value); validateObjective(e.target.value); }} 
+                  placeholder="Cosa deve accadere nel mondo fisico? Es: 'Lei mi chiede scusa pubblicamente'" 
+                  rows={3} 
+                />
+                <div className="flex items-start gap-1 mt-1">
+                  <Info size={12} className="text-muted-foreground mt-0.5 shrink-0" />
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    L'obiettivo non serve all'altro, serve a TE. Solo cambiando il tuo intento vedrai l'altro cambiare. Se l'obiettivo è confuso, la tua forza sarà nulla.
+                  </p>
+                </div>
+                {objectiveWarning && (
+                  <div className="mt-2 rounded-lg bg-destructive/10 border border-destructive/20 p-3">
+                    <p className="text-xs text-destructive font-medium leading-relaxed">{objectiveWarning}</p>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -515,7 +584,7 @@ export default function SOSConflittiPage() {
                 <Textarea value={formData.failure_history} onChange={e => setFormData(p => ({ ...p, failure_history: e.target.value }))} placeholder="Conflitti passati, cosa non ha funzionato..." rows={4} />
               </div>
               <div className="flex gap-2">
-                <Button onClick={handleSaveProfile} disabled={loading || !formData.name.trim()} className="flex-1">
+                <Button onClick={handleSaveProfile} disabled={loading || !formData.name.trim() || !objectiveText.trim()} className="flex-1">
                   {editingId ? 'Aggiorna' : 'Salva'}
                 </Button>
                 <Button variant="outline" onClick={() => { setShowForm(false); setEditingId(null); }}>Annulla</Button>
@@ -524,11 +593,9 @@ export default function SOSConflittiPage() {
           )}
 
           {profiles.map(p => (
-            <div
-              key={p.id}
+            <div key={p.id}
               className={`rounded-xl border p-4 transition-colors cursor-pointer ${selectedProfile?.id === p.id ? 'border-primary bg-primary/10' : 'border-border bg-card hover:border-primary/50'}`}
-              onClick={() => handleSelectProfile(p)}
-            >
+              onClick={() => handleSelectProfile(p)}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {scenarioIcon(p.scenario)}
@@ -579,16 +646,43 @@ export default function SOSConflittiPage() {
                 </div>
               </div>
 
-              <div>
-                <Label>Lingua</Label>
-                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={language} onChange={e => setLanguage(e.target.value)}>
-                  <option value="italiano">Italiano</option>
-                  <option value="inglese">English</option>
-                  <option value="spagnolo">Español</option>
-                  <option value="francese">Français</option>
-                  <option value="tedesco">Deutsch</option>
-                </select>
-              </div>
+              {/* FOCUS 12 — QUANTUM TIMER */}
+              {sessionMode === 'focus12' && (
+                <div className="space-y-4 py-6">
+                  <div className="text-center">
+                    <Zap size={40} className="mx-auto text-primary mb-3" />
+                    <h2 className="text-lg font-bold text-foreground uppercase tracking-wide">Stabilizzazione dell'Ologramma (Focus 12)</h2>
+                  </div>
+                  <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 space-y-4">
+                    <p className="text-sm text-foreground leading-relaxed">
+                      Fermati. La realtà esterna è solo un riflesso della tua mente.
+                    </p>
+                    {objectiveText && (
+                      <div className="rounded-lg bg-card border border-border p-3">
+                        <p className="text-xs text-muted-foreground mb-1">IL TUO OBIETTIVO:</p>
+                        <p className="text-sm text-primary font-medium">{objectiveText}</p>
+                      </div>
+                    )}
+                    <p className="text-sm text-foreground leading-relaxed">
+                      Non sperare che accada. Visualizzalo come un fatto già avvenuto, una memoria del futuro. 
+                      Senti il peso della vittoria e il sollievo nel tuo corpo proprio ora.
+                    </p>
+                    <p className="text-xs text-muted-foreground italic">
+                      Se la tua mente non è ferma, le parole del Consiglio saranno inutili gusci vuoti. 
+                      L'intenzione è la forza, la parola è solo il mezzo.
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full border-2 border-primary bg-primary/10">
+                      <span className="text-2xl font-bold text-primary">{focus12Timer}</span>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">secondi</p>
+                  </div>
+                  {focus12Timer <= 0 && (
+                    <p className="text-center text-sm text-primary font-medium animate-pulse">Convocazione in corso...</p>
+                  )}
+                </div>
+              )}
 
               {/* SCELTA INIZIALE */}
               {sessionMode === 'choose' && (
@@ -605,7 +699,7 @@ export default function SOSConflittiPage() {
                       <MessageCircle size={18} /> Incolla messaggio WhatsApp
                     </Button>
                   )}
-                  <Button onClick={() => handleConvoca()} className="w-full gap-2 py-5 text-base">
+                  <Button onClick={() => startConvoca()} className="w-full gap-2 py-5 text-base">
                     <Swords size={18} /> CONVOCA IL CONSIGLIO — Velo {currentVelo}
                   </Button>
                 </div>
@@ -618,15 +712,9 @@ export default function SOSConflittiPage() {
                     <p className="text-sm font-medium text-primary">📱 WhatsApp Shield</p>
                     <p className="text-xs text-muted-foreground">Incolla il messaggio ricevuto. Il Consiglio analizzerà il sottotesto e genererà la risposta perfetta.</p>
                   </div>
-                  <Textarea
-                    value={whatsappMessage}
-                    onChange={e => setWhatsappMessage(e.target.value)}
-                    placeholder="Incolla qui il messaggio che hai ricevuto..."
-                    rows={6}
-                    autoFocus
-                  />
+                  <Textarea value={whatsappMessage} onChange={e => setWhatsappMessage(e.target.value)} placeholder="Incolla qui il messaggio che hai ricevuto..." rows={6} autoFocus />
                   <div className="flex gap-2">
-                    <Button onClick={() => handleConvoca({ whatsapp: whatsappMessage.trim() })} disabled={!whatsappMessage.trim()} className="flex-1 gap-2">
+                    <Button onClick={() => startConvoca({ whatsapp: whatsappMessage.trim() })} disabled={!whatsappMessage.trim()} className="flex-1 gap-2">
                       <Shield size={16} /> ANALIZZA E RISPONDI
                     </Button>
                     <Button variant="ghost" onClick={() => setSessionMode('choose')}>Indietro</Button>
@@ -640,7 +728,7 @@ export default function SOSConflittiPage() {
                   <p className="text-sm text-muted-foreground">Racconta cosa è successo. Il Consiglio preparerà frasi basate su questo evento.</p>
                   <Textarea value={newEventText} onChange={e => setNewEventText(e.target.value)} placeholder="Descrivi l'evento, il conflitto, cosa è stato detto..." rows={6} autoFocus />
                   <div className="flex gap-2">
-                    <Button onClick={() => handleConvoca({ newEvent: newEventText.trim() })} disabled={!newEventText.trim()} className="flex-1 gap-2">
+                    <Button onClick={() => startConvoca({ newEvent: newEventText.trim() })} disabled={!newEventText.trim()} className="flex-1 gap-2">
                       <Swords size={16} /> CONVOCA IL CONSIGLIO
                     </Button>
                     <Button variant="ghost" onClick={() => setSessionMode('choose')}>Indietro</Button>
@@ -683,7 +771,6 @@ export default function SOSConflittiPage() {
                   </div>
                   {sessionQuestions.map((q, i) => renderQuestionCard(q, i))}
 
-                  {/* NEXT VELO BUTTON */}
                   {selectedProfile.scenario !== 'whatsapp' && (
                     <Button onClick={handleNextVelo} className="w-full gap-2 mt-4" variant="outline">
                       <Layers size={16} /> Vai al Velo {currentVelo + 1} — Penetra più in profondità

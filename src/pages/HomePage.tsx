@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { LogOut, ChevronRight, Eye } from 'lucide-react';
+import { ChevronRight, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import OnboardingPage from '@/pages/OnboardingPage';
+import HamburgerMenu from '@/components/HamburgerMenu';
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -19,7 +20,7 @@ interface ActiveQuestion {
 }
 
 export default function HomePage() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
   const [activeQuestion, setActiveQuestion] = useState<ActiveQuestion | null>(null);
 
@@ -81,9 +82,7 @@ export default function HomePage() {
           <p className="text-sm text-muted-foreground">{getGreeting()},</p>
           <h1 className="text-2xl font-bold text-foreground">{userName}</h1>
         </div>
-        <button onClick={signOut} className="rounded-2xl p-2 text-muted-foreground transition-colors hover:text-foreground">
-          <LogOut size={20} />
-        </button>
+        <HamburgerMenu />
       </div>
 
       {/* Active question card */}
