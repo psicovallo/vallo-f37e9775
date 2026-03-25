@@ -500,14 +500,19 @@ export default function QuestionPage() {
             <Pencil size={14} className="text-muted-foreground" />
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">I tuoi appunti privati</span>
           </div>
-          <textarea
-            value={noteText}
-            onChange={(e) => handleNoteChange(e.target.value)}
-            onBlur={() => { if (noteText.trim()) saveNote(noteText); }}
-            placeholder="Sfoga i tuoi pensieri qui... nessuno li vedrà tranne te e il sistema."
-            rows={4}
-            className="w-full resize-none rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-          />
+          <div className="relative">
+            <textarea
+              value={noteText}
+              onChange={(e) => handleNoteChange(e.target.value)}
+              onBlur={() => { if (noteText.trim()) saveNote(noteText); }}
+              placeholder="Sfoga i tuoi pensieri qui... nessuno li vedrà tranne te e il sistema."
+              rows={4}
+              className="w-full resize-none rounded-2xl border border-border bg-card px-4 py-3 pr-12 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <div className="absolute right-3 top-3">
+              <VoiceInput onTranscript={(t) => handleNoteChange(t)} currentValue={noteText} />
+            </div>
+          </div>
           <p className="mt-2 text-xs text-muted-foreground">
             I tuoi appunti aiutano il sistema a generare domande più mirate per te.
           </p>
