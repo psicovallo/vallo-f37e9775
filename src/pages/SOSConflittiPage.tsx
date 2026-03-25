@@ -593,7 +593,12 @@ export default function SOSConflittiPage() {
               </div>
               <div>
                 <Label>Storico Fallimenti</Label>
-                <Textarea value={formData.failure_history} onChange={e => setFormData(p => ({ ...p, failure_history: e.target.value }))} placeholder="Conflitti passati, cosa non ha funzionato..." rows={4} />
+                <div className="relative">
+                  <Textarea value={formData.failure_history} onChange={e => setFormData(p => ({ ...p, failure_history: e.target.value }))} placeholder="Conflitti passati, cosa non ha funzionato..." rows={4} className="pr-12" />
+                  <div className="absolute right-3 top-3">
+                    <VoiceInput onTranscript={(t) => setFormData(p => ({ ...p, failure_history: t }))} currentValue={formData.failure_history} />
+                  </div>
+                </div>
               </div>
               <div className="flex gap-2">
                 <Button onClick={handleSaveProfile} disabled={loading || !formData.name.trim() || !objectiveText.trim()} className="flex-1">
