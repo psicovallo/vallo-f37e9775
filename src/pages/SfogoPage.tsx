@@ -256,12 +256,17 @@ export default function SfogoPage() {
               <p className="text-sm text-muted-foreground">
                 Scrivi liberamente. Nessun filtro, nessun limite. Sfogati su quello che senti, quello che pensi, quello che ti blocca.
               </p>
-              <Textarea
-                value={sfogoText}
-                onChange={(e) => setSfogoText(e.target.value)}
-                placeholder="Scrivi qui tutto quello che hai dentro..."
-                className="min-h-[200px] rounded-2xl border-border bg-card text-foreground"
-              />
+              <div className="relative">
+                <Textarea
+                  value={sfogoText}
+                  onChange={(e) => setSfogoText(e.target.value)}
+                  placeholder="Scrivi qui tutto quello che hai dentro..."
+                  className="min-h-[200px] rounded-2xl border-border bg-card text-foreground pr-12"
+                />
+                <div className="absolute right-3 top-3">
+                  <VoiceInput onTranscript={setSfogoText} currentValue={sfogoText} />
+                </div>
+              </div>
               <Button
                 onClick={() => handleAskForHelp()}
                 disabled={loading || sfogoText.trim().length < 10}
