@@ -53,13 +53,18 @@ export default function NotesPage() {
       <h1 className="mb-6 text-2xl font-bold text-foreground">Note</h1>
 
       <div className="mb-6 rounded-2xl border border-border bg-card p-4 space-y-3">
-        <textarea
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder="Scrivi una nota..."
-          rows={3}
-          className="w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-        />
+        <div className="relative">
+          <textarea
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder="Scrivi una nota..."
+            rows={3}
+            className="w-full resize-none rounded-xl border border-border bg-background px-4 py-3 pr-12 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          <div className="absolute right-2 top-2">
+            <VoiceInput onTranscript={setText} currentValue={text} />
+          </div>
+        </div>
         <button
           onClick={add}
           className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
