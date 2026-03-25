@@ -177,27 +177,33 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          lingua_madre: string
           milestone_zero: string | null
           name: string | null
           objective: string | null
+          quantum_enabled: boolean
           user_id: string
         }
         Insert: {
           created_at?: string
           email?: string | null
           id?: string
+          lingua_madre?: string
           milestone_zero?: string | null
           name?: string | null
           objective?: string | null
+          quantum_enabled?: boolean
           user_id: string
         }
         Update: {
           created_at?: string
           email?: string | null
           id?: string
+          lingua_madre?: string
           milestone_zero?: string | null
           name?: string | null
           objective?: string | null
+          quantum_enabled?: boolean
           user_id?: string
         }
         Relationships: []
