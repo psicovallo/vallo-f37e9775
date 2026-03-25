@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
+import VoiceInput from '@/components/VoiceInput';
 import { toast } from 'sonner';
 
 interface Note {
