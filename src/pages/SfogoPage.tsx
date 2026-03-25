@@ -302,15 +302,23 @@ export default function SfogoPage() {
                   <p className="text-xs text-muted-foreground">
                     I tuoi appunti aiutano il sistema a generare domande più mirate per te.
                   </p>
-                  <Textarea
-                    value={currentQuestion.note}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setQuestions(prev => prev.map((q, i) => i === currentQIndex ? { ...q, note: val } : q));
-                    }}
-                    placeholder="I tuoi pensieri su questa domanda..."
-                    className="min-h-[100px] rounded-2xl border-border bg-card text-foreground"
-                  />
+                  <div className="relative">
+                    <Textarea
+                      value={currentQuestion.note}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setQuestions(prev => prev.map((q, i) => i === currentQIndex ? { ...q, note: val } : q));
+                      }}
+                      placeholder="I tuoi pensieri su questa domanda..."
+                      className="min-h-[100px] rounded-2xl border-border bg-card text-foreground pr-12"
+                    />
+                    <div className="absolute right-3 top-3">
+                      <VoiceInput
+                        onTranscript={(t) => setQuestions(prev => prev.map((q, i) => i === currentQIndex ? { ...q, note: t } : q))}
+                        currentValue={currentQuestion.note}
+                      />
+                    </div>
+                  </div>
                   <Button
                     onClick={saveCurrentNoteAndContinue}
                     disabled={loading}

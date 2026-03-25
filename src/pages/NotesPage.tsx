@@ -84,13 +84,18 @@ export default function NotesPage() {
             <div key={n.id} className="rounded-2xl border border-border bg-card p-4">
               {editingId === n.id ? (
                 <div className="space-y-2">
-                  <textarea
-                    value={editText}
-                    onChange={e => setEditText(e.target.value)}
-                    rows={3}
-                    className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    autoFocus
-                  />
+                  <div className="relative">
+                    <textarea
+                      value={editText}
+                      onChange={e => setEditText(e.target.value)}
+                      rows={3}
+                      className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 pr-12 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      autoFocus
+                    />
+                    <div className="absolute right-2 top-2">
+                      <VoiceInput onTranscript={setEditText} currentValue={editText} />
+                    </div>
+                  </div>
                   <div className="flex gap-2">
                     <button onClick={() => save(n.id)} className="flex items-center gap-1 rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">
                       <Check size={12} /> Salva

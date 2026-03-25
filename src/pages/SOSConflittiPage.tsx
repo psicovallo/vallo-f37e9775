@@ -396,7 +396,12 @@ export default function SOSConflittiPage() {
       {adjustingId === q.id && (
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">Spiega cosa non va. Il Consiglio riformulerà.</p>
-          <Textarea value={adjustmentText} onChange={e => setAdjustmentText(e.target.value)} placeholder="Es: troppo lunga, tono sbagliato, voglio più colpa..." rows={3} />
+          <div className="relative">
+            <Textarea value={adjustmentText} onChange={e => setAdjustmentText(e.target.value)} placeholder="Es: troppo lunga, tono sbagliato, voglio più colpa..." rows={3} className="pr-12" />
+            <div className="absolute right-3 top-3">
+              <VoiceInput onTranscript={setAdjustmentText} currentValue={adjustmentText} />
+            </div>
+          </div>
           <div className="flex gap-2">
             <Button size="sm" onClick={() => handleAggiusta(q)} disabled={adjustingQuestionId === q.id || !adjustmentText.trim()} className="gap-1">
               {adjustingQuestionId === q.id ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
