@@ -8,7 +8,6 @@ interface VoiceInputProps {
   className?: string;
 }
 
-// Extend window for SpeechRecognition
 interface SpeechRecognitionEvent {
   results: SpeechRecognitionResultList;
   resultIndex: number;
@@ -18,44 +17,24 @@ export default function VoiceInput({ onTranscript, currentValue = '', className 
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
   const accumulatedRef = useRef(currentValue);
+  const intentionalStopRef = useRef(false);
+  const isListeningRef = useRef(false);
 
-  // Keep accumulated text in sync with external value
   useEffect(() => {
-    if (!isListening) {
+    if (!isListeningRef.current) {
       accumulatedRef.current = currentValue;
     }
-  }, [currentValue, isListening]);
+  }, [currentValue]);
 
-  const stopListening = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-    setIsListening(false);
-  }, []);
-
-  const startListening = useCallback(async () => {
+  const createRecognition = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      toast.error('Il tuo browser non supporta il riconoscimento vocale.');
-      return;
-    }
-
-    // Request mic permission
-    try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch {
-      toast.error('Permesso microfono negato.');
-      return;
-    }
+    if (!SpeechRecognition) return null;
 
     const recognition = new SpeechRecognition();
     recognition.lang = 'it-IT';
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
-
-    accumulatedRef.current = currentValue;
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interimTranscript = '';
@@ -81,21 +60,92 @@ export default function VoiceInput({ onTranscript, currentValue = '', className 
     };
 
     recognition.onerror = (event: any) => {
-      if (event.error !== 'aborted') {
-        toast.error('Errore riconoscimento vocale: ' + event.error);
+      // "no-speech" is normal on mobile — just restart
+      if (event.error === 'no-speech' || event.error === 'aborted') {
+        return;
       }
-      stopListening();
-    };
-
-    recognition.onend = () => {
+      toast.error('Errore riconoscimento vocale: ' + event.error);
+      intentionalStopRef.current = true;
+      isListeningRef.current = false;
       setIsListening(false);
       recognitionRef.current = null;
     };
 
+    // Auto-restart on mobile when recognition ends unexpectedly
+    recognition.onend = () => {
+      if (!intentionalStopRef.current && isListeningRef.current) {
+        // Restart after a tiny delay to avoid rapid loops
+        setTimeout(() => {
+          if (isListeningRef.current && !intentionalStopRef.current) {
+            try {
+              const newRecog = createRecognition();
+              if (newRecog) {
+                recognitionRef.current = newRecog;
+                newRecog.start();
+              }
+            } catch {
+              isListeningRef.current = false;
+              setIsListening(false);
+              recognitionRef.current = null;
+            }
+          }
+        }, 100);
+      } else {
+        isListeningRef.current = false;
+        setIsListening(false);
+        recognitionRef.current = null;
+      }
+    };
+
+    return recognition;
+  }, [onTranscript]);
+
+  const stopListening = useCallback(() => {
+    intentionalStopRef.current = true;
+    isListeningRef.current = false;
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+  }, []);
+
+  const startListening = useCallback(async () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error('Il tuo browser non supporta il riconoscimento vocale.');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Release the stream immediately — we only needed the permission
+      stream.getTracks().forEach(t => t.stop());
+    } catch {
+      toast.error('Permesso microfono negato.');
+      return;
+    }
+
+    accumulatedRef.current = currentValue;
+    intentionalStopRef.current = false;
+    isListeningRef.current = true;
+
+    const recognition = createRecognition();
+    if (!recognition) {
+      toast.error('Il tuo browser non supporta il riconoscimento vocale.');
+      return;
+    }
+
     recognitionRef.current = recognition;
-    recognition.start();
-    setIsListening(true);
-  }, [currentValue, onTranscript, stopListening]);
+
+    try {
+      recognition.start();
+      setIsListening(true);
+    } catch {
+      toast.error('Impossibile avviare il riconoscimento vocale.');
+      isListeningRef.current = false;
+    }
+  }, [currentValue, createRecognition]);
 
   const toggle = useCallback(() => {
     if (isListening) {
@@ -105,11 +155,12 @@ export default function VoiceInput({ onTranscript, currentValue = '', className 
     }
   }, [isListening, startListening, stopListening]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
+      intentionalStopRef.current = true;
+      isListeningRef.current = false;
       if (recognitionRef.current) {
-        recognitionRef.current.stop();
+        try { recognitionRef.current.stop(); } catch {}
       }
     };
   }, []);
