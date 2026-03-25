@@ -12,6 +12,7 @@ import {
   RotateCcw, MessageSquarePlus, Eye, HelpCircle, X, Layers, Shield,
   Heart, Briefcase, MessageCircle, Crosshair, Sparkles, Brain, Zap, Target, Info
 } from 'lucide-react';
+import VoiceInput from '@/components/VoiceInput';
 
 const RELATIONSHIP_OPTIONS = [
   'Compagna', 'Moglie', 'Fidanzata', 'Figlio', 'Figlia', 'Amica',
@@ -395,7 +396,12 @@ export default function SOSConflittiPage() {
       {adjustingId === q.id && (
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">Spiega cosa non va. Il Consiglio riformulerà.</p>
-          <Textarea value={adjustmentText} onChange={e => setAdjustmentText(e.target.value)} placeholder="Es: troppo lunga, tono sbagliato, voglio più colpa..." rows={3} />
+          <div className="relative">
+            <Textarea value={adjustmentText} onChange={e => setAdjustmentText(e.target.value)} placeholder="Es: troppo lunga, tono sbagliato, voglio più colpa..." rows={3} className="pr-12" />
+            <div className="absolute right-3 top-3">
+              <VoiceInput onTranscript={setAdjustmentText} currentValue={adjustmentText} />
+            </div>
+          </div>
           <div className="flex gap-2">
             <Button size="sm" onClick={() => handleAggiusta(q)} disabled={adjustingQuestionId === q.id || !adjustmentText.trim()} className="gap-1">
               {adjustingQuestionId === q.id ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
@@ -556,12 +562,18 @@ export default function SOSConflittiPage() {
                 <Label className="flex items-center gap-1">
                   <Target size={14} /> L'Obiettivo Finale <span className="text-destructive">*</span>
                 </Label>
-                <Textarea 
-                  value={objectiveText} 
-                  onChange={e => { setObjectiveText(e.target.value); validateObjective(e.target.value); }} 
-                  placeholder="Cosa deve accadere nel mondo fisico? Es: 'Lei mi chiede scusa pubblicamente'" 
-                  rows={3} 
-                />
+                <div className="relative">
+                  <Textarea 
+                    value={objectiveText} 
+                    onChange={e => { setObjectiveText(e.target.value); validateObjective(e.target.value); }} 
+                    placeholder="Cosa deve accadere nel mondo fisico? Es: 'Lei mi chiede scusa pubblicamente'" 
+                    rows={3}
+                    className="pr-12"
+                  />
+                  <div className="absolute right-3 top-3">
+                    <VoiceInput onTranscript={(t) => { setObjectiveText(t); validateObjective(t); }} currentValue={objectiveText} />
+                  </div>
+                </div>
                 <div className="flex items-start gap-1 mt-1">
                   <Info size={12} className="text-muted-foreground mt-0.5 shrink-0" />
                   <p className="text-[10px] text-muted-foreground leading-relaxed">
@@ -577,11 +589,21 @@ export default function SOSConflittiPage() {
 
               <div>
                 <Label>Descrizione Profilo</Label>
-                <Textarea value={formData.profile_description} onChange={e => setFormData(p => ({ ...p, profile_description: e.target.value }))} placeholder="Carattere, punti deboli, pattern..." rows={4} />
+                <div className="relative">
+                  <Textarea value={formData.profile_description} onChange={e => setFormData(p => ({ ...p, profile_description: e.target.value }))} placeholder="Carattere, punti deboli, pattern..." rows={4} className="pr-12" />
+                  <div className="absolute right-3 top-3">
+                    <VoiceInput onTranscript={(t) => setFormData(p => ({ ...p, profile_description: t }))} currentValue={formData.profile_description} />
+                  </div>
+                </div>
               </div>
               <div>
                 <Label>Storico Fallimenti</Label>
-                <Textarea value={formData.failure_history} onChange={e => setFormData(p => ({ ...p, failure_history: e.target.value }))} placeholder="Conflitti passati, cosa non ha funzionato..." rows={4} />
+                <div className="relative">
+                  <Textarea value={formData.failure_history} onChange={e => setFormData(p => ({ ...p, failure_history: e.target.value }))} placeholder="Conflitti passati, cosa non ha funzionato..." rows={4} className="pr-12" />
+                  <div className="absolute right-3 top-3">
+                    <VoiceInput onTranscript={(t) => setFormData(p => ({ ...p, failure_history: t }))} currentValue={formData.failure_history} />
+                  </div>
+                </div>
               </div>
               <div className="flex gap-2">
                 <Button onClick={handleSaveProfile} disabled={loading || !formData.name.trim() || !objectiveText.trim()} className="flex-1">
@@ -712,7 +734,12 @@ export default function SOSConflittiPage() {
                     <p className="text-sm font-medium text-primary">📱 WhatsApp Shield</p>
                     <p className="text-xs text-muted-foreground">Incolla il messaggio ricevuto. Il Consiglio analizzerà il sottotesto e genererà la risposta perfetta.</p>
                   </div>
-                  <Textarea value={whatsappMessage} onChange={e => setWhatsappMessage(e.target.value)} placeholder="Incolla qui il messaggio che hai ricevuto..." rows={6} autoFocus />
+                  <div className="relative">
+                    <Textarea value={whatsappMessage} onChange={e => setWhatsappMessage(e.target.value)} placeholder="Incolla qui il messaggio che hai ricevuto..." rows={6} autoFocus className="pr-12" />
+                    <div className="absolute right-3 top-3">
+                      <VoiceInput onTranscript={setWhatsappMessage} currentValue={whatsappMessage} />
+                    </div>
+                  </div>
                   <div className="flex gap-2">
                     <Button onClick={() => startConvoca({ whatsapp: whatsappMessage.trim() })} disabled={!whatsappMessage.trim()} className="flex-1 gap-2">
                       <Shield size={16} /> ANALIZZA E RISPONDI
@@ -726,7 +753,12 @@ export default function SOSConflittiPage() {
               {sessionMode === 'new_event' && (
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground">Racconta cosa è successo. Il Consiglio preparerà frasi basate su questo evento.</p>
-                  <Textarea value={newEventText} onChange={e => setNewEventText(e.target.value)} placeholder="Descrivi l'evento, il conflitto, cosa è stato detto..." rows={6} autoFocus />
+                  <div className="relative">
+                    <Textarea value={newEventText} onChange={e => setNewEventText(e.target.value)} placeholder="Descrivi l'evento, il conflitto, cosa è stato detto..." rows={6} autoFocus className="pr-12" />
+                    <div className="absolute right-3 top-3">
+                      <VoiceInput onTranscript={setNewEventText} currentValue={newEventText} />
+                    </div>
+                  </div>
                   <div className="flex gap-2">
                     <Button onClick={() => startConvoca({ newEvent: newEventText.trim() })} disabled={!newEventText.trim()} className="flex-1 gap-2">
                       <Swords size={16} /> CONVOCA IL CONSIGLIO

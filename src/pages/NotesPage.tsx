@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
+import VoiceInput from '@/components/VoiceInput';
 import { toast } from 'sonner';
 
 interface Note {
@@ -52,13 +53,18 @@ export default function NotesPage() {
       <h1 className="mb-6 text-2xl font-bold text-foreground">Note</h1>
 
       <div className="mb-6 rounded-2xl border border-border bg-card p-4 space-y-3">
-        <textarea
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder="Scrivi una nota..."
-          rows={3}
-          className="w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-        />
+        <div className="relative">
+          <textarea
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder="Scrivi una nota..."
+            rows={3}
+            className="w-full resize-none rounded-xl border border-border bg-background px-4 py-3 pr-12 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          <div className="absolute right-2 top-2">
+            <VoiceInput onTranscript={setText} currentValue={text} />
+          </div>
+        </div>
         <button
           onClick={add}
           className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
@@ -78,13 +84,18 @@ export default function NotesPage() {
             <div key={n.id} className="rounded-2xl border border-border bg-card p-4">
               {editingId === n.id ? (
                 <div className="space-y-2">
-                  <textarea
-                    value={editText}
-                    onChange={e => setEditText(e.target.value)}
-                    rows={3}
-                    className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    autoFocus
-                  />
+                  <div className="relative">
+                    <textarea
+                      value={editText}
+                      onChange={e => setEditText(e.target.value)}
+                      rows={3}
+                      className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 pr-12 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      autoFocus
+                    />
+                    <div className="absolute right-2 top-2">
+                      <VoiceInput onTranscript={setEditText} currentValue={editText} />
+                    </div>
+                  </div>
                   <div className="flex gap-2">
                     <button onClick={() => save(n.id)} className="flex items-center gap-1 rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground">
                       <Check size={12} /> Salva

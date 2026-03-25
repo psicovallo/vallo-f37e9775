@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Send, Clock, Loader2, PenLine, History } from 'lucide-react';
+import VoiceInput from '@/components/VoiceInput';
 import { toast } from 'sonner';
 
 const SESSION_DURATION_MS = 30 * 60 * 1000;
@@ -255,12 +256,17 @@ export default function SfogoPage() {
               <p className="text-sm text-muted-foreground">
                 Scrivi liberamente. Nessun filtro, nessun limite. Sfogati su quello che senti, quello che pensi, quello che ti blocca.
               </p>
-              <Textarea
-                value={sfogoText}
-                onChange={(e) => setSfogoText(e.target.value)}
-                placeholder="Scrivi qui tutto quello che hai dentro..."
-                className="min-h-[200px] rounded-2xl border-border bg-card text-foreground"
-              />
+              <div className="relative">
+                <Textarea
+                  value={sfogoText}
+                  onChange={(e) => setSfogoText(e.target.value)}
+                  placeholder="Scrivi qui tutto quello che hai dentro..."
+                  className="min-h-[200px] rounded-2xl border-border bg-card text-foreground pr-12"
+                />
+                <div className="absolute right-3 top-3">
+                  <VoiceInput onTranscript={setSfogoText} currentValue={sfogoText} />
+                </div>
+              </div>
               <Button
                 onClick={() => handleAskForHelp()}
                 disabled={loading || sfogoText.trim().length < 10}
@@ -296,15 +302,23 @@ export default function SfogoPage() {
                   <p className="text-xs text-muted-foreground">
                     I tuoi appunti aiutano il sistema a generare domande più mirate per te.
                   </p>
-                  <Textarea
-                    value={currentQuestion.note}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setQuestions(prev => prev.map((q, i) => i === currentQIndex ? { ...q, note: val } : q));
-                    }}
-                    placeholder="I tuoi pensieri su questa domanda..."
-                    className="min-h-[100px] rounded-2xl border-border bg-card text-foreground"
-                  />
+                  <div className="relative">
+                    <Textarea
+                      value={currentQuestion.note}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setQuestions(prev => prev.map((q, i) => i === currentQIndex ? { ...q, note: val } : q));
+                      }}
+                      placeholder="I tuoi pensieri su questa domanda..."
+                      className="min-h-[100px] rounded-2xl border-border bg-card text-foreground pr-12"
+                    />
+                    <div className="absolute right-3 top-3">
+                      <VoiceInput
+                        onTranscript={(t) => setQuestions(prev => prev.map((q, i) => i === currentQIndex ? { ...q, note: t } : q))}
+                        currentValue={currentQuestion.note}
+                      />
+                    </div>
+                  </div>
                   <Button
                     onClick={saveCurrentNoteAndContinue}
                     disabled={loading}
