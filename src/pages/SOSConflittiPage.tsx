@@ -12,6 +12,7 @@ import {
   RotateCcw, MessageSquarePlus, Eye, HelpCircle, X, Layers, Shield,
   Heart, Briefcase, MessageCircle, Crosshair, Sparkles, Brain, Zap, Target, Info
 } from 'lucide-react';
+import VoiceInput from '@/components/VoiceInput';
 
 const RELATIONSHIP_OPTIONS = [
   'Compagna', 'Moglie', 'Fidanzata', 'Figlio', 'Figlia', 'Amica',
