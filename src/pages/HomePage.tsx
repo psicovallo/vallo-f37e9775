@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { LogOut, ChevronRight, Eye } from 'lucide-react';
+import { ChevronRight, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import OnboardingPage from '@/pages/OnboardingPage';
+import HamburgerMenu from '@/components/HamburgerMenu';
 
 function getGreeting(): string {
   const h = new Date().getHours();
