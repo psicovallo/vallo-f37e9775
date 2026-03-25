@@ -748,7 +748,12 @@ export default function SOSConflittiPage() {
               {sessionMode === 'new_event' && (
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground">Racconta cosa è successo. Il Consiglio preparerà frasi basate su questo evento.</p>
-                  <Textarea value={newEventText} onChange={e => setNewEventText(e.target.value)} placeholder="Descrivi l'evento, il conflitto, cosa è stato detto..." rows={6} autoFocus />
+                  <div className="relative">
+                    <Textarea value={newEventText} onChange={e => setNewEventText(e.target.value)} placeholder="Descrivi l'evento, il conflitto, cosa è stato detto..." rows={6} autoFocus className="pr-12" />
+                    <div className="absolute right-3 top-3">
+                      <VoiceInput onTranscript={setNewEventText} currentValue={newEventText} />
+                    </div>
+                  </div>
                   <div className="flex gap-2">
                     <Button onClick={() => startConvoca({ newEvent: newEventText.trim() })} disabled={!newEventText.trim()} className="flex-1 gap-2">
                       <Swords size={16} /> CONVOCA IL CONSIGLIO
