@@ -584,7 +584,12 @@ export default function SOSConflittiPage() {
 
               <div>
                 <Label>Descrizione Profilo</Label>
-                <Textarea value={formData.profile_description} onChange={e => setFormData(p => ({ ...p, profile_description: e.target.value }))} placeholder="Carattere, punti deboli, pattern..." rows={4} />
+                <div className="relative">
+                  <Textarea value={formData.profile_description} onChange={e => setFormData(p => ({ ...p, profile_description: e.target.value }))} placeholder="Carattere, punti deboli, pattern..." rows={4} className="pr-12" />
+                  <div className="absolute right-3 top-3">
+                    <VoiceInput onTranscript={(t) => setFormData(p => ({ ...p, profile_description: t }))} currentValue={formData.profile_description} />
+                  </div>
+                </div>
               </div>
               <div>
                 <Label>Storico Fallimenti</Label>
