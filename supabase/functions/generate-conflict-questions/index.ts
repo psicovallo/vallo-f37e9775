@@ -110,6 +110,8 @@ BERSAGLIO:
 - Profilo psicologico: ${profile.profile_description}
 - Storico fallimenti: ${profile.failure_history}
 ${eventContext}${whatsappContext}
+${objective ? `\nOBIETTIVO FINALE DELL'UTENTE (usa questo come bussola per ogni frase):\n"${objective}"\n` : ""}
+${quantum ? "\nMODALITÀ QUANTUM ATTIVA: L'utente ha stabilizzato il suo ologramma con il Focus 12. Le frasi devono essere ancora più incisive, come se la realtà stesse già cedendo." : ""}
 ${prevText ? `STORICO DOMANDE/FRASI PRECEDENTI (cambia strategia, usa leve diverse):\n${prevText}` : ""}
 
 METODO CIPOLLA — VELO ${velo_number}:
