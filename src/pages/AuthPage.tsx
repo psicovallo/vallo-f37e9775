@@ -111,7 +111,8 @@ export default function AuthPage() {
         <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="text"
-            placeholder="Nome (opzionale per nuovi utenti)"
+            placeholder="Nome"
+            required
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"

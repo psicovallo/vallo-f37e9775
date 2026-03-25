@@ -82,9 +82,7 @@ export default function HomePage() {
           <p className="text-sm text-muted-foreground">{getGreeting()},</p>
           <h1 className="text-2xl font-bold text-foreground">{userName}</h1>
         </div>
-        <button onClick={signOut} className="rounded-2xl p-2 text-muted-foreground transition-colors hover:text-foreground">
-          <LogOut size={20} />
-        </button>
+        <HamburgerMenu />
       </div>
 
       {/* Active question card */}
