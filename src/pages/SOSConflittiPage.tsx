@@ -557,12 +557,18 @@ export default function SOSConflittiPage() {
                 <Label className="flex items-center gap-1">
                   <Target size={14} /> L'Obiettivo Finale <span className="text-destructive">*</span>
                 </Label>
-                <Textarea 
-                  value={objectiveText} 
-                  onChange={e => { setObjectiveText(e.target.value); validateObjective(e.target.value); }} 
-                  placeholder="Cosa deve accadere nel mondo fisico? Es: 'Lei mi chiede scusa pubblicamente'" 
-                  rows={3} 
-                />
+                <div className="relative">
+                  <Textarea 
+                    value={objectiveText} 
+                    onChange={e => { setObjectiveText(e.target.value); validateObjective(e.target.value); }} 
+                    placeholder="Cosa deve accadere nel mondo fisico? Es: 'Lei mi chiede scusa pubblicamente'" 
+                    rows={3}
+                    className="pr-12"
+                  />
+                  <div className="absolute right-3 top-3">
+                    <VoiceInput onTranscript={(t) => { setObjectiveText(t); validateObjective(t); }} currentValue={objectiveText} />
+                  </div>
+                </div>
                 <div className="flex items-start gap-1 mt-1">
                   <Info size={12} className="text-muted-foreground mt-0.5 shrink-0" />
                   <p className="text-[10px] text-muted-foreground leading-relaxed">
