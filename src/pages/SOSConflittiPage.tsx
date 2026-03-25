@@ -729,7 +729,12 @@ export default function SOSConflittiPage() {
                     <p className="text-sm font-medium text-primary">📱 WhatsApp Shield</p>
                     <p className="text-xs text-muted-foreground">Incolla il messaggio ricevuto. Il Consiglio analizzerà il sottotesto e genererà la risposta perfetta.</p>
                   </div>
-                  <Textarea value={whatsappMessage} onChange={e => setWhatsappMessage(e.target.value)} placeholder="Incolla qui il messaggio che hai ricevuto..." rows={6} autoFocus />
+                  <div className="relative">
+                    <Textarea value={whatsappMessage} onChange={e => setWhatsappMessage(e.target.value)} placeholder="Incolla qui il messaggio che hai ricevuto..." rows={6} autoFocus className="pr-12" />
+                    <div className="absolute right-3 top-3">
+                      <VoiceInput onTranscript={setWhatsappMessage} currentValue={whatsappMessage} />
+                    </div>
+                  </div>
                   <div className="flex gap-2">
                     <Button onClick={() => startConvoca({ whatsapp: whatsappMessage.trim() })} disabled={!whatsappMessage.trim()} className="flex-1 gap-2">
                       <Shield size={16} /> ANALIZZA E RISPONDI
