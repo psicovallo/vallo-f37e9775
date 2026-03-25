@@ -102,8 +102,10 @@ export default function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-primary">Vallo!</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Alzati. Costruisci. Domina.</p>
+          <h1 className="text-4xl font-bold tracking-tight text-primary">Proteggi il tuo DNA</h1>
+          <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
+            Registrati per non perdere i tuoi profili, i tuoi obiettivi e l'archivio segreto del Consiglio dei Maestri. I tuoi dati saranno criptati e accessibili solo a te.
+          </p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
