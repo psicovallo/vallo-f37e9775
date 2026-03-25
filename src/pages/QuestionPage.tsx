@@ -410,14 +410,17 @@ export default function QuestionPage() {
         )}
 
         {!isLocked && (
-          <div className="mb-6">
+          <div className="mb-6 relative">
             <textarea
               value={answerText}
               onChange={(e) => handleTextChange(e.target.value)}
               placeholder="Scrivi la tua risposta sincera... (minimo 50 caratteri)"
               rows={5}
-              className="w-full resize-none rounded-2xl border border-border bg-card px-4 py-3 text-foreground transition-all placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full resize-none rounded-2xl border border-border bg-card px-4 py-3 pr-12 text-foreground transition-all placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             />
+            <div className="absolute right-3 top-3">
+              <VoiceInput onTranscript={(t) => handleTextChange(t)} currentValue={answerText} />
+            </div>
             <p className={`mt-1 text-xs ${answerText.trim().length >= MIN_CHARS ? 'text-primary' : 'text-muted-foreground'}`}>
               {answerText.trim().length}/{MIN_CHARS} caratteri minimi
             </p>
