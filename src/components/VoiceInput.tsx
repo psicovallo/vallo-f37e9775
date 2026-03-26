@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Mic, MicOff } from 'lucide-react';
+import { Mic, MicOff, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VoiceInputProps {
   onTranscript: (text: string) => void;
@@ -15,10 +16,13 @@ interface SpeechRecognitionEvent {
 
 export default function VoiceInput({ onTranscript, currentValue = '', className = '' }: VoiceInputProps) {
   const [isListening, setIsListening] = useState(false);
+  const [isCleaning, setIsCleaning] = useState(false);
+  const [showClean, setShowClean] = useState(false);
   const recognitionRef = useRef<any>(null);
   const accumulatedRef = useRef(currentValue);
   const intentionalStopRef = useRef(false);
   const isListeningRef = useRef(false);
+  const didDictateRef = useRef(false);
 
   useEffect(() => {
     if (!isListeningRef.current) {
@@ -53,6 +57,7 @@ export default function VoiceInput({ onTranscript, currentValue = '', className 
         const separator = accumulatedRef.current.trim() ? ' ' : '';
         accumulatedRef.current = accumulatedRef.current + separator + finalTranscript;
         onTranscript(accumulatedRef.current);
+        didDictateRef.current = true;
       } else if (interimTranscript) {
         const separator = accumulatedRef.current.trim() ? ' ' : '';
         onTranscript(accumulatedRef.current + separator + interimTranscript);
@@ -60,7 +65,6 @@ export default function VoiceInput({ onTranscript, currentValue = '', className 
     };
 
     recognition.onerror = (event: any) => {
-      // "no-speech" is normal on mobile — just restart
       if (event.error === 'no-speech' || event.error === 'aborted') {
         return;
       }
@@ -71,10 +75,8 @@ export default function VoiceInput({ onTranscript, currentValue = '', className 
       recognitionRef.current = null;
     };
 
-    // Auto-restart on mobile when recognition ends unexpectedly
     recognition.onend = () => {
       if (!intentionalStopRef.current && isListeningRef.current) {
-        // Restart after a tiny delay to avoid rapid loops
         setTimeout(() => {
           if (isListeningRef.current && !intentionalStopRef.current) {
             try {
@@ -94,6 +96,10 @@ export default function VoiceInput({ onTranscript, currentValue = '', className 
         isListeningRef.current = false;
         setIsListening(false);
         recognitionRef.current = null;
+        // Show clean button if user dictated something
+        if (didDictateRef.current && accumulatedRef.current.trim().length > 20) {
+          setShowClean(true);
+        }
       }
     };
 
@@ -119,7 +125,6 @@ export default function VoiceInput({ onTranscript, currentValue = '', className 
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Release the stream immediately — we only needed the permission
       stream.getTracks().forEach(t => t.stop());
     } catch {
       toast.error('Permesso microfono negato.');
@@ -129,6 +134,8 @@ export default function VoiceInput({ onTranscript, currentValue = '', className 
     accumulatedRef.current = currentValue;
     intentionalStopRef.current = false;
     isListeningRef.current = true;
+    didDictateRef.current = false;
+    setShowClean(false);
 
     const recognition = createRecognition();
     if (!recognition) {
@@ -155,6 +162,38 @@ export default function VoiceInput({ onTranscript, currentValue = '', className 
     }
   }, [isListening, startListening, stopListening]);
 
+  const cleanTranscription = useCallback(async () => {
+    const textToClean = accumulatedRef.current.trim();
+    if (!textToClean) return;
+
+    setIsCleaning(true);
+    setShowClean(false);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('clean-transcription', {
+        body: { text: textToClean },
+      });
+
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        setShowClean(true);
+        return;
+      }
+
+      const cleaned = data?.cleaned || textToClean;
+      accumulatedRef.current = cleaned;
+      onTranscript(cleaned);
+      toast.success('Testo pulito dal Consiglio ✨');
+    } catch (e) {
+      console.error('Clean transcription error:', e);
+      toast.error('Errore nella pulizia del testo');
+      setShowClean(true);
+    } finally {
+      setIsCleaning(false);
+    }
+  }, [onTranscript]);
+
   useEffect(() => {
     return () => {
       intentionalStopRef.current = true;
@@ -166,22 +205,42 @@ export default function VoiceInput({ onTranscript, currentValue = '', className 
   }, []);
 
   return (
-    <div className={`inline-flex flex-col items-center ${className}`}>
-      <button
-        type="button"
-        onClick={toggle}
-        className={`rounded-full p-2 transition-all ${
-          isListening
-            ? 'bg-destructive text-destructive-foreground animate-pulse shadow-lg shadow-destructive/30'
-            : 'bg-muted text-muted-foreground hover:bg-primary/20 hover:text-primary'
-        }`}
-        title={isListening ? 'Ferma dettatura' : 'Avvia dettatura vocale'}
-      >
-        {isListening ? <MicOff size={18} /> : <Mic size={18} />}
-      </button>
+    <div className={`inline-flex flex-col items-center gap-1 ${className}`}>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={toggle}
+          className={`rounded-full p-2 transition-all ${
+            isListening
+              ? 'bg-destructive text-destructive-foreground animate-pulse shadow-lg shadow-destructive/30'
+              : 'bg-muted text-muted-foreground hover:bg-primary/20 hover:text-primary'
+          }`}
+          title={isListening ? 'Ferma dettatura' : 'Avvia dettatura vocale'}
+        >
+          {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+        </button>
+
+        {showClean && !isListening && (
+          <button
+            type="button"
+            onClick={cleanTranscription}
+            disabled={isCleaning}
+            className="rounded-full p-2 bg-primary/10 text-primary hover:bg-primary/20 transition-all animate-in fade-in"
+            title="Pulisci e ordina il testo dettato"
+          >
+            <Sparkles size={16} className={isCleaning ? 'animate-spin' : ''} />
+          </button>
+        )}
+      </div>
+
       {isListening && (
-        <span className="mt-1 text-[10px] text-destructive font-medium animate-pulse">
+        <span className="text-[10px] text-destructive font-medium animate-pulse">
           Parla ora...
+        </span>
+      )}
+      {isCleaning && (
+        <span className="text-[10px] text-primary font-medium animate-pulse">
+          Pulizia...
         </span>
       )}
     </div>
