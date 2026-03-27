@@ -196,15 +196,19 @@ ${outputFormat}`;
       });
     }
 
-    const inserts = questions.map((q: any) => ({
-      conflict_profile_id,
-      user_id: profile.user_id,
-      question_text: q.text,
-      validation_text: q.validation,
-      maestri_used: q.maestri_used,
-      status: "generated",
-      velo_number,
-    }));
+    const translations: Record<number, string> = {};
+    const inserts = questions.map((q: any, idx: number) => {
+      if (q.text_translated) translations[idx] = q.text_translated;
+      return {
+        conflict_profile_id,
+        user_id: profile.user_id,
+        question_text: q.text,
+        validation_text: q.validation,
+        maestri_used: q.maestri_used,
+        status: "generated",
+        velo_number,
+      };
+    });
 
     const { data: saved, error: insertError } = await supabase
       .from("conflict_questions")
@@ -213,7 +217,13 @@ ${outputFormat}`;
 
     if (insertError) throw insertError;
 
-    return new Response(JSON.stringify({ questions: saved }), {
+    // Attach translations to response
+    const enriched = (saved || []).map((s: any, idx: number) => ({
+      ...s,
+      question_text_translated: translations[idx] || null,
+    }));
+
+    return new Response(JSON.stringify({ questions: enriched }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
