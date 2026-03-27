@@ -338,6 +338,9 @@ export default function SOSConflittiPage() {
       </div>
 
       <p className="text-sm text-foreground font-medium leading-relaxed">"{q.question_text}"</p>
+      {(q as any).question_text_translated && (q as any).question_text_translated !== q.question_text && (
+        <p className="text-xs text-muted-foreground italic leading-relaxed mt-1">🌐 {(q as any).question_text_translated}</p>
+      )}
 
       <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3">
         <p className="text-xs text-destructive font-medium">
