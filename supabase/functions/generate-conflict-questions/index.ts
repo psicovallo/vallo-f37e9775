@@ -83,18 +83,23 @@ serve(async (req) => {
       ? `\nATTENZIONE: L'utente ha chiesto di abbassare il calibro. Genera una versione più morbida MA comunque strategica e manipolatoria. Non perdere la ferocia logica, solo il tono. Il messaggio deve comunque dominare.`
       : "";
 
+    const targetLang = lingua_bersaglio && lingua_bersaglio !== language ? lingua_bersaglio : "";
+    const dualLangInstruction = targetLang
+      ? `\nDUAL LANGUAGE: Genera ogni frase PRIMA nella lingua del bersaglio (${targetLang}) come "text", POI aggiungi il campo "text_translated" con la traduzione nella lingua dell'utente (${language}).`
+      : "";
+
     const outputFormat = scenario === "whatsapp"
       ? `RISPONDI SOLO con un JSON valido (array di 3 oggetti):
 [
-  {"text": "risposta WhatsApp pronta all'uso", "validation": "analisi tecnica del sottotesto e perché questa risposta lo distrugge", "maestri_used": "Maestro1, Maestro2, Maestro3"},
-  {"text": "risposta alternativa", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"},
-  {"text": "risposta nucleare", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"}
+  {"text": "risposta WhatsApp pronta all'uso${targetLang ? ` in ${targetLang}` : ""}", "validation": "analisi tecnica del sottotesto e perché questa risposta lo distrugge", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione in ${language}"` : ""}},
+  {"text": "risposta alternativa", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione"` : ""}},
+  {"text": "risposta nucleare", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione"` : ""}}
 ]`
       : `RISPONDI SOLO con un JSON valido (array di 3 oggetti):
 [
-  {"text": "frase/domanda Velo ${velo_number}", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"},
-  {"text": "frase/domanda alternativa", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"},
-  {"text": "frase/domanda più aggressiva", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"}
+  {"text": "frase/domanda Velo ${velo_number}${targetLang ? ` in ${targetLang}` : ""}", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione in ${language}"` : ""}},
+  {"text": "frase/domanda alternativa", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione"` : ""}},
+  {"text": "frase/domanda più aggressiva", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione"` : ""}}
 ]`;
 
     const systemPrompt = `SEI IL CONSIGLIO DEI 15 MAESTRI. Lavorate TUTTI INSIEME come un unico organismo analitico.
