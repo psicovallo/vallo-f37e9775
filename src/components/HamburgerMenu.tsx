@@ -80,7 +80,7 @@ export default function HamburgerMenu() {
       <div className="fixed inset-0 z-[60] bg-black/50" onClick={() => { setOpen(false); setShowProfile(false); setShowQuantum(false); setShowManual(false); }} />
 
       {/* Panel */}
-      <div className="fixed top-0 left-0 bottom-0 z-[70] w-72 bg-card border-r border-border flex flex-col animate-in slide-in-from-left duration-200">
+      <div className="fixed top-0 left-0 bottom-0 z-[70] w-[75vw] max-w-72 bg-card border-r border-border flex flex-col animate-in slide-in-from-left duration-200">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="font-bold text-foreground">Menu</h2>
           <button onClick={() => setOpen(false)} className="p-1 text-muted-foreground hover:text-foreground"><X size={20} /></button>
