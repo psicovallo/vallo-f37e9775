@@ -181,7 +181,7 @@ export default function HamburgerMenu() {
       )}
 
       {showManual && (
-        <div className="fixed top-0 left-72 bottom-0 z-[70] w-80 bg-background border-r border-border overflow-y-auto animate-in slide-in-from-left duration-150">
+        <div className="fixed inset-0 z-[75] bg-background overflow-y-auto animate-in slide-in-from-right duration-150">
           <div className="p-4 border-b border-border flex items-center justify-between">
             <h3 className="font-bold text-foreground text-sm">Manuale Operativo</h3>
             <button onClick={() => setShowManual(false)} className="text-muted-foreground hover:text-foreground"><X size={16} /></button>
