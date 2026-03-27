@@ -11,6 +11,10 @@ import {
   Plus, Swords, ChevronDown, ChevronUp, Check, PenLine, Trash2, Loader2,
   RotateCcw, MessageSquarePlus, Eye, HelpCircle, X, Layers, Shield,
   Heart, Briefcase, MessageCircle, Crosshair, Sparkles, Brain, Zap, Target, Info
+import {
+  Plus, Swords, ChevronDown, ChevronUp, Check, PenLine, Trash2, Loader2,
+  RotateCcw, MessageSquarePlus, Eye, HelpCircle, X, Layers, Shield,
+  Heart, Briefcase, MessageCircle, Crosshair, Sparkles, Brain, Zap, Target, Info, Globe
 } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
 
