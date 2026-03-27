@@ -41,7 +41,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { conflict_profile_id, language = "italiano", new_event = "", scenario = "conflitto", user_style = "chirurgico", velo_number = 1, whatsapp_message = "", soften = false, objective = "", quantum = false } = await req.json();
+    const { conflict_profile_id, language = "italiano", lingua_bersaglio = "", new_event = "", scenario = "conflitto", user_style = "chirurgico", velo_number = 1, whatsapp_message = "", soften = false, objective = "", quantum = false } = await req.json();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
