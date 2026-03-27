@@ -135,12 +135,13 @@ PROTOCOLLO:
 4. VALIDAZIONE TECNICA: Per ogni frase, spiega QUALE maestro l'ha ispirata e PERCHÉ.
 
 REGOLE FONDAMENTALI:
-- Le frasi devono essere in ${language}.
+- Le frasi devono essere in ${targetLang || language}.
 - BREVITÀ ASSOLUTA: ogni frase deve avere MASSIMO 15-20 parole. Facile da ricordare a memoria.
 - La frase deve poter essere detta guardando negli occhi il bersaglio.
 - NO frasi elaborate, accademiche o con subordinate complesse. Linguaggio DIRETTO, quotidiano ma tagliente.
 - NO risposte che permettono uscite facili all'altro.
 - Ogni frase deve essere TAGLIENTE, SPIETATA e INTELLIGENTE.
+${dualLangInstruction}
 
 ${outputFormat}`;
 
