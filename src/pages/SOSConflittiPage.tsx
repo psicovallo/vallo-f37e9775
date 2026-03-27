@@ -192,7 +192,7 @@ export default function SOSConflittiPage() {
       toast.success('Profilo creato');
     }
 
-    setFormData({ name: '', relationship: 'Compagna', customRelationship: '', profile_description: '', failure_history: '', scenario: 'conflitto', user_style: 'chirurgico' });
+    setFormData({ name: '', relationship: 'Compagna', customRelationship: '', profile_description: '', failure_history: '', scenario: 'conflitto', user_style: 'chirurgico', lingua_bersaglio: 'italiano' });
     setObjectiveText('');
     setObjectiveWarning('');
     setShowForm(false);
