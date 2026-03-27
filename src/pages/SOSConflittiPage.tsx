@@ -249,9 +249,11 @@ export default function SOSConflittiPage() {
     setSessionMode('generating');
     try {
       const velo = opts.veloOverride ?? currentVelo;
+      const targetLang = (selectedProfile as any).lingua_bersaglio || 'italiano';
       const body: any = {
         conflict_profile_id: selectedProfile.id,
         language: linguaMadre,
+        lingua_bersaglio: targetLang,
         scenario: selectedProfile.scenario || 'conflitto',
         user_style: selectedProfile.user_style || 'chirurgico',
         velo_number: velo,
