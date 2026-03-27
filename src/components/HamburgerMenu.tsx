@@ -80,7 +80,7 @@ export default function HamburgerMenu() {
       <div className="fixed inset-0 z-[60] bg-black/50" onClick={() => { setOpen(false); setShowProfile(false); setShowQuantum(false); setShowManual(false); }} />
 
       {/* Panel */}
-      <div className="fixed top-0 left-0 bottom-0 z-[70] w-72 bg-card border-r border-border flex flex-col animate-in slide-in-from-left duration-200">
+      <div className="fixed top-0 left-0 bottom-0 z-[70] w-[75vw] max-w-72 bg-card border-r border-border flex flex-col animate-in slide-in-from-left duration-200">
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="font-bold text-foreground">Menu</h2>
           <button onClick={() => setOpen(false)} className="p-1 text-muted-foreground hover:text-foreground"><X size={20} /></button>
@@ -116,7 +116,7 @@ export default function HamburgerMenu() {
 
       {/* Sub-panels */}
       {showProfile && (
-        <div className="fixed top-0 left-72 bottom-0 z-[70] w-80 bg-background border-r border-border overflow-y-auto animate-in slide-in-from-left duration-150">
+        <div className="fixed inset-0 z-[75] bg-background overflow-y-auto animate-in slide-in-from-right duration-150">
           <div className="p-4 border-b border-border flex items-center justify-between">
             <h3 className="font-bold text-foreground text-sm">Il Mio Profilo</h3>
             <button onClick={() => setShowProfile(false)} className="text-muted-foreground hover:text-foreground"><X size={16} /></button>
@@ -152,7 +152,7 @@ export default function HamburgerMenu() {
       )}
 
       {showQuantum && (
-        <div className="fixed top-0 left-72 bottom-0 z-[70] w-80 bg-background border-r border-border overflow-y-auto animate-in slide-in-from-left duration-150">
+        <div className="fixed inset-0 z-[75] bg-background overflow-y-auto animate-in slide-in-from-right duration-150">
           <div className="p-4 border-b border-border flex items-center justify-between">
             <h3 className="font-bold text-foreground text-sm">Settings Quantum</h3>
             <button onClick={() => setShowQuantum(false)} className="text-muted-foreground hover:text-foreground"><X size={16} /></button>
@@ -181,7 +181,7 @@ export default function HamburgerMenu() {
       )}
 
       {showManual && (
-        <div className="fixed top-0 left-72 bottom-0 z-[70] w-80 bg-background border-r border-border overflow-y-auto animate-in slide-in-from-left duration-150">
+        <div className="fixed inset-0 z-[75] bg-background overflow-y-auto animate-in slide-in-from-right duration-150">
           <div className="p-4 border-b border-border flex items-center justify-between">
             <h3 className="font-bold text-foreground text-sm">Manuale Operativo</h3>
             <button onClick={() => setShowManual(false)} className="text-muted-foreground hover:text-foreground"><X size={16} /></button>
