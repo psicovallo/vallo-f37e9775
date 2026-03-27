@@ -62,3 +62,7 @@
     user-select: none;
   }
 }
+
+/* Hide Google Translate banner */
+.goog-te-banner-frame, .skiptranslate, #goog-gt-tt { display: none !important; }
+body { top: 0 !important; }

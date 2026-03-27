@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import {
   Plus, Swords, ChevronDown, ChevronUp, Check, PenLine, Trash2, Loader2,
   RotateCcw, MessageSquarePlus, Eye, HelpCircle, X, Layers, Shield,
-  Heart, Briefcase, MessageCircle, Crosshair, Sparkles, Brain, Zap, Target, Info
+  Heart, Briefcase, MessageCircle, Crosshair, Sparkles, Brain, Zap, Target, Info, Globe
 } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
 
@@ -30,6 +30,11 @@ const DNA_STYLES = [
   { id: 'chirurgico', label: 'Chirurgico', icon: Crosshair, description: 'Freddo, preciso, senza emozione. Solo lama.' },
   { id: 'persuasivo', label: 'Persuasivo', icon: Sparkles, description: 'Seduce prima di colpire. Devastazione nascosta.' },
   { id: 'logico', label: 'Logico', icon: Brain, description: 'Ragionamento inattaccabile. Nessuna leva emotiva.' },
+];
+
+const LANGUAGES = [
+  'italiano', 'english', 'español', 'français', 'deutsch', 'português',
+  'العربية', '中文', '日本語', 'русский', 'हिन्दी',
 ];
 
 const PASSIVE_WORDS = ['spero', 'capisca', 'provare', 'magari', 'forse', 'vorrei', 'speriamo', 'cercherò'];
@@ -69,6 +74,7 @@ export default function SOSConflittiPage() {
     name: '', relationship: 'Compagna', customRelationship: '',
     profile_description: '', failure_history: '',
     scenario: 'conflitto', user_style: 'chirurgico',
+    lingua_bersaglio: 'italiano',
   });
   const [objectiveText, setObjectiveText] = useState('');
   const [objectiveWarning, setObjectiveWarning] = useState('');
@@ -180,6 +186,7 @@ export default function SOSConflittiPage() {
       user_id: user.id, name: formData.name, relationship: rel,
       profile_description: formData.profile_description, failure_history: formData.failure_history,
       scenario: formData.scenario, user_style: formData.user_style,
+      lingua_bersaglio: formData.lingua_bersaglio,
     };
 
     if (editingId) {
@@ -190,7 +197,7 @@ export default function SOSConflittiPage() {
       toast.success('Profilo creato');
     }
 
-    setFormData({ name: '', relationship: 'Compagna', customRelationship: '', profile_description: '', failure_history: '', scenario: 'conflitto', user_style: 'chirurgico' });
+    setFormData({ name: '', relationship: 'Compagna', customRelationship: '', profile_description: '', failure_history: '', scenario: 'conflitto', user_style: 'chirurgico', lingua_bersaglio: 'italiano' });
     setObjectiveText('');
     setObjectiveWarning('');
     setShowForm(false);
@@ -213,6 +220,7 @@ export default function SOSConflittiPage() {
       customRelationship: RELATIONSHIP_OPTIONS.includes(p.relationship) ? '' : p.relationship,
       profile_description: p.profile_description, failure_history: p.failure_history,
       scenario: p.scenario || 'conflitto', user_style: p.user_style || 'chirurgico',
+      lingua_bersaglio: (p as any).lingua_bersaglio || 'italiano',
     });
     setEditingId(p.id);
     setShowForm(true);
@@ -241,9 +249,11 @@ export default function SOSConflittiPage() {
     setSessionMode('generating');
     try {
       const velo = opts.veloOverride ?? currentVelo;
+      const targetLang = (selectedProfile as any).lingua_bersaglio || 'italiano';
       const body: any = {
         conflict_profile_id: selectedProfile.id,
         language: linguaMadre,
+        lingua_bersaglio: targetLang,
         scenario: selectedProfile.scenario || 'conflitto',
         user_style: selectedProfile.user_style || 'chirurgico',
         velo_number: velo,
@@ -328,6 +338,9 @@ export default function SOSConflittiPage() {
       </div>
 
       <p className="text-sm text-foreground font-medium leading-relaxed">"{q.question_text}"</p>
+      {(q as any).question_text_translated && (q as any).question_text_translated !== q.question_text && (
+        <p className="text-xs text-muted-foreground italic leading-relaxed mt-1">🌐 {(q as any).question_text_translated}</p>
+      )}
 
       <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3">
         <p className="text-xs text-destructive font-medium">
@@ -587,10 +600,23 @@ export default function SOSConflittiPage() {
                 )}
               </div>
 
+              {/* LINGUA BERSAGLIO */}
               <div>
-                <Label>Descrizione Profilo</Label>
+                <Label className="flex items-center gap-1">
+                  <Globe size={14} /> Lingua del Bersaglio
+                </Label>
+                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.lingua_bersaglio} onChange={e => setFormData(p => ({ ...p, lingua_bersaglio: e.target.value }))}>
+                  {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
+                </select>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  La lingua in cui il bersaglio parla/capisce. Le frasi verranno generate in questa lingua con traduzione nella tua.
+                </p>
+              </div>
+
+              <div>
+                <Label>Profilo del Bersaglio (chi è questa persona)</Label>
                 <div className="relative">
-                  <Textarea value={formData.profile_description} onChange={e => setFormData(p => ({ ...p, profile_description: e.target.value }))} placeholder="Carattere, punti deboli, pattern..." rows={4} className="pr-12" />
+                  <Textarea value={formData.profile_description} onChange={e => setFormData(p => ({ ...p, profile_description: e.target.value }))} placeholder="Descrivi il carattere, i punti deboli, i pattern comportamentali di questa persona..." rows={4} className="pr-12" />
                   <div className="absolute right-3 top-3">
                     <VoiceInput onTranscript={(t) => setFormData(p => ({ ...p, profile_description: t }))} currentValue={formData.profile_description} />
                   </div>

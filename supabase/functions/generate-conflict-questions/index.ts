@@ -41,7 +41,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { conflict_profile_id, language = "italiano", new_event = "", scenario = "conflitto", user_style = "chirurgico", velo_number = 1, whatsapp_message = "", soften = false, objective = "", quantum = false } = await req.json();
+    const { conflict_profile_id, language = "italiano", lingua_bersaglio = "", new_event = "", scenario = "conflitto", user_style = "chirurgico", velo_number = 1, whatsapp_message = "", soften = false, objective = "", quantum = false } = await req.json();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -83,18 +83,23 @@ serve(async (req) => {
       ? `\nATTENZIONE: L'utente ha chiesto di abbassare il calibro. Genera una versione più morbida MA comunque strategica e manipolatoria. Non perdere la ferocia logica, solo il tono. Il messaggio deve comunque dominare.`
       : "";
 
+    const targetLang = lingua_bersaglio && lingua_bersaglio !== language ? lingua_bersaglio : "";
+    const dualLangInstruction = targetLang
+      ? `\nDUAL LANGUAGE: Genera ogni frase PRIMA nella lingua del bersaglio (${targetLang}) come "text", POI aggiungi il campo "text_translated" con la traduzione nella lingua dell'utente (${language}).`
+      : "";
+
     const outputFormat = scenario === "whatsapp"
       ? `RISPONDI SOLO con un JSON valido (array di 3 oggetti):
 [
-  {"text": "risposta WhatsApp pronta all'uso", "validation": "analisi tecnica del sottotesto e perché questa risposta lo distrugge", "maestri_used": "Maestro1, Maestro2, Maestro3"},
-  {"text": "risposta alternativa", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"},
-  {"text": "risposta nucleare", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"}
+  {"text": "risposta WhatsApp pronta all'uso${targetLang ? ` in ${targetLang}` : ""}", "validation": "analisi tecnica del sottotesto e perché questa risposta lo distrugge", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione in ${language}"` : ""}},
+  {"text": "risposta alternativa", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione"` : ""}},
+  {"text": "risposta nucleare", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione"` : ""}}
 ]`
       : `RISPONDI SOLO con un JSON valido (array di 3 oggetti):
 [
-  {"text": "frase/domanda Velo ${velo_number}", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"},
-  {"text": "frase/domanda alternativa", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"},
-  {"text": "frase/domanda più aggressiva", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"}
+  {"text": "frase/domanda Velo ${velo_number}${targetLang ? ` in ${targetLang}` : ""}", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione in ${language}"` : ""}},
+  {"text": "frase/domanda alternativa", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione"` : ""}},
+  {"text": "frase/domanda più aggressiva", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione"` : ""}}
 ]`;
 
     const systemPrompt = `SEI IL CONSIGLIO DEI 15 MAESTRI. Lavorate TUTTI INSIEME come un unico organismo analitico.
@@ -130,12 +135,13 @@ PROTOCOLLO:
 4. VALIDAZIONE TECNICA: Per ogni frase, spiega QUALE maestro l'ha ispirata e PERCHÉ.
 
 REGOLE FONDAMENTALI:
-- Le frasi devono essere in ${language}.
+- Le frasi devono essere in ${targetLang || language}.
 - BREVITÀ ASSOLUTA: ogni frase deve avere MASSIMO 15-20 parole. Facile da ricordare a memoria.
 - La frase deve poter essere detta guardando negli occhi il bersaglio.
 - NO frasi elaborate, accademiche o con subordinate complesse. Linguaggio DIRETTO, quotidiano ma tagliente.
 - NO risposte che permettono uscite facili all'altro.
 - Ogni frase deve essere TAGLIENTE, SPIETATA e INTELLIGENTE.
+${dualLangInstruction}
 
 ${outputFormat}`;
 
@@ -190,15 +196,19 @@ ${outputFormat}`;
       });
     }
 
-    const inserts = questions.map((q: any) => ({
-      conflict_profile_id,
-      user_id: profile.user_id,
-      question_text: q.text,
-      validation_text: q.validation,
-      maestri_used: q.maestri_used,
-      status: "generated",
-      velo_number,
-    }));
+    const translations: Record<number, string> = {};
+    const inserts = questions.map((q: any, idx: number) => {
+      if (q.text_translated) translations[idx] = q.text_translated;
+      return {
+        conflict_profile_id,
+        user_id: profile.user_id,
+        question_text: q.text,
+        validation_text: q.validation,
+        maestri_used: q.maestri_used,
+        status: "generated",
+        velo_number,
+      };
+    });
 
     const { data: saved, error: insertError } = await supabase
       .from("conflict_questions")
@@ -207,7 +217,13 @@ ${outputFormat}`;
 
     if (insertError) throw insertError;
 
-    return new Response(JSON.stringify({ questions: saved }), {
+    // Attach translations to response
+    const enriched = (saved || []).map((s: any, idx: number) => ({
+      ...s,
+      question_text_translated: translations[idx] || null,
+    }));
+
+    return new Response(JSON.stringify({ questions: enriched }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
