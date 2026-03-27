@@ -19,6 +19,7 @@ export type Database = {
           created_at: string
           failure_history: string
           id: string
+          lingua_bersaglio: string
           name: string
           profile_description: string
           relationship: string
@@ -31,6 +32,7 @@ export type Database = {
           created_at?: string
           failure_history?: string
           id?: string
+          lingua_bersaglio?: string
           name?: string
           profile_description?: string
           relationship?: string
@@ -43,6 +45,7 @@ export type Database = {
           created_at?: string
           failure_history?: string
           id?: string
+          lingua_bersaglio?: string
           name?: string
           profile_description?: string
           relationship?: string

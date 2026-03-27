@@ -1,0 +1,1 @@
+ALTER TABLE public.conflict_profiles ADD COLUMN IF NOT EXISTS lingua_bersaglio text NOT NULL DEFAULT 'italiano';
