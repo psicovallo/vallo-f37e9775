@@ -66,6 +66,29 @@ export default function GoogleTranslate({ language }: { language: string }) {
       // Re-init
       window.googleTranslateElementInit();
     }
+
+    // Prevent Google Translate from hijacking internal links
+    const fixLinks = () => {
+      document.querySelectorAll('a[href*="translate.google"]').forEach((a) => {
+        const el = a as HTMLAnchorElement;
+        try {
+          const url = new URL(el.href);
+          const u = url.searchParams.get('u');
+          if (u) {
+            const parsed = new URL(u);
+            // If it's an internal link, restore the path
+            if (parsed.origin === window.location.origin || parsed.hostname === window.location.hostname) {
+              el.href = parsed.pathname + parsed.search + parsed.hash;
+            }
+          }
+        } catch {}
+      });
+    };
+
+    const observer = new MutationObserver(fixLinks);
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['href'] });
+
+    return () => observer.disconnect();
   }, [language]);
 
   return <div id="google_translate_element" style={{ position: 'fixed', top: -9999, left: -9999 }} />;
