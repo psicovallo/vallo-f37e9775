@@ -181,6 +181,7 @@ export default function SOSConflittiPage() {
       user_id: user.id, name: formData.name, relationship: rel,
       profile_description: formData.profile_description, failure_history: formData.failure_history,
       scenario: formData.scenario, user_style: formData.user_style,
+      lingua_bersaglio: formData.lingua_bersaglio,
     };
 
     if (editingId) {
