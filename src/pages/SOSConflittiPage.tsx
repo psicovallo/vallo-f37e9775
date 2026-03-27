@@ -32,6 +32,11 @@ const DNA_STYLES = [
   { id: 'logico', label: 'Logico', icon: Brain, description: 'Ragionamento inattaccabile. Nessuna leva emotiva.' },
 ];
 
+const LANGUAGES = [
+  'italiano', 'english', 'español', 'français', 'deutsch', 'português',
+  'العربية', '中文', '日本語', 'русский', 'हिन्दी',
+];
+
 const PASSIVE_WORDS = ['spero', 'capisca', 'provare', 'magari', 'forse', 'vorrei', 'speriamo', 'cercherò'];
 
 interface ConflictProfile {
