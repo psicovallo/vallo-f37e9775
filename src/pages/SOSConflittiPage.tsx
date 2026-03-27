@@ -215,6 +215,7 @@ export default function SOSConflittiPage() {
       customRelationship: RELATIONSHIP_OPTIONS.includes(p.relationship) ? '' : p.relationship,
       profile_description: p.profile_description, failure_history: p.failure_history,
       scenario: p.scenario || 'conflitto', user_style: p.user_style || 'chirurgico',
+      lingua_bersaglio: (p as any).lingua_bersaglio || 'italiano',
     });
     setEditingId(p.id);
     setShowForm(true);
