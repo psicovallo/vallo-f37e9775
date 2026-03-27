@@ -590,10 +590,23 @@ export default function SOSConflittiPage() {
                 )}
               </div>
 
+              {/* LINGUA BERSAGLIO */}
               <div>
-                <Label>Descrizione Profilo</Label>
+                <Label className="flex items-center gap-1">
+                  <Globe size={14} /> Lingua del Bersaglio
+                </Label>
+                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.lingua_bersaglio} onChange={e => setFormData(p => ({ ...p, lingua_bersaglio: e.target.value }))}>
+                  {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
+                </select>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  La lingua in cui il bersaglio parla/capisce. Le frasi verranno generate in questa lingua con traduzione nella tua.
+                </p>
+              </div>
+
+              <div>
+                <Label>Profilo del Bersaglio (chi è questa persona)</Label>
                 <div className="relative">
-                  <Textarea value={formData.profile_description} onChange={e => setFormData(p => ({ ...p, profile_description: e.target.value }))} placeholder="Carattere, punti deboli, pattern..." rows={4} className="pr-12" />
+                  <Textarea value={formData.profile_description} onChange={e => setFormData(p => ({ ...p, profile_description: e.target.value }))} placeholder="Descrivi il carattere, i punti deboli, i pattern comportamentali di questa persona..." rows={4} className="pr-12" />
                   <div className="absolute right-3 top-3">
                     <VoiceInput onTranscript={(t) => setFormData(p => ({ ...p, profile_description: t }))} currentValue={formData.profile_description} />
                   </div>
