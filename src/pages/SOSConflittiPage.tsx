@@ -467,8 +467,8 @@ export default function SOSConflittiPage() {
               {SCENARIOS.map(s => {
                 const Icon = s.icon;
                 return (
-                  <div key={s.id} className="flex items-start gap-3">
-                    <Icon size={16} className="text-primary mt-0.5" />
+                    <div key={s.id} className="flex items-start gap-3">
+                      <Icon size={16} className="mt-0.5" style={{ color: s.color }} />
                     <div>
                       <p className="text-sm font-medium text-foreground">{s.label}</p>
                       <p className="text-xs text-muted-foreground">{s.description}</p>
