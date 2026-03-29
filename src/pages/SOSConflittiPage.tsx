@@ -684,7 +684,7 @@ export default function SOSConflittiPage() {
         <TabsContent value="sessione" className="space-y-4">
           {selectedProfile && (
             <>
-              <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 flex items-center justify-between">
+              <div className="rounded-xl border p-3 flex items-center justify-between" style={{ borderColor: `${getScenarioColor(selectedProfile.scenario)}50`, backgroundColor: `${getScenarioColor(selectedProfile.scenario)}08` }}>
                 <div className="flex items-center gap-2">
                   {scenarioIcon(selectedProfile.scenario)}
                   <div>
