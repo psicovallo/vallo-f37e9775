@@ -279,7 +279,7 @@ function FieldWithVoice({
             className="w-full rounded-xl border border-border bg-card px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary resize-none"
           />
           <div className="absolute right-2 top-2">
-            <VoiceInput onResult={t => onChange(value ? value + ' ' + t : t)} />
+            <VoiceInput onTranscript={t => onChange(value ? value + ' ' + t : t)} currentValue={value} />
           </div>
         </div>
       ) : (
@@ -291,7 +291,7 @@ function FieldWithVoice({
             className="w-full rounded-xl border border-border bg-card px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <div className="absolute right-2 top-1/2 -translate-y-1/2">
-            <VoiceInput onResult={t => onChange(value ? value + ' ' + t : t)} />
+            <VoiceInput onTranscript={t => onChange(value ? value + ' ' + t : t)} currentValue={value} />
           </div>
         </div>
       )}
