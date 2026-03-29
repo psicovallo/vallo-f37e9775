@@ -838,7 +838,7 @@ export default function SOSConflittiPage() {
               )}
 
               <p className="text-xs text-muted-foreground italic text-center mt-6 px-4">
-                "Il Consiglio richiede tempo. Una domanda di decostruzione è un seme: lascialo marcire nella mente dell'altro prima di aspettarti il crollo."
+                "Il Consiglio dei Maestri richiede tempo. Una domanda di DECOSTRUZIONE è un seme: lascialo crescere nella mente, nella tua mente e in quella dell'altro prima di aspettarti il crollo."
               </p>
             </>
           )}
