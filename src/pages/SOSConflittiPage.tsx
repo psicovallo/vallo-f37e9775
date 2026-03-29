@@ -325,7 +325,7 @@ export default function SOSConflittiPage() {
     const s = SCENARIOS.find(s => s.id === id);
     if (!s) return <Swords size={14} />;
     const Icon = s.icon;
-    return <Icon size={14} />;
+    return <Icon size={14} style={{ color: s.color }} />;
   };
 
   const renderQuestionCard = (q: ConflictQuestion, i: number) => (
