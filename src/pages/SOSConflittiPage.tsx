@@ -20,11 +20,13 @@ const RELATIONSHIP_OPTIONS = [
 ];
 
 const SCENARIOS = [
-  { id: 'conflitto', label: 'Conflitto', icon: Swords, description: 'Guerra interpersonale. Smonta le difese.' },
-  { id: 'eros', label: 'Eros & Tabù', icon: Heart, description: 'Osa di più. Smonta i blocchi intimi.' },
-  { id: 'business', label: 'Power Business', icon: Briefcase, description: 'Negoziazione. Aumenti, contratti, forza.' },
-  { id: 'whatsapp', label: 'WhatsApp Shield', icon: MessageCircle, description: 'Rispondi a messaggi manipolatori.' },
+  { id: 'conflitto', label: 'Conflitto', icon: Swords, description: 'Guerra interpersonale. Smonta le difese.', color: 'hsl(36 91% 44%)' },
+  { id: 'eros', label: 'Eros & Tabù', icon: Heart, description: 'Osa di più. Smonta i blocchi intimi.', color: 'hsl(0 84% 55%)' },
+  { id: 'business', label: 'Power Business', icon: Briefcase, description: 'Negoziazione. Aumenti, contratti, forza.', color: 'hsl(250 60% 55%)' },
+  { id: 'whatsapp', label: 'WhatsApp Shield', icon: MessageCircle, description: 'Rispondi a messaggi manipolatori.', color: 'hsl(142 70% 45%)' },
 ];
+
+const getScenarioColor = (id: string) => SCENARIOS.find(s => s.id === id)?.color || 'hsl(36 91% 44%)';
 
 const DNA_STYLES = [
   { id: 'chirurgico', label: 'Chirurgico', icon: Crosshair, description: 'Freddo, preciso, senza emozione. Solo lama.' },
