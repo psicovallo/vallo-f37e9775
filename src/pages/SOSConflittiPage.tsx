@@ -645,7 +645,8 @@ export default function SOSConflittiPage() {
 
           {profiles.map(p => (
             <div key={p.id}
-              className={`rounded-xl border p-4 transition-colors cursor-pointer ${selectedProfile?.id === p.id ? 'border-primary bg-primary/10' : 'border-border bg-card hover:border-primary/50'}`}
+              className={`rounded-xl border p-4 transition-colors cursor-pointer ${selectedProfile?.id === p.id ? 'bg-opacity-10' : 'border-border bg-card hover:border-primary/50'}`}
+              style={selectedProfile?.id === p.id ? { borderColor: getScenarioColor(p.scenario), backgroundColor: `${getScenarioColor(p.scenario)}10` } : {}}
               onClick={() => handleSelectProfile(p)}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
