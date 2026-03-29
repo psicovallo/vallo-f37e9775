@@ -148,7 +148,7 @@ export default function RemindersPage() {
             <div className="flex-1">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <Swords size={14} className="text-red-500" />
-                SOS DNA Conflitti
+                SOS DNA
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Fino a 6 notifiche al giorno per ogni profilo attivo
