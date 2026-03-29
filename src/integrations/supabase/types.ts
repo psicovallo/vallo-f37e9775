@@ -177,7 +177,11 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_profile_analysis: string | null
+          ai_profile_updated_at: string | null
+          communication_style: string | null
           created_at: string
+          current_problems: string | null
           email: string | null
           id: string
           lingua_madre: string
@@ -186,9 +190,14 @@ export type Database = {
           objective: string | null
           quantum_enabled: boolean
           user_id: string
+          vision: string | null
         }
         Insert: {
+          ai_profile_analysis?: string | null
+          ai_profile_updated_at?: string | null
+          communication_style?: string | null
           created_at?: string
+          current_problems?: string | null
           email?: string | null
           id?: string
           lingua_madre?: string
@@ -197,9 +206,14 @@ export type Database = {
           objective?: string | null
           quantum_enabled?: boolean
           user_id: string
+          vision?: string | null
         }
         Update: {
+          ai_profile_analysis?: string | null
+          ai_profile_updated_at?: string | null
+          communication_style?: string | null
           created_at?: string
+          current_problems?: string | null
           email?: string | null
           id?: string
           lingua_madre?: string
@@ -208,6 +222,7 @@ export type Database = {
           objective?: string | null
           quantum_enabled?: boolean
           user_id?: string
+          vision?: string | null
         }
         Relationships: []
       }

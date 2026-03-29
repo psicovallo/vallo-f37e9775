@@ -87,10 +87,10 @@ export default function HamburgerMenu() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          <button onClick={() => { setShowProfile(true); setShowQuantum(false); setShowManual(false); }}
+          <Link to="/profile" onClick={() => setOpen(false)}
             className="w-full flex items-center gap-3 rounded-xl p-3 text-sm text-foreground hover:bg-muted transition-colors">
-            <User size={18} /> Il Mio Profilo
-          </button>
+            <User size={18} /> Il Mio Profilo Evolutivo
+          </Link>
           <button onClick={() => { setShowQuantum(true); setShowProfile(false); setShowManual(false); }}
             className="w-full flex items-center gap-3 rounded-xl p-3 text-sm text-foreground hover:bg-muted transition-colors">
             <Zap size={18} className={quantumEnabled ? 'text-primary' : ''} /> Settings Quantum
