@@ -661,7 +661,7 @@ export default function SOSConflittiPage() {
                 </div>
               </div>
               <div className="mt-2 flex gap-2">
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-primary">
+                <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: `${getScenarioColor(p.scenario)}20`, color: getScenarioColor(p.scenario) }}>
                   {SCENARIOS.find(s => s.id === p.scenario)?.label || 'Conflitto'}
                 </span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
