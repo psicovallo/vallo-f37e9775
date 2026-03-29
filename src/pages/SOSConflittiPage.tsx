@@ -542,10 +542,11 @@ export default function SOSConflittiPage() {
                   {SCENARIOS.map(s => {
                     const Icon = s.icon;
                     const active = formData.scenario === s.id;
-                    return (
-                      <button key={s.id} type="button" onClick={() => setFormData(p => ({ ...p, scenario: s.id }))}
-                        className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-colors ${active ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card text-muted-foreground hover:border-primary/50'}`}>
-                        <Icon size={16} /><span className="text-xs font-medium">{s.label}</span>
+                      return (
+                        <button key={s.id} type="button" onClick={() => setFormData(p => ({ ...p, scenario: s.id }))}
+                          className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-colors ${active ? 'bg-opacity-10' : 'border-border bg-card text-muted-foreground hover:border-primary/50'}`}
+                          style={active ? { borderColor: s.color, backgroundColor: `${s.color}15`, color: s.color } : {}}>
+                          <Icon size={16} style={active ? { color: s.color } : {}} /><span className="text-xs font-medium">{s.label}</span>
                       </button>
                     );
                   })}
