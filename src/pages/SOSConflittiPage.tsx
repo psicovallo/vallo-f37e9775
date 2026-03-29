@@ -20,11 +20,13 @@ const RELATIONSHIP_OPTIONS = [
 ];
 
 const SCENARIOS = [
-  { id: 'conflitto', label: 'Conflitto', icon: Swords, description: 'Guerra interpersonale. Smonta le difese.' },
-  { id: 'eros', label: 'Eros & Tabù', icon: Heart, description: 'Osa di più. Smonta i blocchi intimi.' },
-  { id: 'business', label: 'Power Business', icon: Briefcase, description: 'Negoziazione. Aumenti, contratti, forza.' },
-  { id: 'whatsapp', label: 'WhatsApp Shield', icon: MessageCircle, description: 'Rispondi a messaggi manipolatori.' },
+  { id: 'conflitto', label: 'Conflitto', icon: Swords, description: 'Guerra interpersonale. Smonta le difese.', color: 'hsl(36 91% 44%)' },
+  { id: 'eros', label: 'Eros & Tabù', icon: Heart, description: 'Osa di più. Smonta i blocchi intimi.', color: 'hsl(0 84% 55%)' },
+  { id: 'business', label: 'Power Business', icon: Briefcase, description: 'Negoziazione. Aumenti, contratti, forza.', color: 'hsl(250 60% 55%)' },
+  { id: 'whatsapp', label: 'WhatsApp Shield', icon: MessageCircle, description: 'Rispondi a messaggi manipolatori.', color: 'hsl(142 70% 45%)' },
 ];
+
+const getScenarioColor = (id: string) => SCENARIOS.find(s => s.id === id)?.color || 'hsl(36 91% 44%)';
 
 const DNA_STYLES = [
   { id: 'chirurgico', label: 'Chirurgico', icon: Crosshair, description: 'Freddo, preciso, senza emozione. Solo lama.' },
@@ -323,7 +325,7 @@ export default function SOSConflittiPage() {
     const s = SCENARIOS.find(s => s.id === id);
     if (!s) return <Swords size={14} />;
     const Icon = s.icon;
-    return <Icon size={14} />;
+    return <Icon size={14} style={{ color: s.color }} />;
   };
 
   const renderQuestionCard = (q: ConflictQuestion, i: number) => (
@@ -465,8 +467,8 @@ export default function SOSConflittiPage() {
               {SCENARIOS.map(s => {
                 const Icon = s.icon;
                 return (
-                  <div key={s.id} className="flex items-start gap-3">
-                    <Icon size={16} className="text-primary mt-0.5" />
+                    <div key={s.id} className="flex items-start gap-3">
+                      <Icon size={16} className="mt-0.5" style={{ color: s.color }} />
                     <div>
                       <p className="text-sm font-medium text-foreground">{s.label}</p>
                       <p className="text-xs text-muted-foreground">{s.description}</p>
@@ -540,10 +542,11 @@ export default function SOSConflittiPage() {
                   {SCENARIOS.map(s => {
                     const Icon = s.icon;
                     const active = formData.scenario === s.id;
-                    return (
-                      <button key={s.id} type="button" onClick={() => setFormData(p => ({ ...p, scenario: s.id }))}
-                        className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-colors ${active ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card text-muted-foreground hover:border-primary/50'}`}>
-                        <Icon size={16} /><span className="text-xs font-medium">{s.label}</span>
+                      return (
+                        <button key={s.id} type="button" onClick={() => setFormData(p => ({ ...p, scenario: s.id }))}
+                          className={`flex items-center gap-2 rounded-lg border p-3 text-left transition-colors ${active ? 'bg-opacity-10' : 'border-border bg-card text-muted-foreground hover:border-primary/50'}`}
+                          style={active ? { borderColor: s.color, backgroundColor: `${s.color}15`, color: s.color } : {}}>
+                          <Icon size={16} style={active ? { color: s.color } : {}} /><span className="text-xs font-medium">{s.label}</span>
                       </button>
                     );
                   })}
@@ -642,7 +645,8 @@ export default function SOSConflittiPage() {
 
           {profiles.map(p => (
             <div key={p.id}
-              className={`rounded-xl border p-4 transition-colors cursor-pointer ${selectedProfile?.id === p.id ? 'border-primary bg-primary/10' : 'border-border bg-card hover:border-primary/50'}`}
+              className={`rounded-xl border p-4 transition-colors cursor-pointer ${selectedProfile?.id === p.id ? 'bg-opacity-10' : 'border-border bg-card hover:border-primary/50'}`}
+              style={selectedProfile?.id === p.id ? { borderColor: getScenarioColor(p.scenario), backgroundColor: `${getScenarioColor(p.scenario)}10` } : {}}
               onClick={() => handleSelectProfile(p)}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -658,7 +662,7 @@ export default function SOSConflittiPage() {
                 </div>
               </div>
               <div className="mt-2 flex gap-2">
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-primary">
+                <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: `${getScenarioColor(p.scenario)}20`, color: getScenarioColor(p.scenario) }}>
                   {SCENARIOS.find(s => s.id === p.scenario)?.label || 'Conflitto'}
                 </span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
@@ -680,7 +684,7 @@ export default function SOSConflittiPage() {
         <TabsContent value="sessione" className="space-y-4">
           {selectedProfile && (
             <>
-              <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 flex items-center justify-between">
+              <div className="rounded-xl border p-3 flex items-center justify-between" style={{ borderColor: `${getScenarioColor(selectedProfile.scenario)}50`, backgroundColor: `${getScenarioColor(selectedProfile.scenario)}08` }}>
                 <div className="flex items-center gap-2">
                   {scenarioIcon(selectedProfile.scenario)}
                   <div>
