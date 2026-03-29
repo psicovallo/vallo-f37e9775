@@ -496,7 +496,7 @@ export default function SOSConflittiPage() {
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Swords size={24} className="text-primary" />
-          <h1 className="text-xl font-bold text-foreground">SOS DNA</h1>
+          <h1 className="text-xl font-bold text-foreground">SOS DNA (Decoding & Neural Adaptation)</h1>
           {quantumEnabled && <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-primary flex items-center gap-1"><Zap size={10} /> Quantum</span>}
         </div>
         <button onClick={() => setShowWelcome(true)} className="p-2 text-muted-foreground hover:text-primary transition-colors">
