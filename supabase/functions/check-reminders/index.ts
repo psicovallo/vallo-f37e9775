@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+const DAY_MAP: Record<number, string> = { 0: 'dom', 1: 'lun', 2: 'mar', 3: 'mer', 4: 'gio', 5: 'ven', 6: 'sab' };
+
 function generateRandomTimes(start: string, end: string, count: number): string[] {
   const [startH, startM] = start.split(':').map(Number);
   const [endH, endM] = end.split(':').map(Number);
@@ -30,7 +32,7 @@ function generateRandomTimes(start: string, end: string, count: number): string[
   }
   // Fill rest randomly
   let attempts = 0;
-  while (times.size < count && attempts < 300) {
+  while (times.size < count && attempts < 500) {
     times.add(fmt(startMin + Math.floor(Math.random() * (endMin - startMin))));
     attempts++;
   }
@@ -68,8 +70,10 @@ serve(async (req) => {
     const now = new Date();
     const romeDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
     const romeTime = now.toLocaleTimeString('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit', hour12: false });
+    const romeDayNum = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Rome' })).getDay();
+    const romeDayKey = DAY_MAP[romeDayNum];
 
-    console.log(`Check at ${romeTime} on ${romeDate}`);
+    console.log(`Check at ${romeTime} on ${romeDate} (${romeDayKey})`);
 
     const { data: allProgress } = await supabase
       .from('question_progress')
@@ -83,18 +87,24 @@ serve(async (req) => {
     for (const progress of allProgress || []) {
       const userId = progress.user_id;
       const winStart = progress.notification_window_start || '06:00';
-      const winEnd = progress.notification_window_end || '22:00';
+      const winEnd = progress.notification_window_end || '23:00';
+      const notifyDays: string[] = progress.notify_days || ['lun','mar','mer','gio','ven','sab','dom'];
+
+      // Skip if today is not an active day
+      if (!notifyDays.includes(romeDayKey)) {
+        continue;
+      }
 
       // ── QUESTION NOTIFICATIONS ──
       if (progress.notify_questions !== false) {
-        // Generate or reuse daily question times
+        const qCount = progress.questions_per_day || 6;
         let qTimes: string[] = progress.daily_times || [];
         if (progress.daily_times_date !== romeDate) {
-          qTimes = generateRandomTimes(winStart, winEnd, 6);
+          qTimes = generateRandomTimes(winStart, winEnd, qCount);
           await supabase.from('question_progress')
             .update({ daily_times: qTimes, daily_times_date: romeDate })
             .eq('id', progress.id);
-          console.log(`Q times for ${userId}: ${qTimes.join(', ')}`);
+          console.log(`Q times for ${userId} (${qCount}): ${qTimes.join(', ')}`);
         }
 
         if (qTimes.includes(romeTime)) {
@@ -114,10 +124,10 @@ serve(async (req) => {
               .gte('delivered_at', `${romeDate}T00:00:00`)
               .lte('delivered_at', `${romeDate}T23:59:59`);
 
+            // Cycle through assignments, repeating if needed
             const idx = (todayCount || 0) % assignments.length;
             const assignment = assignments[idx];
 
-            // Create delivery record
             await supabase.from('question_deliveries').insert({
               user_id: userId,
               question_index: assignment.sort_order,
@@ -133,17 +143,17 @@ serve(async (req) => {
 
       // ── SOS DNA NOTIFICATIONS ──
       if (progress.notify_dna !== false) {
+        const dnaCount = progress.dna_per_day || 6;
         let dnaTimes: string[] = progress.dna_daily_times || [];
         if (progress.dna_daily_times_date !== romeDate) {
-          dnaTimes = generateRandomTimes(winStart, winEnd, 6);
+          dnaTimes = generateRandomTimes(winStart, winEnd, dnaCount);
           await supabase.from('question_progress')
             .update({ dna_daily_times: dnaTimes, dna_daily_times_date: romeDate })
             .eq('id', progress.id);
-          console.log(`DNA times for ${userId}: ${dnaTimes.join(', ')}`);
+          console.log(`DNA times for ${userId} (${dnaCount}): ${dnaTimes.join(', ')}`);
         }
 
         if (dnaTimes.includes(romeTime)) {
-          // Get active conflict questions for this user
           const { data: questions } = await supabase
             .from('conflict_questions')
             .select('*, conflict_profiles!inner(name)')
@@ -173,7 +183,7 @@ serve(async (req) => {
       reminderPushes += await sendPush(supabaseUrl, serviceKey, reminder.user_id, '⏰ Promemoria', reminder.text, { url: '/reminders' });
     }
 
-    const result = { checked: romeTime, date: romeDate, users: allProgress?.length || 0, question_sent: questionPushes, conflict_sent: conflictPushes, reminder_sent: reminderPushes, total_sent: questionPushes + conflictPushes + reminderPushes };
+    const result = { checked: romeTime, date: romeDate, day: romeDayKey, users: allProgress?.length || 0, question_sent: questionPushes, conflict_sent: conflictPushes, reminder_sent: reminderPushes, total_sent: questionPushes + conflictPushes + reminderPushes };
     console.log('Result:', JSON.stringify(result));
 
     return new Response(JSON.stringify(result), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

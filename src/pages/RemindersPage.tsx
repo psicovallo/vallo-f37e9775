@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Trash2, Clock, BellRing, X, Bell, Zap, Swords } from 'lucide-react';
+import { Plus, Trash2, Clock, BellRing, X, Bell, Zap, Swords, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Reminder {
   id: string;
@@ -18,7 +19,29 @@ interface NotifSettings {
   notify_dna: boolean;
   daily_times: string[] | null;
   dna_daily_times: string[] | null;
+  questions_per_day: number;
+  dna_per_day: number;
+  notification_window_start: string | null;
+  notification_window_end: string | null;
+  notify_days: string[];
 }
+
+const ALL_DAYS = [
+  { key: 'lun', label: 'L' },
+  { key: 'mar', label: 'M' },
+  { key: 'mer', label: 'M' },
+  { key: 'gio', label: 'G' },
+  { key: 'ven', label: 'V' },
+  { key: 'sab', label: 'S' },
+  { key: 'dom', label: 'D' },
+];
+
+const HOURS = Array.from({ length: 18 }, (_, i) => {
+  const h = i + 6;
+  return `${h.toString().padStart(2, '0')}:00`;
+});
+
+const COUNT_OPTIONS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20];
 
 export default function RemindersPage() {
   const { user } = useAuth();
@@ -43,7 +66,7 @@ export default function RemindersPage() {
     if (!user) return;
     const { data } = await supabase
       .from('question_progress')
-      .select('notify_questions, notify_dna, daily_times, dna_daily_times')
+      .select('notify_questions, notify_dna, daily_times, dna_daily_times, questions_per_day, dna_per_day, notification_window_start, notification_window_end, notify_days')
       .eq('user_id', user.id)
       .maybeSingle();
     if (data) {
@@ -63,6 +86,32 @@ export default function RemindersPage() {
       .eq('user_id', user.id);
     setNotifSettings(prev => prev ? { ...prev, [field]: !current } : null);
     toast.success(!current ? 'Notifiche attivate' : 'Notifiche disattivate');
+  };
+
+  const updateSetting = async (field: string, value: any) => {
+    if (!user) return;
+    // Reset daily times when count changes so they regenerate
+    const extra: any = {};
+    if (field === 'questions_per_day') extra.daily_times_date = null;
+    if (field === 'dna_per_day') extra.dna_daily_times_date = null;
+    if (field === 'notification_window_start' || field === 'notification_window_end') {
+      extra.daily_times_date = null;
+      extra.dna_daily_times_date = null;
+    }
+    await supabase.from('question_progress')
+      .update({ [field]: value, ...extra } as any)
+      .eq('user_id', user.id);
+    setNotifSettings(prev => prev ? { ...prev, [field]: value } : null);
+    toast.success('Impostazione aggiornata');
+  };
+
+  const toggleDay = async (day: string) => {
+    if (!notifSettings) return;
+    const current = notifSettings.notify_days || ALL_DAYS.map(d => d.key);
+    const next = current.includes(day) ? current.filter(d => d !== day) : [...current, day];
+    if (next.length === 0) { toast.error('Seleziona almeno un giorno'); return; }
+    await updateSetting('notify_days', next);
+    setNotifSettings(prev => prev ? { ...prev, notify_days: next } : null);
   };
 
   const addTimeSlot = () => { if (times.length < 3) setTimes([...times, '']); };
@@ -115,54 +164,158 @@ export default function RemindersPage() {
 
       {/* ── NOTIFICATION SETTINGS ── */}
       {notifSettings && (
-        <div className="mb-6 rounded-2xl border border-border bg-card p-4 space-y-4">
+        <div className="mb-6 rounded-2xl border border-border bg-card p-4 space-y-5">
           <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
             <Bell size={16} className="text-primary" />
             Notifiche Automatiche
           </h2>
 
           {/* Questions switch */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <Zap size={14} className="text-amber-500" />
-                Domande di Riflessione
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                6 notifiche al giorno per memorizzare le domande
-              </p>
-              {notifSettings.notify_questions && notifSettings.daily_times?.length ? (
-                <p className="text-xs text-primary mt-1">
-                  🔥 Oggi: {notifSettings.daily_times.join(', ')}
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Zap size={14} className="text-amber-500" />
+                  Domande di Riflessione
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Notifiche al giorno per memorizzare le domande
                 </p>
-              ) : null}
+                {notifSettings.notify_questions && notifSettings.daily_times?.length ? (
+                  <p className="text-xs text-primary mt-1">
+                    🔥 Oggi: {notifSettings.daily_times.join(', ')}
+                  </p>
+                ) : null}
+              </div>
+              <Switch
+                checked={notifSettings.notify_questions}
+                onCheckedChange={() => toggleNotifSetting('notify_questions', notifSettings.notify_questions)}
+              />
             </div>
-            <Switch
-              checked={notifSettings.notify_questions}
-              onCheckedChange={() => toggleNotifSetting('notify_questions', notifSettings.notify_questions)}
-            />
+            {notifSettings.notify_questions && (
+              <div className="ml-6 flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Quante al giorno:</span>
+                <Select
+                  value={String(notifSettings.questions_per_day || 6)}
+                  onValueChange={v => updateSetting('questions_per_day', Number(v))}
+                >
+                  <SelectTrigger className="h-8 w-20 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COUNT_OPTIONS.map(n => (
+                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           {/* DNA switch */}
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <Swords size={14} className="text-red-500" />
-                SOS DNA
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Fino a 6 notifiche al giorno per ogni profilo attivo
-              </p>
-              {notifSettings.notify_dna && notifSettings.dna_daily_times?.length ? (
-                <p className="text-xs text-primary mt-1">
-                  ⚔️ Oggi: {notifSettings.dna_daily_times.join(', ')}
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Swords size={14} className="text-red-500" />
+                  SOS DNA
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Notifiche al giorno per ogni profilo attivo
                 </p>
-              ) : null}
+                {notifSettings.notify_dna && notifSettings.dna_daily_times?.length ? (
+                  <p className="text-xs text-primary mt-1">
+                    ⚔️ Oggi: {notifSettings.dna_daily_times.join(', ')}
+                  </p>
+                ) : null}
+              </div>
+              <Switch
+                checked={notifSettings.notify_dna}
+                onCheckedChange={() => toggleNotifSetting('notify_dna', notifSettings.notify_dna)}
+              />
             </div>
-            <Switch
-              checked={notifSettings.notify_dna}
-              onCheckedChange={() => toggleNotifSetting('notify_dna', notifSettings.notify_dna)}
-            />
+            {notifSettings.notify_dna && (
+              <div className="ml-6 flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Quante al giorno:</span>
+                <Select
+                  value={String(notifSettings.dna_per_day || 6)}
+                  onValueChange={v => updateSetting('dna_per_day', Number(v))}
+                >
+                  <SelectTrigger className="h-8 w-20 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COUNT_OPTIONS.map(n => (
+                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          {/* Time window */}
+          <div className="border-t border-border pt-4 space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <Settings size={14} className="text-muted-foreground" />
+              Finestra oraria
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground w-10">Da:</span>
+              <Select
+                value={notifSettings.notification_window_start || '06:00'}
+                onValueChange={v => updateSetting('notification_window_start', v)}
+              >
+                <SelectTrigger className="h-8 flex-1 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {HOURS.map(h => (
+                    <SelectItem key={h} value={h}>{h}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-xs text-muted-foreground w-10">A:</span>
+              <Select
+                value={notifSettings.notification_window_end || '23:00'}
+                onValueChange={v => updateSetting('notification_window_end', v)}
+              >
+                <SelectTrigger className="h-8 flex-1 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {HOURS.map(h => (
+                    <SelectItem key={h} value={h}>{h}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Days of week */}
+          <div className="border-t border-border pt-4 space-y-3">
+            <p className="text-xs font-medium text-foreground">Giorni attivi</p>
+            <div className="flex gap-1.5">
+              {ALL_DAYS.map(d => {
+                const active = (notifSettings.notify_days || ALL_DAYS.map(x => x.key)).includes(d.key);
+                return (
+                  <button
+                    key={d.key}
+                    onClick={() => toggleDay(d.key)}
+                    className={`flex-1 rounded-lg py-2 text-xs font-bold transition-colors ${
+                      active
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Se non ci sono nuove domande, le notifiche ripetono quelle esistenti
+            </p>
           </div>
         </div>
       )}
