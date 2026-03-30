@@ -98,17 +98,46 @@ serve(async (req) => {
       // ── QUESTION NOTIFICATIONS ──
       if (progress.notify_questions !== false) {
         const qCount = progress.questions_per_day || 6;
-        let qTimes: string[] = progress.daily_times || [];
-        if (progress.daily_times_date !== romeDate) {
-          qTimes = generateRandomTimes(winStart, winEnd, qCount);
-          await supabase.from('question_progress')
-            .update({ daily_times: qTimes, daily_times_date: romeDate })
-            .eq('id', progress.id);
-          console.log(`Q times for ${userId} (${qCount}): ${qTimes.join(', ')}`);
+        const qFreq = progress.questions_frequency || 'day';
+        let shouldSendQ = false;
+
+        if (qFreq === 'hour') {
+          // Per-hour mode: send qCount notifications every hour within the window
+          const [wsh, wsm] = winStart.split(':').map(Number);
+          const [weh, wem] = winEnd.split(':').map(Number);
+          const [ch, cm] = romeTime.split(':').map(Number);
+          const curMin = ch * 60 + cm;
+          const startMin = wsh * 60 + wsm;
+          const endMin = weh * 60 + wem;
+          if (curMin >= startMin && curMin < endMin) {
+            // Generate random minute slots within the current hour
+            let qTimes: string[] = progress.daily_times || [];
+            const hourKey = `${romeDate}-${ch}`;
+            if (progress.daily_times_date !== hourKey) {
+              const hourStart = `${ch.toString().padStart(2,'0')}:00`;
+              const hourEnd = `${ch.toString().padStart(2,'0')}:59`;
+              qTimes = generateRandomTimes(hourStart, hourEnd, qCount);
+              await supabase.from('question_progress')
+                .update({ daily_times: qTimes, daily_times_date: hourKey })
+                .eq('id', progress.id);
+              console.log(`Q hourly times for ${userId} (${qCount}/h): ${qTimes.join(', ')}`);
+            }
+            shouldSendQ = qTimes.includes(romeTime);
+          }
+        } else {
+          // Per-day mode: send qCount notifications spread across the day
+          let qTimes: string[] = progress.daily_times || [];
+          if (progress.daily_times_date !== romeDate) {
+            qTimes = generateRandomTimes(winStart, winEnd, qCount);
+            await supabase.from('question_progress')
+              .update({ daily_times: qTimes, daily_times_date: romeDate })
+              .eq('id', progress.id);
+            console.log(`Q daily times for ${userId} (${qCount}): ${qTimes.join(', ')}`);
+          }
+          shouldSendQ = qTimes.includes(romeTime);
         }
 
-        if (qTimes.includes(romeTime)) {
-          // Get assignments - cycle through all of them
+        if (shouldSendQ) {
           const { data: assignments } = await supabase
             .from('question_assignments')
             .select('*')
@@ -116,7 +145,6 @@ serve(async (req) => {
             .order('sort_order', { ascending: true });
 
           if (assignments?.length) {
-            // Count today's deliveries to rotate
             const { count: todayCount } = await supabase
               .from('question_deliveries')
               .select('id', { count: 'exact', head: true })
@@ -124,7 +152,6 @@ serve(async (req) => {
               .gte('delivered_at', `${romeDate}T00:00:00`)
               .lte('delivered_at', `${romeDate}T23:59:59`);
 
-            // Cycle through assignments, repeating if needed
             const idx = (todayCount || 0) % assignments.length;
             const assignment = assignments[idx];
 
@@ -144,16 +171,43 @@ serve(async (req) => {
       // ── SOS DNA NOTIFICATIONS ──
       if (progress.notify_dna !== false) {
         const dnaCount = progress.dna_per_day || 6;
-        let dnaTimes: string[] = progress.dna_daily_times || [];
-        if (progress.dna_daily_times_date !== romeDate) {
-          dnaTimes = generateRandomTimes(winStart, winEnd, dnaCount);
-          await supabase.from('question_progress')
-            .update({ dna_daily_times: dnaTimes, dna_daily_times_date: romeDate })
-            .eq('id', progress.id);
-          console.log(`DNA times for ${userId} (${dnaCount}): ${dnaTimes.join(', ')}`);
+        const dnaFreq = progress.dna_frequency || 'day';
+        let shouldSendDna = false;
+
+        if (dnaFreq === 'hour') {
+          const [wsh, wsm] = winStart.split(':').map(Number);
+          const [weh, wem] = winEnd.split(':').map(Number);
+          const [ch, cm] = romeTime.split(':').map(Number);
+          const curMin = ch * 60 + cm;
+          const startMin = wsh * 60 + wsm;
+          const endMin = weh * 60 + wem;
+          if (curMin >= startMin && curMin < endMin) {
+            let dnaTimes: string[] = progress.dna_daily_times || [];
+            const hourKey = `${romeDate}-${ch}`;
+            if (progress.dna_daily_times_date !== hourKey) {
+              const hourStart = `${ch.toString().padStart(2,'0')}:00`;
+              const hourEnd = `${ch.toString().padStart(2,'0')}:59`;
+              dnaTimes = generateRandomTimes(hourStart, hourEnd, dnaCount);
+              await supabase.from('question_progress')
+                .update({ dna_daily_times: dnaTimes, dna_daily_times_date: hourKey })
+                .eq('id', progress.id);
+              console.log(`DNA hourly times for ${userId} (${dnaCount}/h): ${dnaTimes.join(', ')}`);
+            }
+            shouldSendDna = dnaTimes.includes(romeTime);
+          }
+        } else {
+          let dnaTimes: string[] = progress.dna_daily_times || [];
+          if (progress.dna_daily_times_date !== romeDate) {
+            dnaTimes = generateRandomTimes(winStart, winEnd, dnaCount);
+            await supabase.from('question_progress')
+              .update({ dna_daily_times: dnaTimes, dna_daily_times_date: romeDate })
+              .eq('id', progress.id);
+            console.log(`DNA daily times for ${userId} (${dnaCount}): ${dnaTimes.join(', ')}`);
+          }
+          shouldSendDna = dnaTimes.includes(romeTime);
         }
 
-        if (dnaTimes.includes(romeTime)) {
+        if (shouldSendDna) {
           const { data: questions } = await supabase
             .from('conflict_questions')
             .select('*, conflict_profiles!inner(name)')

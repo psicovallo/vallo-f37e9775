@@ -434,6 +434,7 @@ export type Database = {
           daily_times_date: string | null
           dna_daily_times: string[] | null
           dna_daily_times_date: string | null
+          dna_frequency: string
           dna_per_day: number
           id: string
           notification_window_end: string | null
@@ -443,6 +444,7 @@ export type Database = {
           notify_questions: boolean
           onboarding_completed: boolean
           phase: string
+          questions_frequency: string
           questions_per_day: number
           questions_read_count: number
           updated_at: string
@@ -459,6 +461,7 @@ export type Database = {
           daily_times_date?: string | null
           dna_daily_times?: string[] | null
           dna_daily_times_date?: string | null
+          dna_frequency?: string
           dna_per_day?: number
           id?: string
           notification_window_end?: string | null
@@ -468,6 +471,7 @@ export type Database = {
           notify_questions?: boolean
           onboarding_completed?: boolean
           phase?: string
+          questions_frequency?: string
           questions_per_day?: number
           questions_read_count?: number
           updated_at?: string
@@ -484,6 +488,7 @@ export type Database = {
           daily_times_date?: string | null
           dna_daily_times?: string[] | null
           dna_daily_times_date?: string | null
+          dna_frequency?: string
           dna_per_day?: number
           id?: string
           notification_window_end?: string | null
@@ -493,6 +498,7 @@ export type Database = {
           notify_questions?: boolean
           onboarding_completed?: boolean
           phase?: string
+          questions_frequency?: string
           questions_per_day?: number
           questions_read_count?: number
           updated_at?: string
