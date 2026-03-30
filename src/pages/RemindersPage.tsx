@@ -195,21 +195,46 @@ export default function RemindersPage() {
               />
             </div>
             {notifSettings.notify_questions && (
-              <div className="ml-6 flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Quante al giorno:</span>
-                <Select
-                  value={String(notifSettings.questions_per_day || 6)}
-                  onValueChange={v => updateSetting('questions_per_day', Number(v))}
-                >
-                  <SelectTrigger className="h-8 w-20 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COUNT_OPTIONS.map(n => (
-                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="ml-6 space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-muted-foreground">Quante:</span>
+                  <Select
+                    value={String(notifSettings.questions_per_day || 6)}
+                    onValueChange={v => updateSetting('questions_per_day', Number(v))}
+                  >
+                    <SelectTrigger className="h-8 w-16 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COUNT_OPTIONS.map(n => (
+                        <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex rounded-lg border border-border overflow-hidden">
+                    <button
+                      onClick={() => updateSetting('questions_frequency', 'day')}
+                      className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                        (notifSettings.questions_frequency || 'day') === 'day'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground'
+                      }`}
+                    >al giorno</button>
+                    <button
+                      onClick={() => updateSetting('questions_frequency', 'hour')}
+                      className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                        notifSettings.questions_frequency === 'hour'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground'
+                      }`}
+                    >all'ora</button>
+                  </div>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  {notifSettings.questions_frequency === 'hour'
+                    ? `${notifSettings.questions_per_day || 6} notifiche ogni ora nella finestra oraria`
+                    : `${notifSettings.questions_per_day || 6} notifiche distribuite nella giornata`}
+                </p>
               </div>
             )}
           </div>
