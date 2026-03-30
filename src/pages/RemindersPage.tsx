@@ -21,6 +21,8 @@ interface NotifSettings {
   dna_daily_times: string[] | null;
   questions_per_day: number;
   dna_per_day: number;
+  questions_frequency: string;
+  dna_frequency: string;
   notification_window_start: string | null;
   notification_window_end: string | null;
   notify_days: string[];
