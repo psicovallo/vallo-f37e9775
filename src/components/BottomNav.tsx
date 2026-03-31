@@ -1,6 +1,9 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Bell, StickyNote, MessageSquare, Shield, Flame, PenLine, Swords } from 'lucide-react';
+import { Home, Bell, Shield, Flame, PenLine, Swords, Share2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+
+const SHARE_MESSAGE = `Smetti di trascinarti nel fango della normalità. Ho trovato il codice per camminare a un palmo da terra mentre gli altri mormorano nell'ombra. Senti il brivido di chi ha finalmente indossato l'Armatura. Diventa il Dio della tua realtà: https://www.psicovallo.com`;
 
 const tabs = [
   { to: '/home', label: 'Home', icon: Home },
@@ -8,7 +11,6 @@ const tabs = [
   { to: '/sfogo', label: 'Sfogo', icon: PenLine },
   { to: '/sos-conflitti', label: 'SOS DNA', icon: Swords },
   { to: '/reminders', label: 'Promemoria', icon: Bell },
-  { to: '/messages', label: 'Messaggi', icon: MessageSquare },
 ];
 
 export default function BottomNav() {
