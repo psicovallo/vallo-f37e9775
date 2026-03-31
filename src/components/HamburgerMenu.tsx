@@ -19,7 +19,15 @@ export default function HamburgerMenu() {
   const [userName, setUserName] = useState('');
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
+  const handleShare = async () => {
+    if (navigator.share) {
+      try { await navigator.share({ text: SHARE_MESSAGE }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(SHARE_MESSAGE);
+      toast.success('Link copiato!');
+    }
+  };
+
     if (!user) return;
     supabase
       .from('profiles')
