@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
 import AuthPage from "@/pages/AuthPage";
+import LandingPage from "@/pages/LandingPage";
+import ManifestoPage from "@/pages/ManifestoPage";
 import HomePage from "@/pages/HomePage";
 import RemindersPage from "@/pages/RemindersPage";
 import NotesPage from "@/pages/NotesPage";
@@ -27,7 +29,9 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/" element={<AuthPage />} />
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/manifesto" element={<ManifestoPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route element={<AppLayout />}>
               <Route path="/home" element={<HomePage />} />
@@ -40,6 +44,7 @@ const App = () => (
               <Route path="/notes" element={<NotesPage />} />
               <Route path="/messages" element={<MessagesPage />} />
               <Route path="/admin" element={<AdminPage />} />
+              <Route path="/landing" element={<LandingPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

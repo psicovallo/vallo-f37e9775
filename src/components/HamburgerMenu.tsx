@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Menu, X, User, Zap, Bell, BookOpen, LogOut, Globe, Save } from 'lucide-react';
+import { Menu, X, User, Zap, Bell, BookOpen, LogOut, Globe, Save, Shield, ScrollText, Share2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -104,6 +104,15 @@ export default function HamburgerMenu() {
             className="w-full flex items-center gap-3 rounded-xl p-3 text-sm text-foreground hover:bg-muted transition-colors">
             <BookOpen size={18} /> Manuale Operativo
           </button>
+          <div className="my-2 border-t border-border" />
+          <Link to="/landing" onClick={() => setOpen(false)}
+            className="w-full flex items-center gap-3 rounded-xl p-3 text-sm text-foreground hover:bg-muted transition-colors">
+            <Shield size={18} /> L'Armatura
+          </Link>
+          <Link to="/manifesto" onClick={() => setOpen(false)}
+            className="w-full flex items-center gap-3 rounded-xl p-3 text-sm text-foreground hover:bg-muted transition-colors">
+            <ScrollText size={18} /> Il Manifesto
+          </Link>
         </div>
 
         <div className="p-4 border-t border-border">
