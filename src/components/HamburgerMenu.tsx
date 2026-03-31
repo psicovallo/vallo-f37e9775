@@ -28,6 +28,7 @@ export default function HamburgerMenu() {
     }
   };
 
+  useEffect(() => {
     if (!user) return;
     supabase
       .from('profiles')
