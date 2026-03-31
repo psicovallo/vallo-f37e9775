@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Save, Brain, Loader2, User, Target, MessageCircle, AlertTriangle, Compass } from 'lucide-react';
+import { Save, Brain, Loader2, User, Target, MessageCircle, AlertTriangle, Compass, MessageSquare } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import VoiceInput from '@/components/VoiceInput';
 import { formatDistanceToNow } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -243,6 +244,14 @@ export default function ProfilePage() {
           per costruire un profilo psicologico evolutivo.
         </p>
       </div>
+
+      {/* Chatta con Vallo */}
+      <Link
+        to="/messages"
+        className="flex items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
+      >
+        <MessageSquare size={18} /> Chatta con Vallo
+      </Link>
 
       {/* Disclaimer */}
       <p className="text-[10px] text-muted-foreground text-center italic px-4">

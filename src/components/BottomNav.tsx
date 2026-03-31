@@ -1,6 +1,9 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Bell, StickyNote, MessageSquare, Shield, Flame, PenLine, Swords } from 'lucide-react';
+import { Home, Bell, Shield, Flame, PenLine, Swords, Share2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+
+const SHARE_MESSAGE = `Smetti di trascinarti nel fango della normalità. Ho trovato il codice per camminare a un palmo da terra mentre gli altri mormorano nell'ombra. Senti il brivido di chi ha finalmente indossato l'Armatura. Diventa il Dio della tua realtà: https://www.psicovallo.com`;
 
 const tabs = [
   { to: '/home', label: 'Home', icon: Home },
@@ -8,7 +11,6 @@ const tabs = [
   { to: '/sfogo', label: 'Sfogo', icon: PenLine },
   { to: '/sos-conflitti', label: 'SOS DNA', icon: Swords },
   { to: '/reminders', label: 'Promemoria', icon: Bell },
-  { to: '/messages', label: 'Messaggi', icon: MessageSquare },
 ];
 
 export default function BottomNav() {
@@ -16,6 +18,15 @@ export default function BottomNav() {
   const location = useLocation();
 
   const allTabs = isAdmin ? [...tabs, { to: '/admin', label: 'Admin', icon: Shield }] : tabs;
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try { await navigator.share({ text: SHARE_MESSAGE }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(SHARE_MESSAGE);
+      toast.success('Link copiato!');
+    }
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card safe-area-bottom">
@@ -35,6 +46,10 @@ export default function BottomNav() {
             </NavLink>
           );
         })}
+        <button onClick={handleShare} className="flex flex-col items-center gap-0.5 px-2 py-1">
+          <Share2 size={20} className="text-muted-foreground" />
+          <span className="text-[10px] text-muted-foreground">Condividi</span>
+        </button>
       </div>
     </nav>
   );

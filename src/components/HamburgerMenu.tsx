@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Menu, X, User, Zap, Bell, BookOpen, LogOut, Globe, Save, Shield, ScrollText, Share2 } from 'lucide-react';
+import { Menu, X, User, Zap, Bell, BookOpen, LogOut, Globe, Save, Shield, ScrollText, Share2, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+
+const SHARE_MESSAGE = `Smetti di trascinarti nel fango della normalità. Ho trovato il codice per camminare a un palmo da terra mentre gli altri mormorano nell'ombra. Senti il brivido di chi ha finalmente indossato l'Armatura. Diventa il Dio della tua realtà: https://www.psicovallo.com`;
 
 export default function HamburgerMenu() {
   const { user, signOut } = useAuth();
@@ -16,6 +18,15 @@ export default function HamburgerMenu() {
   const [linguaMadre, setLinguaMadre] = useState('italiano');
   const [userName, setUserName] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try { await navigator.share({ text: SHARE_MESSAGE }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(SHARE_MESSAGE);
+      toast.success('Link copiato!');
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -113,6 +124,11 @@ export default function HamburgerMenu() {
             className="w-full flex items-center gap-3 rounded-xl p-3 text-sm text-foreground hover:bg-muted transition-colors">
             <ScrollText size={18} /> Il Manifesto
           </Link>
+          <div className="my-2 border-t border-border" />
+          <button onClick={() => { setOpen(false); handleShare(); }}
+            className="w-full flex items-center gap-3 rounded-xl p-3 text-sm text-foreground hover:bg-muted transition-colors">
+            <Share2 size={18} /> Condividi l'Armatura
+          </button>
         </div>
 
         <div className="p-4 border-t border-border">
