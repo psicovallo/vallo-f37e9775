@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import AppLayout from "@/components/AppLayout";
 import AuthPage from "@/pages/AuthPage";
+import LandingPage from "@/pages/LandingPage";
+import ManifestoPage from "@/pages/ManifestoPage";
 import HomePage from "@/pages/HomePage";
 import RemindersPage from "@/pages/RemindersPage";
 import NotesPage from "@/pages/NotesPage";
