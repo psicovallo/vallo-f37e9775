@@ -9,8 +9,9 @@ export default function LandingPage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
+  // Only redirect if accessed as root "/" and user is logged in
   useEffect(() => {
-    if (!loading && user) navigate('/home', { replace: true });
+    if (!loading && user && window.location.pathname === '/') navigate('/home', { replace: true });
   }, [loading, user, navigate]);
 
   const handleShare = async () => {

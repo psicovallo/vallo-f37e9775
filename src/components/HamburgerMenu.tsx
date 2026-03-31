@@ -113,6 +113,11 @@ export default function HamburgerMenu() {
             className="w-full flex items-center gap-3 rounded-xl p-3 text-sm text-foreground hover:bg-muted transition-colors">
             <ScrollText size={18} /> Il Manifesto
           </Link>
+          <div className="my-2 border-t border-border" />
+          <button onClick={() => { setOpen(false); handleShare(); }}
+            className="w-full flex items-center gap-3 rounded-xl p-3 text-sm text-foreground hover:bg-muted transition-colors">
+            <Share2 size={18} /> Condividi l'Armatura
+          </button>
         </div>
 
         <div className="p-4 border-t border-border">

@@ -19,6 +19,15 @@ export default function BottomNav() {
 
   const allTabs = isAdmin ? [...tabs, { to: '/admin', label: 'Admin', icon: Shield }] : tabs;
 
+  const handleShare = async () => {
+    if (navigator.share) {
+      try { await navigator.share({ text: SHARE_MESSAGE }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(SHARE_MESSAGE);
+      toast.success('Link copiato!');
+    }
+  };
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card safe-area-bottom">
       <div className="mx-auto flex max-w-lg justify-around py-2">
@@ -37,6 +46,10 @@ export default function BottomNav() {
             </NavLink>
           );
         })}
+        <button onClick={handleShare} className="flex flex-col items-center gap-0.5 px-2 py-1">
+          <Share2 size={20} className="text-muted-foreground" />
+          <span className="text-[10px] text-muted-foreground">Condividi</span>
+        </button>
       </div>
     </nav>
   );
