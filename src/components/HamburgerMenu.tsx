@@ -5,6 +5,8 @@ import { Menu, X, User, Zap, Bell, BookOpen, LogOut, Globe, Save, Shield, Scroll
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
+const SHARE_MESSAGE = `Smetti di trascinarti nel fango della normalità. Ho trovato il codice per camminare a un palmo da terra mentre gli altri mormorano nell'ombra. Senti il brivido di chi ha finalmente indossato l'Armatura. Diventa il Dio della tua realtà: https://www.psicovallo.com`;
+
 export default function HamburgerMenu() {
   const { user, signOut } = useAuth();
   const [open, setOpen] = useState(false);

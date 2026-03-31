@@ -245,6 +245,14 @@ export default function ProfilePage() {
         </p>
       </div>
 
+      {/* Chatta con Vallo */}
+      <Link
+        to="/messages"
+        className="flex items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
+      >
+        <MessageSquare size={18} /> Chatta con Vallo
+      </Link>
+
       {/* Disclaimer */}
       <p className="text-[10px] text-muted-foreground text-center italic px-4">
         "La comunicazione è lo specchio del tuo DNA. Se vuoi passare dalla reazione alla creazione olografica, 
