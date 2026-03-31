@@ -1,0 +1,2 @@
+ALTER TABLE public.question_progress ALTER COLUMN daily_times_date TYPE text USING daily_times_date::text;
+ALTER TABLE public.question_progress ALTER COLUMN dna_daily_times_date TYPE text USING dna_daily_times_date::text;
