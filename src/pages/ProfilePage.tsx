@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Save, Brain, Loader2, User, Target, MessageCircle, AlertTriangle, Compass, MessageSquare } from 'lucide-react';
+import { Save, Brain, Loader2, User, Target, MessageCircle, AlertTriangle, Compass, MessageSquare, Mail, Lock, Shield, Smartphone, CheckCircle, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import VoiceInput from '@/components/VoiceInput';
 import { formatDistanceToNow } from 'date-fns';
 import { it } from 'date-fns/locale';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 interface ProfileData {
   name: string;
@@ -30,6 +31,24 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resendingConfirm, setResendingConfirm] = useState(false);
+  const [deviceCount, setDeviceCount] = useState(0);
+  const [registeringDevice, setRegisteringDevice] = useState(false);
+  const { isSupported, requestPermission } = usePushNotifications();
+
+  const emailConfirmed = !!user?.email_confirmed_at;
+
+  const loadDeviceCount = useCallback(async () => {
+    if (!user) return;
+    const { count } = await supabase
+      .from('push_subscriptions')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+    setDeviceCount(count || 0);
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -54,6 +73,7 @@ export default function ProfilePage() {
         }
         setLoading(false);
       });
+    loadDeviceCount();
   }, [user]);
 
   const updateField = (field: keyof ProfileData, value: string) => {
@@ -99,6 +119,54 @@ export default function ProfilePage() {
     setAnalyzing(false);
   };
 
+  const handleChangePassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast.error('La password deve avere almeno 6 caratteri');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('Le password non coincidono');
+      return;
+    }
+    setChangingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      toast.error('Errore: ' + error.message);
+    } else {
+      toast.success('Password aggiornata');
+      setNewPassword('');
+      setConfirmPassword('');
+    }
+    setChangingPassword(false);
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!user?.email) return;
+    setResendingConfirm(true);
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: user.email,
+    });
+    if (error) {
+      toast.error('Errore: ' + error.message);
+    } else {
+      toast.success('Email di conferma inviata!');
+    }
+    setResendingConfirm(false);
+  };
+
+  const handleRegisterDevice = async () => {
+    setRegisteringDevice(true);
+    const success = await requestPermission();
+    if (success) {
+      toast.success('Dispositivo registrato per le notifiche!');
+      loadDeviceCount();
+    } else {
+      toast.error('Impossibile registrare il dispositivo. Controlla i permessi del browser.');
+    }
+    setRegisteringDevice(false);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -118,6 +186,89 @@ export default function ProfilePage() {
         <p className="text-xs text-muted-foreground">
           Scrivi chi sei. Il Consiglio dei 15 leggerà tutto il tuo percorso.
         </p>
+      </div>
+
+      {/* Account section */}
+      <div className="rounded-xl border border-border bg-card p-4 space-y-4">
+        <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+          <Shield size={16} className="text-primary" /> Account
+        </h2>
+
+        {/* Email */}
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+            <Mail size={12} /> Email
+          </label>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-foreground">{user?.email || '—'}</span>
+            {emailConfirmed ? (
+              <span className="flex items-center gap-1 text-[10px] text-green-600 bg-green-500/10 px-2 py-0.5 rounded-full">
+                <CheckCircle size={10} /> Verificata
+              </span>
+            ) : (
+              <button
+                onClick={handleResendConfirmation}
+                disabled={resendingConfirm}
+                className="flex items-center gap-1 text-[10px] text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-full hover:bg-amber-500/20 transition-colors"
+              >
+                {resendingConfirm ? <Loader2 size={10} className="animate-spin" /> : <RefreshCw size={10} />}
+                {resendingConfirm ? 'Invio...' : 'Invia conferma'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Change password */}
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+            <Lock size={12} /> Cambia Password
+          </label>
+          <input
+            type="password"
+            value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+            placeholder="Nuova password"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={e => setConfirmPassword(e.target.value)}
+            placeholder="Conferma password"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          <button
+            onClick={handleChangePassword}
+            disabled={changingPassword || !newPassword}
+            className="w-full flex items-center justify-center gap-2 rounded-lg bg-muted px-3 py-2 text-xs font-medium text-foreground hover:bg-muted/80 disabled:opacity-50"
+          >
+            {changingPassword ? <Loader2 size={12} className="animate-spin" /> : <Lock size={12} />}
+            {changingPassword ? 'Aggiornamento...' : 'Aggiorna Password'}
+          </button>
+        </div>
+
+        {/* Devices */}
+        <div className="space-y-2 border-t border-border pt-3">
+          <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+            <Smartphone size={12} /> Dispositivi Notifiche
+          </label>
+          <p className="text-xs text-muted-foreground">
+            {deviceCount === 0 ? 'Nessun dispositivo registrato' : `${deviceCount} dispositivo/i registrato/i`}
+          </p>
+          {isSupported && (
+            <button
+              onClick={handleRegisterDevice}
+              disabled={registeringDevice}
+              className="w-full flex items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-medium text-primary hover:bg-primary/20 disabled:opacity-50"
+            >
+              {registeringDevice ? <Loader2 size={12} className="animate-spin" /> : <Smartphone size={12} />}
+              {registeringDevice ? 'Registrazione...' : 'Registra questo dispositivo'}
+            </button>
+          )}
+          <p className="text-[10px] text-muted-foreground">
+            Registra ogni telefono/browser su cui vuoi ricevere le notifiche push.
+          </p>
+        </div>
       </div>
 
       {/* User-written section */}
