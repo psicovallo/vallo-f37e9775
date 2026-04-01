@@ -1,0 +1,1 @@
+CREATE POLICY "Users can update own push subs" ON public.push_subscriptions FOR UPDATE TO public USING (auth.uid() = user_id);
