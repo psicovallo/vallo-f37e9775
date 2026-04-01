@@ -43,16 +43,31 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
       );
 
-      // Delete old subscriptions for this user
-      await supabase.from('push_subscriptions').delete().eq('user_id', user_id);
+      // Upsert: replace if same endpoint exists, otherwise add new device
+      // First check if this endpoint already exists
+      const { data: existing } = await supabase
+        .from('push_subscriptions')
+        .select('id')
+        .eq('user_id', user_id)
+        .eq('endpoint', endpoint)
+        .maybeSingle();
 
-      // Insert new subscription
-      const { error } = await supabase.from('push_subscriptions').insert({
+      let error;
+      if (existing) {
+        // Update existing subscription keys
+        ({ error } = await supabase.from('push_subscriptions').update({
+          p256dh: keys.p256dh,
+          auth: keys.auth,
+        }).eq('id', existing.id));
+      } else {
+        // Insert new device subscription
+        ({ error } = await supabase.from('push_subscriptions').insert({
         user_id,
         endpoint,
         p256dh: keys.p256dh,
         auth: keys.auth,
-      });
+        }));
+      }
 
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), {
