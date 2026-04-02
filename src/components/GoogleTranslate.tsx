@@ -21,21 +21,30 @@ const LANG_MAP: Record<string, string> = {
   'हिन्दी': 'hi',
 };
 
-export default function GoogleTranslate({ language }: { language: string }) {
+export default function GoogleTranslate({ language, enabled = false }: { language: string; enabled?: boolean }) {
   useEffect(() => {
     const langCode = LANG_MAP[language] || 'it';
-    
-    // If Italian, remove any existing translation
-    if (langCode === 'it') {
-      // Reset to original
+
+    const resetTranslation = () => {
       const frame = document.querySelector('.goog-te-banner-frame') as HTMLIFrameElement;
       if (frame) {
         const closeBtn = frame.contentDocument?.querySelector('.goog-close-link') as HTMLElement;
         closeBtn?.click();
       }
-      // Remove cookie
+
+      const combo = document.querySelector('.goog-te-combo') as HTMLSelectElement | null;
+      if (combo) {
+        combo.value = 'it';
+        combo.dispatchEvent(new Event('change'));
+      }
+
       document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.' + window.location.hostname;
+    };
+    
+    // Translation stays opt-in: browser language can be remembered without auto-translating the UI.
+    if (!enabled || langCode === 'it') {
+      resetTranslation();
       return;
     }
 
@@ -89,7 +98,7 @@ export default function GoogleTranslate({ language }: { language: string }) {
     observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['href'] });
 
     return () => observer.disconnect();
-  }, [language]);
+  }, [enabled, language]);
 
   return <div id="google_translate_element" style={{ position: 'fixed', top: -9999, left: -9999 }} />;
 }
