@@ -85,6 +85,8 @@ export default function HomePage() {
         <HamburgerMenu />
       </div>
 
+      <InstallBanner />
+
       {/* Active question card */}
       <Link
         to="/question"
