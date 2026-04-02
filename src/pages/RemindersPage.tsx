@@ -5,6 +5,7 @@ import { Plus, Trash2, Clock, BellRing, X, Bell, Zap, Swords, Settings } from 'l
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 interface Reminder {
   id: string;
@@ -47,6 +48,7 @@ const COUNT_OPTIONS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20];
 
 export default function RemindersPage() {
   const { user } = useAuth();
+  const { isSupported, requestPermission } = usePushNotifications();
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [text, setText] = useState('');
   const [times, setTimes] = useState<string[]>(['']);
@@ -149,6 +151,15 @@ export default function RemindersPage() {
     setTesting(true);
     setTestResult(null);
     try {
+      if (isSupported) {
+        const ready = await requestPermission();
+        if (!ready) {
+          setTestResult('❌ Notifiche non attive su questo dispositivo. Registralo prima.');
+          setTesting(false);
+          return;
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke('send-push-notification', {
         body: { user_ids: [user.id], title: '🧪 Test Vallo', body: 'Le notifiche push funzionano!' },
       });
