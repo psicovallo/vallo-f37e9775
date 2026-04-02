@@ -24,6 +24,7 @@ interface ActiveQuestion {
 
 export default function HomePage() {
   const { user } = useAuth();
+  const { linguaMadre, setLanguage } = useLanguage();
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
   const [activeQuestion, setActiveQuestion] = useState<ActiveQuestion | null>(null);
 
