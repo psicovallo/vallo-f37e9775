@@ -98,9 +98,8 @@ export function usePushNotifications() {
       let subscription = await registration.pushManager.getSubscription();
 
       if (!subscription) {
-        const applicationServerKey = urlBase64ToUint8Array(vapidData.publicKey);
+        const applicationServerKey = urlBase64ToUint8Array(vapidData.publicKey).buffer as ArrayBuffer;
 
-        // Uint8Array is more reliable than ArrayBuffer here on mobile browsers
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey,
