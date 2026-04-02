@@ -6,6 +6,8 @@ import { Link } from 'react-router-dom';
 import OnboardingPage from '@/pages/OnboardingPage';
 import HamburgerMenu from '@/components/HamburgerMenu';
 import InstallBanner from '@/components/InstallBanner';
+import LanguageButton from '@/components/LanguageButton';
+import { useLanguage } from '@/components/AppLayout';
 
 function getGreeting(): string {
   const h = new Date().getHours();
