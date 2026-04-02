@@ -86,7 +86,10 @@ export default function HomePage() {
           <p className="text-sm text-muted-foreground">{getGreeting()},</p>
           <h1 className="text-2xl font-bold text-foreground">{userName}</h1>
         </div>
-        <HamburgerMenu />
+        <div className="flex items-center gap-1">
+          <LanguageButton current={linguaMadre} onChange={setLanguage} />
+          <HamburgerMenu />
+        </div>
       </div>
 
       <InstallBanner />
