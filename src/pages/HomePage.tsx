@@ -5,6 +5,7 @@ import { ChevronRight, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import OnboardingPage from '@/pages/OnboardingPage';
 import HamburgerMenu from '@/components/HamburgerMenu';
+import InstallBanner from '@/components/InstallBanner';
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -84,6 +85,8 @@ export default function HomePage() {
         </div>
         <HamburgerMenu />
       </div>
+
+      <InstallBanner />
 
       {/* Active question card */}
       <Link
