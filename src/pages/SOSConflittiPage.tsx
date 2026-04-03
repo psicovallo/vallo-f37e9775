@@ -255,7 +255,7 @@ export default function SOSConflittiPage() {
       const targetLang = (selectedProfile as any).lingua_bersaglio || 'italiano';
       const body: any = {
         conflict_profile_id: selectedProfile.id,
-        language: linguaMadre,
+        language: 'italiano',
         lingua_bersaglio: targetLang,
         scenario: selectedProfile.scenario || 'conflitto',
         user_style: selectedProfile.user_style || 'chirurgico',
@@ -345,7 +345,13 @@ export default function SOSConflittiPage() {
         <QuestionActions text={q.question_text} />
       </div>
       {(q as any).question_text_translated && (q as any).question_text_translated !== q.question_text && (
-        <p className="text-xs text-muted-foreground italic leading-relaxed mt-1">🌐 {(q as any).question_text_translated}</p>
+        <div className="mt-2 rounded-lg border border-muted bg-muted/30 p-3 space-y-1">
+          <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">🌐 Lingua bersaglio</p>
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-sm text-foreground italic leading-relaxed flex-1">"{(q as any).question_text_translated}"</p>
+            <QuestionActions text={(q as any).question_text_translated} />
+          </div>
+        </div>
       )}
 
       <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3">

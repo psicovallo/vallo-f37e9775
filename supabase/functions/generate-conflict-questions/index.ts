@@ -83,23 +83,23 @@ serve(async (req) => {
       ? `\nATTENZIONE: L'utente ha chiesto di abbassare il calibro. Genera una versione più morbida MA comunque strategica e manipolatoria. Non perdere la ferocia logica, solo il tono. Il messaggio deve comunque dominare.`
       : "";
 
-    const targetLang = lingua_bersaglio && lingua_bersaglio !== language ? lingua_bersaglio : "";
+    const targetLang = lingua_bersaglio && lingua_bersaglio !== "italiano" ? lingua_bersaglio : "";
     const dualLangInstruction = targetLang
-      ? `\nDUAL LANGUAGE: Genera ogni frase PRIMA nella lingua del bersaglio (${targetLang}) come "text", POI aggiungi il campo "text_translated" con la traduzione nella lingua dell'utente (${language}).`
+      ? `\nDUAL LANGUAGE: Genera ogni frase PRIMA in italiano come "text", POI aggiungi il campo "text_translated" con la traduzione nella lingua del bersaglio (${targetLang}).`
       : "";
 
     const outputFormat = scenario === "whatsapp"
       ? `RISPONDI SOLO con un JSON valido (array di 3 oggetti):
 [
-  {"text": "risposta WhatsApp pronta all'uso${targetLang ? ` in ${targetLang}` : ""}", "validation": "analisi tecnica del sottotesto e perché questa risposta lo distrugge", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione in ${language}"` : ""}},
-  {"text": "risposta alternativa", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione"` : ""}},
-  {"text": "risposta nucleare", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione"` : ""}}
+  {"text": "risposta WhatsApp in italiano", "validation": "analisi tecnica del sottotesto e perché questa risposta lo distrugge", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione in ${targetLang}"` : ""}},
+  {"text": "risposta alternativa in italiano", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione in ${targetLang}"` : ""}},
+  {"text": "risposta nucleare in italiano", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione in ${targetLang}"` : ""}}
 ]`
       : `RISPONDI SOLO con un JSON valido (array di 3 oggetti):
 [
-  {"text": "frase/domanda Velo ${velo_number}${targetLang ? ` in ${targetLang}` : ""}", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione in ${language}"` : ""}},
-  {"text": "frase/domanda alternativa", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione"` : ""}},
-  {"text": "frase/domanda più aggressiva", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione"` : ""}}
+  {"text": "frase/domanda Velo ${velo_number} in italiano", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione in ${targetLang}"` : ""}},
+  {"text": "frase/domanda alternativa in italiano", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione in ${targetLang}"` : ""}},
+  {"text": "frase/domanda più aggressiva in italiano", "validation": "spiegazione tecnica", "maestri_used": "Maestro1, Maestro2, Maestro3"${targetLang ? `, "text_translated": "traduzione in ${targetLang}"` : ""}}
 ]`;
 
     const systemPrompt = `SEI IL CONSIGLIO DEI 15 MAESTRI. Lavorate TUTTI INSIEME come un unico organismo analitico.
@@ -135,7 +135,7 @@ PROTOCOLLO:
 4. VALIDAZIONE TECNICA: Per ogni frase, spiega QUALE maestro l'ha ispirata e PERCHÉ.
 
 REGOLE FONDAMENTALI:
-- Le frasi devono essere in ${targetLang || language}.
+- Le frasi devono essere in italiano.${targetLang ? ` Il campo "text_translated" deve essere in ${targetLang}.` : ""}
 - BREVITÀ ASSOLUTA: ogni frase deve avere MASSIMO 15-20 parole. Facile da ricordare a memoria.
 - La frase deve poter essere detta guardando negli occhi il bersaglio.
 - NO frasi elaborate, accademiche o con subordinate complesse. Linguaggio DIRETTO, quotidiano ma tagliente.
