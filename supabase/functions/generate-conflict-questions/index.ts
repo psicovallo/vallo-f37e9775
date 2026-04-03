@@ -135,7 +135,7 @@ PROTOCOLLO:
 4. VALIDAZIONE TECNICA: Per ogni frase, spiega QUALE maestro l'ha ispirata e PERCHÉ.
 
 REGOLE FONDAMENTALI:
-- Le frasi devono essere in ${targetLang || language}.
+- Le frasi devono essere in italiano.${targetLang ? ` Il campo "text_translated" deve essere in ${targetLang}.` : ""}
 - BREVITÀ ASSOLUTA: ogni frase deve avere MASSIMO 15-20 parole. Facile da ricordare a memoria.
 - La frase deve poter essere detta guardando negli occhi il bersaglio.
 - NO frasi elaborate, accademiche o con subordinate complesse. Linguaggio DIRETTO, quotidiano ma tagliente.
