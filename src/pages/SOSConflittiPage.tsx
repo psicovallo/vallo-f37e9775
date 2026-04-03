@@ -255,7 +255,7 @@ export default function SOSConflittiPage() {
       const targetLang = (selectedProfile as any).lingua_bersaglio || 'italiano';
       const body: any = {
         conflict_profile_id: selectedProfile.id,
-        language: linguaMadre,
+        language: 'italiano',
         lingua_bersaglio: targetLang,
         scenario: selectedProfile.scenario || 'conflitto',
         user_style: selectedProfile.user_style || 'chirurgico',
