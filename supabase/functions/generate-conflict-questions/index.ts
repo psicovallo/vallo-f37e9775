@@ -83,9 +83,9 @@ serve(async (req) => {
       ? `\nATTENZIONE: L'utente ha chiesto di abbassare il calibro. Genera una versione più morbida MA comunque strategica e manipolatoria. Non perdere la ferocia logica, solo il tono. Il messaggio deve comunque dominare.`
       : "";
 
-    const targetLang = lingua_bersaglio && lingua_bersaglio !== language ? lingua_bersaglio : "";
+    const targetLang = lingua_bersaglio && lingua_bersaglio !== "italiano" ? lingua_bersaglio : "";
     const dualLangInstruction = targetLang
-      ? `\nDUAL LANGUAGE: Genera ogni frase PRIMA nella lingua del bersaglio (${targetLang}) come "text", POI aggiungi il campo "text_translated" con la traduzione nella lingua dell'utente (${language}).`
+      ? `\nDUAL LANGUAGE: Genera ogni frase PRIMA in italiano come "text", POI aggiungi il campo "text_translated" con la traduzione nella lingua del bersaglio (${targetLang}).`
       : "";
 
     const outputFormat = scenario === "whatsapp"
