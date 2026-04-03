@@ -339,7 +339,10 @@ export default function SOSConflittiPage() {
         </span>
       </div>
 
-      <p className="text-sm text-foreground font-medium leading-relaxed">"{q.question_text}"</p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-sm text-foreground font-medium leading-relaxed flex-1">"{q.question_text}"</p>
+        <QuestionActions text={q.question_text} />
+      </div>
       {(q as any).question_text_translated && (q as any).question_text_translated !== q.question_text && (
         <p className="text-xs text-muted-foreground italic leading-relaxed mt-1">🌐 {(q as any).question_text_translated}</p>
       )}
