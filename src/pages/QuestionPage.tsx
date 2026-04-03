@@ -66,26 +66,7 @@ function findBlockedWords(text: string): string[] {
   });
 }
 
-function QuestionActions({ text }: { text: string }) {
-  const shareText = `Domanda dal Consiglio dei Maestri:\n\n${text}`;
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(shareText);
-    toast.success('Domanda copiata ✓');
-  };
-  const handleShare = async () => {
-    if (navigator.share) {
-      try { await navigator.share({ text: shareText }); } catch {}
-    } else {
-      await handleCopy();
-    }
-  };
-  return (
-    <div className="mt-3 flex justify-end gap-2">
-      <button onClick={handleCopy} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:text-primary hover:bg-primary/10"><Copy size={18} /></button>
-      <button onClick={handleShare} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:text-primary hover:bg-primary/10"><Share2 size={18} /></button>
-    </div>
-  );
-}
+import QuestionActions from '@/components/QuestionActions';
 
 export default function QuestionPage() {
   const { user } = useAuth();
