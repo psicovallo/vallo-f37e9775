@@ -13,6 +13,7 @@ import {
   Heart, Briefcase, MessageCircle, Crosshair, Sparkles, Brain, Zap, Target, Info, Globe
 } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
+import QuestionActions from '@/components/QuestionActions';
 
 const RELATIONSHIP_OPTIONS = [
   'Compagna', 'Moglie', 'Fidanzata', 'Figlio', 'Figlia', 'Amica',
