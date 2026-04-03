@@ -13,6 +13,7 @@ import {
   Heart, Briefcase, MessageCircle, Crosshair, Sparkles, Brain, Zap, Target, Info, Globe
 } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
+import QuestionActions from '@/components/QuestionActions';
 
 const RELATIONSHIP_OPTIONS = [
   'Compagna', 'Moglie', 'Fidanzata', 'Figlio', 'Figlia', 'Amica',
@@ -339,7 +340,10 @@ export default function SOSConflittiPage() {
         </span>
       </div>
 
-      <p className="text-sm text-foreground font-medium leading-relaxed">"{q.question_text}"</p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-sm text-foreground font-medium leading-relaxed flex-1">"{q.question_text}"</p>
+        <QuestionActions text={q.question_text} />
+      </div>
       {(q as any).question_text_translated && (q as any).question_text_translated !== q.question_text && (
         <p className="text-xs text-muted-foreground italic leading-relaxed mt-1">🌐 {(q as any).question_text_translated}</p>
       )}
@@ -871,7 +875,10 @@ export default function SOSConflittiPage() {
                   {q.status === 'validated' ? 'Validata' : 'Aggiustata'}
                 </span>
               </div>
-              <p className="text-sm text-foreground">"{q.question_text}"</p>
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-sm text-foreground flex-1">"{q.question_text}"</p>
+                <QuestionActions text={q.question_text} />
+              </div>
               <p className="text-xs text-muted-foreground">{q.validation_text}</p>
               <p className="text-xs text-primary">Maestri: {q.maestri_used}</p>
               {q.adjustment_notes && (
