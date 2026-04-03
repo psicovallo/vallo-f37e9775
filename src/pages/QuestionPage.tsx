@@ -400,6 +400,7 @@ export default function QuestionPage() {
 
         <div className="mb-8 rounded-2xl border border-primary/30 bg-primary/5 p-6">
           <p className="text-lg font-semibold leading-relaxed text-foreground">{assignment.question_text}</p>
+          <QuestionActions text={assignment.question_text} />
         </div>
 
         {isLocked && (
