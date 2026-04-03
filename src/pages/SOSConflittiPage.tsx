@@ -874,7 +874,10 @@ export default function SOSConflittiPage() {
                   {q.status === 'validated' ? 'Validata' : 'Aggiustata'}
                 </span>
               </div>
-              <p className="text-sm text-foreground">"{q.question_text}"</p>
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-sm text-foreground flex-1">"{q.question_text}"</p>
+                <QuestionActions text={q.question_text} />
+              </div>
               <p className="text-xs text-muted-foreground">{q.validation_text}</p>
               <p className="text-xs text-primary">Maestri: {q.maestri_used}</p>
               {q.adjustment_notes && (
