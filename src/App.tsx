@@ -17,6 +17,7 @@ import QuestionPage from "@/pages/QuestionPage";
 import ContractPage from "@/pages/ContractPage";
 import SfogoPage from "@/pages/SfogoPage";
 import SOSConflittiPage from "@/pages/SOSConflittiPage";
+import DNAQuestionPage from "@/pages/DNAQuestionPage";
 import ProfilePage from "@/pages/ProfilePage";
 import NotFound from "@/pages/NotFound";
 
