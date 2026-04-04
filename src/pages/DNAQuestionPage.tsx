@@ -39,6 +39,7 @@ export default function DNAQuestionPage() {
           .maybeSingle();
         setProfile(p);
       }
+      if (q?.adjustment_notes) setNoteText(q.adjustment_notes);
       setLoading(false);
     })();
   }, [questionId, user]);
