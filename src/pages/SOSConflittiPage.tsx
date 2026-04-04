@@ -644,7 +644,7 @@ export default function SOSConflittiPage() {
                   {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  La lingua in cui il bersaglio parla/capisce. Le frasi verranno generate in questa lingua con traduzione nella tua.
+                  Se diversa da italiano, le frasi verranno generate in italiano + traduzione. Usa il pulsante "Traduci" sulla card profilo per tradurre anche le domande esistenti.
                 </p>
               </div>
 
