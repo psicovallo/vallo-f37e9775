@@ -917,6 +917,15 @@ export default function SOSConflittiPage() {
                 <p className="text-sm text-foreground flex-1">"{q.question_text}"</p>
                 <QuestionActions text={q.question_text} />
               </div>
+              {(q as any).question_text_translated && (
+                <div className="rounded-lg border border-muted bg-muted/30 p-3 space-y-1">
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">🌐 Lingua bersaglio</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm text-foreground italic leading-relaxed flex-1">"{(q as any).question_text_translated}"</p>
+                    <QuestionActions text={(q as any).question_text_translated} />
+                  </div>
+                </div>
+              )}
               <p className="text-xs text-muted-foreground">{q.validation_text}</p>
               <p className="text-xs text-primary">Maestri: {q.maestri_used}</p>
               {q.adjustment_notes && (
