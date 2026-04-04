@@ -17,6 +17,7 @@ import QuestionPage from "@/pages/QuestionPage";
 import ContractPage from "@/pages/ContractPage";
 import SfogoPage from "@/pages/SfogoPage";
 import SOSConflittiPage from "@/pages/SOSConflittiPage";
+import DNAQuestionPage from "@/pages/DNAQuestionPage";
 import ProfilePage from "@/pages/ProfilePage";
 import NotFound from "@/pages/NotFound";
 
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/contract" element={<ContractPage />} />
               <Route path="/sfogo" element={<SfogoPage />} />
               <Route path="/sos-conflitti" element={<SOSConflittiPage />} />
+              <Route path="/dna-question" element={<DNAQuestionPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/reminders" element={<RemindersPage />} />
               <Route path="/notes" element={<NotesPage />} />
