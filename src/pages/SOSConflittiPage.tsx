@@ -693,13 +693,23 @@ export default function SOSConflittiPage() {
                   <button onClick={e => { e.stopPropagation(); handleDeleteProfile(p.id); }} className="rounded-lg p-2 text-muted-foreground hover:text-destructive"><Trash2 size={14} /></button>
                 </div>
               </div>
-              <div className="mt-2 flex gap-2">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: `${getScenarioColor(p.scenario)}20`, color: getScenarioColor(p.scenario) }}>
                   {SCENARIOS.find(s => s.id === p.scenario)?.label || 'Conflitto'}
                 </span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                   {DNA_STYLES.find(s => s.id === p.user_style)?.label || 'Chirurgico'}
                 </span>
+                {(p as any).lingua_bersaglio && (p as any).lingua_bersaglio !== 'italiano' && (
+                  <button
+                    onClick={e => { e.stopPropagation(); handleTranslateAll(p.id, (p as any).lingua_bersaglio); }}
+                    disabled={translatingProfile === p.id}
+                    className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-primary/15 text-primary hover:bg-primary/25 transition-colors disabled:opacity-50"
+                  >
+                    {translatingProfile === p.id ? <Loader2 size={10} className="animate-spin" /> : <Languages size={10} />}
+                    Traduci in {(p as any).lingua_bersaglio}
+                  </button>
+                )}
               </div>
               {p.profile_description && (
                 <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{p.profile_description}</p>
