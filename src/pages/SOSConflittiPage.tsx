@@ -101,7 +101,7 @@ export default function SOSConflittiPage() {
   const [focus12Timer, setFocus12Timer] = useState(30);
   const [pendingConvokeArgs, setPendingConvokeArgs] = useState<any>(null);
   const [linguaMadre, setLinguaMadre] = useState('italiano');
-
+  const [translatingProfile, setTranslatingProfile] = useState<string | null>(null);
   // Load quantum & lingua from profile
   useEffect(() => {
     if (!user) return;
