@@ -155,7 +155,7 @@ export default function DNAQuestionPage() {
             placeholder="Es: L'ho detta e lei ha reagito così..."
             rows={4}
             className="pr-12"
-            defaultValue={question.adjustment_notes || ''}
+            
           />
           <div className="absolute right-3 top-3">
             <VoiceInput onTranscript={setNoteText} currentValue={noteText} />
