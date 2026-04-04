@@ -64,6 +64,7 @@ export type Database = {
           id: string
           maestri_used: string
           question_text: string
+          question_text_translated: string | null
           status: string
           user_id: string
           validation_text: string
@@ -76,6 +77,7 @@ export type Database = {
           id?: string
           maestri_used?: string
           question_text?: string
+          question_text_translated?: string | null
           status?: string
           user_id: string
           validation_text?: string
@@ -88,6 +90,7 @@ export type Database = {
           id?: string
           maestri_used?: string
           question_text?: string
+          question_text_translated?: string | null
           status?: string
           user_id?: string
           validation_text?: string

@@ -1,0 +1,1 @@
+ALTER TABLE public.conflict_questions ADD COLUMN question_text_translated text DEFAULT NULL;
