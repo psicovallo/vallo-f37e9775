@@ -203,6 +203,7 @@ ${outputFormat}`;
         conflict_profile_id,
         user_id: profile.user_id,
         question_text: q.text,
+        question_text_translated: q.text_translated || null,
         validation_text: q.validation,
         maestri_used: q.maestri_used,
         status: "generated",

@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import {
   Plus, Swords, ChevronDown, ChevronUp, Check, PenLine, Trash2, Loader2,
   RotateCcw, MessageSquarePlus, Eye, HelpCircle, X, Layers, Shield,
-  Heart, Briefcase, MessageCircle, Crosshair, Sparkles, Brain, Zap, Target, Info, Globe
+  Heart, Briefcase, MessageCircle, Crosshair, Sparkles, Brain, Zap, Target, Info, Globe, Languages
 } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
 import QuestionActions from '@/components/QuestionActions';
@@ -101,7 +101,7 @@ export default function SOSConflittiPage() {
   const [focus12Timer, setFocus12Timer] = useState(30);
   const [pendingConvokeArgs, setPendingConvokeArgs] = useState<any>(null);
   const [linguaMadre, setLinguaMadre] = useState('italiano');
-
+  const [translatingProfile, setTranslatingProfile] = useState<string | null>(null);
   // Load quantum & lingua from profile
   useEffect(() => {
     if (!user) return;
@@ -320,6 +320,28 @@ export default function SOSConflittiPage() {
   const handleNextVelo = () => {
     setCurrentVelo(prev => prev + 1);
     startConvoca({ veloOverride: currentVelo + 1 });
+  };
+
+  const handleTranslateAll = async (profileId: string, lingua: string) => {
+    setTranslatingProfile(profileId);
+    try {
+      const { data, error } = await supabase.functions.invoke('translate-conflict-questions', {
+        body: { conflict_profile_id: profileId, lingua_bersaglio: lingua },
+      });
+      if (error) throw error;
+      toast.success(`${data.translated} domande tradotte in ${lingua}`);
+      // Reload archive & session questions
+      loadArchive();
+      if (sessionQuestions.length > 0) {
+        const { data: refreshed } = await supabase
+          .from('conflict_questions').select('*')
+          .in('id', sessionQuestions.map(q => q.id));
+        if (refreshed) setSessionQuestions(refreshed as ConflictQuestion[]);
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Errore nella traduzione');
+    }
+    setTranslatingProfile(null);
   };
 
   const scenarioIcon = (id: string) => {
@@ -622,7 +644,7 @@ export default function SOSConflittiPage() {
                   {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  La lingua in cui il bersaglio parla/capisce. Le frasi verranno generate in questa lingua con traduzione nella tua.
+                  Se diversa da italiano, le frasi verranno generate in italiano + traduzione. Usa il pulsante "Traduci" sulla card profilo per tradurre anche le domande esistenti.
                 </p>
               </div>
 
@@ -671,13 +693,23 @@ export default function SOSConflittiPage() {
                   <button onClick={e => { e.stopPropagation(); handleDeleteProfile(p.id); }} className="rounded-lg p-2 text-muted-foreground hover:text-destructive"><Trash2 size={14} /></button>
                 </div>
               </div>
-              <div className="mt-2 flex gap-2">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ backgroundColor: `${getScenarioColor(p.scenario)}20`, color: getScenarioColor(p.scenario) }}>
                   {SCENARIOS.find(s => s.id === p.scenario)?.label || 'Conflitto'}
                 </span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                   {DNA_STYLES.find(s => s.id === p.user_style)?.label || 'Chirurgico'}
                 </span>
+                {(p as any).lingua_bersaglio && (p as any).lingua_bersaglio !== 'italiano' && (
+                  <button
+                    onClick={e => { e.stopPropagation(); handleTranslateAll(p.id, (p as any).lingua_bersaglio); }}
+                    disabled={translatingProfile === p.id}
+                    className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-primary/15 text-primary hover:bg-primary/25 transition-colors disabled:opacity-50"
+                  >
+                    {translatingProfile === p.id ? <Loader2 size={10} className="animate-spin" /> : <Languages size={10} />}
+                    Traduci in {(p as any).lingua_bersaglio}
+                  </button>
+                )}
               </div>
               {p.profile_description && (
                 <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{p.profile_description}</p>
@@ -885,6 +917,15 @@ export default function SOSConflittiPage() {
                 <p className="text-sm text-foreground flex-1">"{q.question_text}"</p>
                 <QuestionActions text={q.question_text} />
               </div>
+              {(q as any).question_text_translated && (
+                <div className="rounded-lg border border-muted bg-muted/30 p-3 space-y-1">
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">🌐 Lingua bersaglio</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm text-foreground italic leading-relaxed flex-1">"{(q as any).question_text_translated}"</p>
+                    <QuestionActions text={(q as any).question_text_translated} />
+                  </div>
+                </div>
+              )}
               <p className="text-xs text-muted-foreground">{q.validation_text}</p>
               <p className="text-xs text-primary">Maestri: {q.maestri_used}</p>
               {q.adjustment_notes && (
