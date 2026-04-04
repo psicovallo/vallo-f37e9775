@@ -322,6 +322,28 @@ export default function SOSConflittiPage() {
     startConvoca({ veloOverride: currentVelo + 1 });
   };
 
+  const handleTranslateAll = async (profileId: string, lingua: string) => {
+    setTranslatingProfile(profileId);
+    try {
+      const { data, error } = await supabase.functions.invoke('translate-conflict-questions', {
+        body: { conflict_profile_id: profileId, lingua_bersaglio: lingua },
+      });
+      if (error) throw error;
+      toast.success(`${data.translated} domande tradotte in ${lingua}`);
+      // Reload archive & session questions
+      loadArchive();
+      if (sessionQuestions.length > 0) {
+        const { data: refreshed } = await supabase
+          .from('conflict_questions').select('*')
+          .in('id', sessionQuestions.map(q => q.id));
+        if (refreshed) setSessionQuestions(refreshed as ConflictQuestion[]);
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Errore nella traduzione');
+    }
+    setTranslatingProfile(null);
+  };
+
   const scenarioIcon = (id: string) => {
     const s = SCENARIOS.find(s => s.id === id);
     if (!s) return <Swords size={14} />;
