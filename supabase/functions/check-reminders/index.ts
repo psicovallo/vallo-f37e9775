@@ -220,7 +220,7 @@ serve(async (req) => {
             const profileName = (randomQ as any).conflict_profiles?.name || 'Bersaglio';
             const title = `⚔️ DNA: ${profileName}`;
             const body = randomQ.question_text.slice(0, 100) + (randomQ.question_text.length > 100 ? '...' : '');
-            conflictPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: '/sos-conflitti' });
+            conflictPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: `/dna-question?id=${randomQ.id}` });
           }
         }
       }
