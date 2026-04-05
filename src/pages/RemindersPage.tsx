@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Trash2, Clock, BellRing, X, Bell, Zap, Swords, Settings } from 'lucide-react';
+import { Plus, Trash2, Clock, BellRing, X, Bell, Zap, Swords, Flame, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -18,12 +18,16 @@ interface Reminder {
 interface NotifSettings {
   notify_questions: boolean;
   notify_dna: boolean;
+  notify_sfogo: boolean;
   daily_times: string[] | null;
   dna_daily_times: string[] | null;
+  sfogo_daily_times: string[] | null;
   questions_per_day: number;
   dna_per_day: number;
+  sfogo_per_day: number;
   questions_frequency: string;
   dna_frequency: string;
+  sfogo_frequency: string;
   notification_window_start: string | null;
   notification_window_end: string | null;
   notify_days: string[];
@@ -70,7 +74,7 @@ export default function RemindersPage() {
     if (!user) return;
     const { data } = await supabase
       .from('question_progress')
-      .select('notify_questions, notify_dna, daily_times, dna_daily_times, questions_per_day, dna_per_day, questions_frequency, dna_frequency, notification_window_start, notification_window_end, notify_days')
+      .select('notify_questions, notify_dna, notify_sfogo, daily_times, dna_daily_times, sfogo_daily_times, questions_per_day, dna_per_day, sfogo_per_day, questions_frequency, dna_frequency, sfogo_frequency, notification_window_start, notification_window_end, notify_days')
       .eq('user_id', user.id)
       .maybeSingle();
     if (data) {
@@ -83,7 +87,7 @@ export default function RemindersPage() {
     fetchNotifSettings();
   }, [user]);
 
-  const toggleNotifSetting = async (field: 'notify_questions' | 'notify_dna', current: boolean) => {
+  const toggleNotifSetting = async (field: 'notify_questions' | 'notify_dna' | 'notify_sfogo', current: boolean) => {
     if (!user) return;
     await supabase.from('question_progress')
       .update({ [field]: !current } as any)
@@ -98,6 +102,7 @@ export default function RemindersPage() {
     const extra: any = {};
     if (field === 'questions_per_day') extra.daily_times_date = null;
     if (field === 'dna_per_day') extra.dna_daily_times_date = null;
+    if (field === 'sfogo_per_day') extra.sfogo_daily_times_date = null;
     if (field === 'notification_window_start' || field === 'notification_window_end') {
       extra.daily_times_date = null;
       extra.dna_daily_times_date = null;
@@ -317,7 +322,73 @@ export default function RemindersPage() {
             )}
           </div>
 
-          {/* Time window */}
+          {/* Sfogo switch */}
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Flame size={14} className="text-orange-500" />
+                  Area Sfogo
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Notifiche con le domande di riflessione dallo sfogo
+                </p>
+                {notifSettings.notify_sfogo && notifSettings.sfogo_daily_times?.length ? (
+                  <p className="text-xs text-primary mt-1">
+                    🔥 Oggi: {notifSettings.sfogo_daily_times.join(', ')}
+                  </p>
+                ) : null}
+              </div>
+              <Switch
+                checked={notifSettings.notify_sfogo}
+                onCheckedChange={() => toggleNotifSetting('notify_sfogo', notifSettings.notify_sfogo)}
+              />
+            </div>
+            {notifSettings.notify_sfogo && (
+              <div className="ml-6 space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-muted-foreground">Quante:</span>
+                  <Select
+                    value={String(notifSettings.sfogo_per_day || 6)}
+                    onValueChange={v => updateSetting('sfogo_per_day', Number(v))}
+                  >
+                    <SelectTrigger className="h-8 w-16 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COUNT_OPTIONS.map(n => (
+                        <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex rounded-lg border border-border overflow-hidden">
+                    <button
+                      onClick={() => updateSetting('sfogo_frequency', 'day')}
+                      className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                        (notifSettings.sfogo_frequency || 'day') === 'day'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground'
+                      }`}
+                    >al giorno</button>
+                    <button
+                      onClick={() => updateSetting('sfogo_frequency', 'hour')}
+                      className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                        notifSettings.sfogo_frequency === 'hour'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground'
+                      }`}
+                    >all'ora</button>
+                  </div>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  {notifSettings.sfogo_frequency === 'hour'
+                    ? `${notifSettings.sfogo_per_day || 6} notifiche ogni ora nella finestra oraria`
+                    : `${notifSettings.sfogo_per_day || 6} notifiche distribuite nella giornata`}
+                </p>
+              </div>
+            )}
+          </div>
+
           <div className="border-t border-border pt-4 space-y-3">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <Settings size={14} className="text-muted-foreground" />

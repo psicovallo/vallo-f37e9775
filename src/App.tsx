@@ -16,6 +16,7 @@ import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import QuestionPage from "@/pages/QuestionPage";
 import ContractPage from "@/pages/ContractPage";
 import SfogoPage from "@/pages/SfogoPage";
+import SfogoQuestionPage from "@/pages/SfogoQuestionPage";
 import SOSConflittiPage from "@/pages/SOSConflittiPage";
 import DNAQuestionPage from "@/pages/DNAQuestionPage";
 import ProfilePage from "@/pages/ProfilePage";
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/question" element={<QuestionPage />} />
               <Route path="/contract" element={<ContractPage />} />
               <Route path="/sfogo" element={<SfogoPage />} />
+              <Route path="/sfogo-question" element={<SfogoQuestionPage />} />
               <Route path="/sos-conflitti" element={<SOSConflittiPage />} />
               <Route path="/dna-question" element={<DNAQuestionPage />} />
               <Route path="/profile" element={<ProfilePage />} />

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Send, Clock, Loader2, PenLine, History } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
+import QuestionActions from '@/components/QuestionActions';
 import { toast } from 'sonner';
 
 const SESSION_DURATION_MS = 30 * 60 * 1000;
@@ -288,9 +289,12 @@ export default function SfogoPage() {
               </p>
 
               <div className="rounded-2xl border border-primary/30 bg-primary/10 p-4">
-                <p className="text-sm font-medium text-foreground leading-relaxed">
-                  {currentQuestion.text}
-                </p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-medium text-foreground leading-relaxed flex-1">
+                    {currentQuestion.text}
+                  </p>
+                  <QuestionActions text={currentQuestion.text} />
+                </div>
               </div>
 
               {!currentQuestion.timerDone ? (
