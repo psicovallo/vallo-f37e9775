@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Send, Clock, Loader2, PenLine, History } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
+import QuestionActions from '@/components/QuestionActions';
 import { toast } from 'sonner';
 
 const SESSION_DURATION_MS = 30 * 60 * 1000;
