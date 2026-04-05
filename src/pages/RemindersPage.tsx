@@ -87,7 +87,7 @@ export default function RemindersPage() {
     fetchNotifSettings();
   }, [user]);
 
-  const toggleNotifSetting = async (field: 'notify_questions' | 'notify_dna', current: boolean) => {
+  const toggleNotifSetting = async (field: 'notify_questions' | 'notify_dna' | 'notify_sfogo', current: boolean) => {
     if (!user) return;
     await supabase.from('question_progress')
       .update({ [field]: !current } as any)
