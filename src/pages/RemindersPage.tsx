@@ -18,12 +18,16 @@ interface Reminder {
 interface NotifSettings {
   notify_questions: boolean;
   notify_dna: boolean;
+  notify_sfogo: boolean;
   daily_times: string[] | null;
   dna_daily_times: string[] | null;
+  sfogo_daily_times: string[] | null;
   questions_per_day: number;
   dna_per_day: number;
+  sfogo_per_day: number;
   questions_frequency: string;
   dna_frequency: string;
+  sfogo_frequency: string;
   notification_window_start: string | null;
   notification_window_end: string | null;
   notify_days: string[];
