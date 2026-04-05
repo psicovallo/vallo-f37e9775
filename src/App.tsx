@@ -16,6 +16,7 @@ import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import QuestionPage from "@/pages/QuestionPage";
 import ContractPage from "@/pages/ContractPage";
 import SfogoPage from "@/pages/SfogoPage";
+import SfogoQuestionPage from "@/pages/SfogoQuestionPage";
 import SOSConflittiPage from "@/pages/SOSConflittiPage";
 import DNAQuestionPage from "@/pages/DNAQuestionPage";
 import ProfilePage from "@/pages/ProfilePage";
