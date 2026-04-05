@@ -102,6 +102,7 @@ export default function RemindersPage() {
     const extra: any = {};
     if (field === 'questions_per_day') extra.daily_times_date = null;
     if (field === 'dna_per_day') extra.dna_daily_times_date = null;
+    if (field === 'sfogo_per_day') extra.sfogo_daily_times_date = null;
     if (field === 'notification_window_start' || field === 'notification_window_end') {
       extra.daily_times_date = null;
       extra.dna_daily_times_date = null;
