@@ -445,11 +445,16 @@ export type Database = {
           notify_days: string[]
           notify_dna: boolean
           notify_questions: boolean
+          notify_sfogo: boolean
           onboarding_completed: boolean
           phase: string
           questions_frequency: string
           questions_per_day: number
           questions_read_count: number
+          sfogo_daily_times: string[] | null
+          sfogo_daily_times_date: string | null
+          sfogo_frequency: string
+          sfogo_per_day: number
           updated_at: string
           user_id: string
         }
@@ -472,11 +477,16 @@ export type Database = {
           notify_days?: string[]
           notify_dna?: boolean
           notify_questions?: boolean
+          notify_sfogo?: boolean
           onboarding_completed?: boolean
           phase?: string
           questions_frequency?: string
           questions_per_day?: number
           questions_read_count?: number
+          sfogo_daily_times?: string[] | null
+          sfogo_daily_times_date?: string | null
+          sfogo_frequency?: string
+          sfogo_per_day?: number
           updated_at?: string
           user_id: string
         }
@@ -499,11 +509,16 @@ export type Database = {
           notify_days?: string[]
           notify_dna?: boolean
           notify_questions?: boolean
+          notify_sfogo?: boolean
           onboarding_completed?: boolean
           phase?: string
           questions_frequency?: string
           questions_per_day?: number
           questions_read_count?: number
+          sfogo_daily_times?: string[] | null
+          sfogo_daily_times_date?: string | null
+          sfogo_frequency?: string
+          sfogo_per_day?: number
           updated_at?: string
           user_id?: string
         }
