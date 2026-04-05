@@ -74,7 +74,7 @@ export default function RemindersPage() {
     if (!user) return;
     const { data } = await supabase
       .from('question_progress')
-      .select('notify_questions, notify_dna, daily_times, dna_daily_times, questions_per_day, dna_per_day, questions_frequency, dna_frequency, notification_window_start, notification_window_end, notify_days')
+      .select('notify_questions, notify_dna, notify_sfogo, daily_times, dna_daily_times, sfogo_daily_times, questions_per_day, dna_per_day, sfogo_per_day, questions_frequency, dna_frequency, sfogo_frequency, notification_window_start, notification_window_end, notify_days')
       .eq('user_id', user.id)
       .maybeSingle();
     if (data) {
