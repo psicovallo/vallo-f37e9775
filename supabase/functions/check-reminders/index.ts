@@ -82,6 +82,7 @@ serve(async (req) => {
 
     let questionPushes = 0;
     let conflictPushes = 0;
+    let sfogoPushes = 0;
     let reminderPushes = 0;
 
     for (const progress of allProgress || []) {
