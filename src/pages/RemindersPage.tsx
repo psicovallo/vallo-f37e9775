@@ -322,7 +322,73 @@ export default function RemindersPage() {
             )}
           </div>
 
-          {/* Time window */}
+          {/* Sfogo switch */}
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Flame size={14} className="text-orange-500" />
+                  Area Sfogo
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Notifiche con le domande di riflessione dallo sfogo
+                </p>
+                {notifSettings.notify_sfogo && notifSettings.sfogo_daily_times?.length ? (
+                  <p className="text-xs text-primary mt-1">
+                    🔥 Oggi: {notifSettings.sfogo_daily_times.join(', ')}
+                  </p>
+                ) : null}
+              </div>
+              <Switch
+                checked={notifSettings.notify_sfogo}
+                onCheckedChange={() => toggleNotifSetting('notify_sfogo', notifSettings.notify_sfogo)}
+              />
+            </div>
+            {notifSettings.notify_sfogo && (
+              <div className="ml-6 space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-muted-foreground">Quante:</span>
+                  <Select
+                    value={String(notifSettings.sfogo_per_day || 6)}
+                    onValueChange={v => updateSetting('sfogo_per_day', Number(v))}
+                  >
+                    <SelectTrigger className="h-8 w-16 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COUNT_OPTIONS.map(n => (
+                        <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex rounded-lg border border-border overflow-hidden">
+                    <button
+                      onClick={() => updateSetting('sfogo_frequency', 'day')}
+                      className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                        (notifSettings.sfogo_frequency || 'day') === 'day'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground'
+                      }`}
+                    >al giorno</button>
+                    <button
+                      onClick={() => updateSetting('sfogo_frequency', 'hour')}
+                      className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                        notifSettings.sfogo_frequency === 'hour'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground'
+                      }`}
+                    >all'ora</button>
+                  </div>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  {notifSettings.sfogo_frequency === 'hour'
+                    ? `${notifSettings.sfogo_per_day || 6} notifiche ogni ora nella finestra oraria`
+                    : `${notifSettings.sfogo_per_day || 6} notifiche distribuite nella giornata`}
+                </p>
+              </div>
+            )}
+          </div>
+
           <div className="border-t border-border pt-4 space-y-3">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <Settings size={14} className="text-muted-foreground" />
