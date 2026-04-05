@@ -225,6 +225,66 @@ serve(async (req) => {
           }
         }
       }
+
+      // ── SFOGO NOTIFICATIONS ──
+      if (progress.notify_sfogo !== false) {
+        const sfogoCount = progress.sfogo_per_day || 6;
+        const sfogoFreq = progress.sfogo_frequency || 'day';
+        let shouldSendSfogo = false;
+
+        if (sfogoFreq === 'hour') {
+          const [wsh, wsm] = winStart.split(':').map(Number);
+          const [weh, wem] = winEnd.split(':').map(Number);
+          const [ch, cm] = romeTime.split(':').map(Number);
+          const curMin = ch * 60 + cm;
+          const startMin = wsh * 60 + wsm;
+          const endMin = weh * 60 + wem;
+          if (curMin >= startMin && curMin < endMin) {
+            let sfogoTimes: string[] = progress.sfogo_daily_times || [];
+            const hourKey = `${romeDate}-${ch}`;
+            if (progress.sfogo_daily_times_date !== hourKey) {
+              const hourStart = `${ch.toString().padStart(2,'0')}:00`;
+              const hourEnd = `${ch.toString().padStart(2,'0')}:59`;
+              sfogoTimes = generateRandomTimes(hourStart, hourEnd, sfogoCount);
+              await supabase.from('question_progress')
+                .update({ sfogo_daily_times: sfogoTimes, sfogo_daily_times_date: hourKey })
+                .eq('id', progress.id);
+              console.log(`Sfogo hourly times for ${userId} (${sfogoCount}/h): ${sfogoTimes.join(', ')}`);
+            }
+            shouldSendSfogo = sfogoTimes.includes(romeTime);
+          }
+        } else {
+          let sfogoTimes: string[] = progress.sfogo_daily_times || [];
+          if (progress.sfogo_daily_times_date !== romeDate) {
+            sfogoTimes = generateRandomTimes(winStart, winEnd, sfogoCount);
+            await supabase.from('question_progress')
+              .update({ sfogo_daily_times: sfogoTimes, sfogo_daily_times_date: romeDate })
+              .eq('id', progress.id);
+            console.log(`Sfogo daily times for ${userId} (${sfogoCount}): ${sfogoTimes.join(', ')}`);
+          }
+          shouldSendSfogo = sfogoTimes.includes(romeTime);
+        }
+
+        if (shouldSendSfogo) {
+          // Get sfogo reflection notes
+          const { data: sfogoNotes } = await supabase
+            .from('notes')
+            .select('id, text')
+            .eq('user_id', userId)
+            .ilike('text', '[SFOGO-RIFLESSIONE]%')
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+          if (sfogoNotes?.length) {
+            const randomNote = sfogoNotes[Math.floor(Math.random() * sfogoNotes.length)];
+            const qMatch = randomNote.text.match(/Q:\s*(.*?)(?:\nA:|$)/s);
+            const questionText = qMatch ? qMatch[1].trim() : randomNote.text.slice(0, 100);
+            const title = '🔥 Riflessione Sfogo';
+            const body = questionText.slice(0, 100) + (questionText.length > 100 ? '...' : '');
+            sfogoPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: `/sfogo-question?id=${randomNote.id}` });
+          }
+        }
+      }
     }
 
     // ── REMINDER NOTIFICATIONS ──
