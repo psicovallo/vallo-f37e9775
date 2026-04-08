@@ -77,6 +77,15 @@ export default function ProfilePage() {
         setLoading(false);
       });
     loadDeviceCount();
+    // Load archived analyses
+    supabase
+      .from('profile_analysis_archive')
+      .select('analysis_text, cycle_number, archived_at')
+      .eq('user_id', user.id)
+      .order('cycle_number', { ascending: false })
+      .then(({ data }) => {
+        if (data) setArchivedAnalyses(data);
+      });
   }, [user]);
 
   const updateField = (field: keyof ProfileData, value: string) => {
