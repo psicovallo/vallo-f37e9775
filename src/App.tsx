@@ -49,6 +49,8 @@ const App = () => (
               <Route path="/reminders" element={<RemindersPage />} />
               <Route path="/notes" element={<NotesPage />} />
               <Route path="/messages" element={<MessagesPage />} />
+              <Route path="/la-forgia" element={<LaForgiaPage />} />
+              <Route path="/tribunale" element={<TribunalePage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/landing" element={<LandingPage />} />
             </Route>
