@@ -136,6 +136,14 @@ export default function HomePage() {
           <span className="text-[10px] text-muted-foreground text-center">Il Consiglio dei 15</span>
         </Link>
         <Link
+          to="/la-forgia"
+          className="flex flex-col items-center gap-2 rounded-2xl border border-neutral-600 bg-neutral-900 p-4 transition-colors hover:border-red-700 active:scale-[0.97]"
+        >
+          <span className="text-2xl">🔨</span>
+          <span className="text-xs font-medium text-white text-center">La Forgia</span>
+          <span className="text-[10px] text-neutral-400 text-center">Riprogrammazione attiva</span>
+        </Link>
+        <Link
           to="/contract"
           className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary active:scale-[0.97]"
         >

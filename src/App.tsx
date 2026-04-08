@@ -20,6 +20,8 @@ import SfogoQuestionPage from "@/pages/SfogoQuestionPage";
 import SOSConflittiPage from "@/pages/SOSConflittiPage";
 import DNAQuestionPage from "@/pages/DNAQuestionPage";
 import ProfilePage from "@/pages/ProfilePage";
+import LaForgiaPage from "@/pages/LaForgiaPage";
+import TribunalePage from "@/pages/TribunalePage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
