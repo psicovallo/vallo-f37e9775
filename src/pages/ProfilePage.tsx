@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Save, Brain, Loader2, User, Target, MessageCircle, AlertTriangle, Compass, MessageSquare, Mail, Lock, Shield, Smartphone, CheckCircle, RefreshCw } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Save, Brain, Loader2, User, Target, MessageCircle, AlertTriangle, Compass, MessageSquare, Mail, Lock, Shield, Smartphone, CheckCircle, RefreshCw, Copy, Share2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import VoiceInput from '@/components/VoiceInput';
 import { formatDistanceToNow } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -23,6 +24,8 @@ interface ProfileData {
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [archivedAnalyses, setArchivedAnalyses] = useState<{ analysis_text: string; cycle_number: number; archived_at: string }[]>([]);
   const [profile, setProfile] = useState<ProfileData>({
     name: '', objective: '', milestone_zero: '', communication_style: '',
     current_problems: '', vision: '', ai_profile_analysis: '',
