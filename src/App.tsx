@@ -20,6 +20,8 @@ import SfogoQuestionPage from "@/pages/SfogoQuestionPage";
 import SOSConflittiPage from "@/pages/SOSConflittiPage";
 import DNAQuestionPage from "@/pages/DNAQuestionPage";
 import ProfilePage from "@/pages/ProfilePage";
+import LaForgiaPage from "@/pages/LaForgiaPage";
+import TribunalePage from "@/pages/TribunalePage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +49,8 @@ const App = () => (
               <Route path="/reminders" element={<RemindersPage />} />
               <Route path="/notes" element={<NotesPage />} />
               <Route path="/messages" element={<MessagesPage />} />
+              <Route path="/la-forgia" element={<LaForgiaPage />} />
+              <Route path="/tribunale" element={<TribunalePage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/landing" element={<LandingPage />} />
             </Route>

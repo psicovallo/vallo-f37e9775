@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Save, Brain, Loader2, User, Target, MessageCircle, AlertTriangle, Compass, MessageSquare, Mail, Lock, Shield, Smartphone, CheckCircle, RefreshCw } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Save, Brain, Loader2, User, Target, MessageCircle, AlertTriangle, Compass, MessageSquare, Mail, Lock, Shield, Smartphone, CheckCircle, RefreshCw, Copy, Share2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import VoiceInput from '@/components/VoiceInput';
 import { formatDistanceToNow } from 'date-fns';
 import { it } from 'date-fns/locale';
@@ -23,6 +24,8 @@ interface ProfileData {
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [archivedAnalyses, setArchivedAnalyses] = useState<{ analysis_text: string; cycle_number: number; archived_at: string }[]>([]);
   const [profile, setProfile] = useState<ProfileData>({
     name: '', objective: '', milestone_zero: '', communication_style: '',
     current_problems: '', vision: '', ai_profile_analysis: '',
@@ -74,6 +77,15 @@ export default function ProfilePage() {
         setLoading(false);
       });
     loadDeviceCount();
+    // Load archived analyses
+    supabase
+      .from('profile_analysis_archive')
+      .select('analysis_text, cycle_number, archived_at')
+      .eq('user_id', user.id)
+      .order('cycle_number', { ascending: false })
+      .then(({ data }) => {
+        if (data) setArchivedAnalyses(data);
+      });
   }, [user]);
 
   const updateField = (field: keyof ProfileData, value: string) => {
@@ -361,6 +373,32 @@ export default function ProfilePage() {
             <p className="text-xs text-foreground leading-relaxed whitespace-pre-wrap">
               {profile.ai_profile_analysis}
             </p>
+            {/* Copy & Share buttons */}
+            <div className="flex justify-end gap-2 mt-2">
+              <button
+                onClick={async () => {
+                  await navigator.clipboard.writeText(`Analisi del Consiglio dei 15:\n\n${profile.ai_profile_analysis}`);
+                  toast.success('Analisi copiata ✓');
+                }}
+                className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:text-primary hover:bg-primary/10"
+              >
+                <Copy size={16} />
+              </button>
+              <button
+                onClick={async () => {
+                  const shareText = `Analisi del Consiglio dei 15:\n\n${profile.ai_profile_analysis}`;
+                  if (navigator.share) {
+                    try { await navigator.share({ text: shareText }); } catch {}
+                  } else {
+                    await navigator.clipboard.writeText(shareText);
+                    toast.success('Analisi copiata ✓');
+                  }
+                }}
+                className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:text-primary hover:bg-primary/10"
+              >
+                <Share2 size={16} />
+              </button>
+            </div>
           </div>
         ) : (
           <div className="rounded-lg bg-muted/30 p-4 text-center">
@@ -371,6 +409,21 @@ export default function ProfilePage() {
             </p>
           </div>
         )}
+
+        {/* Forgia entry button */}
+        <button
+          onClick={() => {
+            if (!profile.objective || !profile.current_problems || !profile.vision) {
+              toast.error('Il Consiglio richiede i tuoi dati per forgiare le sfide. Compila il Profilo Evolutivo per accedere.');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              return;
+            }
+            navigate('/la-forgia');
+          }}
+          className="w-full flex items-center justify-center gap-2 rounded-xl bg-red-900 px-4 py-3 text-sm font-black text-white uppercase tracking-wider hover:bg-red-800 transition-colors"
+        >
+          🔨 ACCETTO LA REALTÀ. ENTRA NELLA FORGIA.
+        </button>
 
         <button
           onClick={requestAnalysis}
@@ -395,6 +448,31 @@ export default function ProfilePage() {
           per costruire un profilo psicologico evolutivo.
         </p>
       </div>
+
+      {/* Cimitero delle Illusioni */}
+      {archivedAnalyses.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-4">
+          <Accordion type="single" collapsible>
+            <AccordionItem value="cimitero" className="border-none">
+              <AccordionTrigger className="py-2 text-sm font-bold text-muted-foreground hover:no-underline">
+                🪦 Cimitero delle Illusioni ({archivedAnalyses.length} cicli)
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-3 pt-2">
+                  {archivedAnalyses.map((a, i) => (
+                    <div key={i} className="rounded-lg bg-muted/30 p-3 space-y-1">
+                      <p className="text-[10px] text-muted-foreground font-medium">
+                        Ciclo {a.cycle_number} — {new Date(a.archived_at).toLocaleDateString('it-IT')}
+                      </p>
+                      <p className="text-xs text-foreground/70 whitespace-pre-wrap line-clamp-6">{a.analysis_text}</p>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      )}
 
       {/* Chatta con Vallo */}
       <Link
