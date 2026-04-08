@@ -37,7 +37,8 @@ ANALIZZA:
 OUTPUT: Scrivi un profilo in prima persona plurale ("Noi del Consiglio osserviamo che...") di massimo 500 parole.
 Sii ONESTO, DIRETTO e SPIETATO ma costruttivo. Identifica i pattern nascosti.
 Non usare bullet point. Scrivi in modo narrativo e potente.
-Rispondi NELLA LINGUA indicata dall'utente.`;
+
+REGOLA LINGUA ASSOLUTA: Rispondi ESCLUSIVAMENTE in ITALIANO. Non usare MAI l'inglese. Ogni singola parola deve essere in italiano. Anche se i dati dell'utente contengono parole in altre lingue, la tua risposta deve essere 100% in italiano.`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
