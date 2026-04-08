@@ -106,6 +106,89 @@ export type Database = {
           },
         ]
       }
+      forgia_challenges: {
+        Row: {
+          challenge_type: string
+          created_at: string
+          cycle_id: string | null
+          day_number: number
+          id: string
+          options: string[] | null
+          question: string
+          submitted_at: string | null
+          user_id: string
+          user_response: string | null
+        }
+        Insert: {
+          challenge_type?: string
+          created_at?: string
+          cycle_id?: string | null
+          day_number?: number
+          id?: string
+          options?: string[] | null
+          question: string
+          submitted_at?: string | null
+          user_id: string
+          user_response?: string | null
+        }
+        Update: {
+          challenge_type?: string
+          created_at?: string
+          cycle_id?: string | null
+          day_number?: number
+          id?: string
+          options?: string[] | null
+          question?: string
+          submitted_at?: string | null
+          user_id?: string
+          user_response?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forgia_challenges_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "forgia_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forgia_cycles: {
+        Row: {
+          created_at: string
+          critical_areas: string[] | null
+          cycle_number: number
+          ended_at: string | null
+          id: string
+          improvements: string[] | null
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          critical_areas?: string[] | null
+          cycle_number?: number
+          ended_at?: string | null
+          id?: string
+          improvements?: string[] | null
+          started_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          critical_areas?: string[] | null
+          cycle_number?: number
+          ended_at?: string | null
+          id?: string
+          improvements?: string[] | null
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           created_at: string
@@ -175,6 +258,33 @@ export type Database = {
           id?: string
           text?: string
           type?: Database["public"]["Enums"]["phrase_type"]
+        }
+        Relationships: []
+      }
+      profile_analysis_archive: {
+        Row: {
+          analysis_text: string
+          archived_at: string
+          created_at: string
+          cycle_number: number
+          id: string
+          user_id: string
+        }
+        Insert: {
+          analysis_text: string
+          archived_at?: string
+          created_at?: string
+          cycle_number?: number
+          id?: string
+          user_id: string
+        }
+        Update: {
+          analysis_text?: string
+          archived_at?: string
+          created_at?: string
+          cycle_number?: number
+          id?: string
+          user_id?: string
         }
         Relationships: []
       }
