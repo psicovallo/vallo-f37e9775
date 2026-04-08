@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Mic, MicOff, Sparkles } from 'lucide-react';
+import { Mic, Square, Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -9,158 +9,125 @@ interface VoiceInputProps {
   className?: string;
 }
 
-interface SpeechRecognitionEvent {
-  results: SpeechRecognitionResultList;
-  resultIndex: number;
-}
-
 export default function VoiceInput({ onTranscript, currentValue = '', className = '' }: VoiceInputProps) {
-  const [isListening, setIsListening] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const [isCleaning, setIsCleaning] = useState(false);
   const [showClean, setShowClean] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const [duration, setDuration] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const accumulatedRef = useRef(currentValue);
-  const intentionalStopRef = useRef(false);
-  const isListeningRef = useRef(false);
-  const didDictateRef = useRef(false);
 
   useEffect(() => {
-    if (!isListeningRef.current) {
+    if (!isRecording) {
       accumulatedRef.current = currentValue;
     }
-  }, [currentValue]);
+  }, [currentValue, isRecording]);
 
-  const createRecognition = useCallback(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return null;
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'it-IT';
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 1;
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let interimTranscript = '';
-      let finalTranscript = '';
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
-        } else {
-          interimTranscript += transcript;
-        }
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
       }
-
-      if (finalTranscript) {
-        const separator = accumulatedRef.current.trim() ? ' ' : '';
-        accumulatedRef.current = accumulatedRef.current + separator + finalTranscript;
-        onTranscript(accumulatedRef.current);
-        didDictateRef.current = true;
-      } else if (interimTranscript) {
-        const separator = accumulatedRef.current.trim() ? ' ' : '';
-        onTranscript(accumulatedRef.current + separator + interimTranscript);
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
     };
-
-    recognition.onerror = (event: any) => {
-      if (event.error === 'no-speech' || event.error === 'aborted') {
-        return;
-      }
-      toast.error('Errore riconoscimento vocale: ' + event.error);
-      intentionalStopRef.current = true;
-      isListeningRef.current = false;
-      setIsListening(false);
-      recognitionRef.current = null;
-    };
-
-    recognition.onend = () => {
-      if (!intentionalStopRef.current && isListeningRef.current) {
-        setTimeout(() => {
-          if (isListeningRef.current && !intentionalStopRef.current) {
-            try {
-              const newRecog = createRecognition();
-              if (newRecog) {
-                recognitionRef.current = newRecog;
-                newRecog.start();
-              }
-            } catch {
-              isListeningRef.current = false;
-              setIsListening(false);
-              recognitionRef.current = null;
-            }
-          }
-        }, 100);
-      } else {
-        isListeningRef.current = false;
-        setIsListening(false);
-        recognitionRef.current = null;
-        // Show clean button if user dictated something
-        if (didDictateRef.current && accumulatedRef.current.trim().length > 20) {
-          setShowClean(true);
-        }
-      }
-    };
-
-    return recognition;
-  }, [onTranscript]);
-
-  const stopListening = useCallback(() => {
-    intentionalStopRef.current = true;
-    isListeningRef.current = false;
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch {}
-      recognitionRef.current = null;
-    }
-    setIsListening(false);
   }, []);
 
-  const startListening = useCallback(async () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      toast.error('Il tuo browser non supporta il riconoscimento vocale.');
-      return;
-    }
-
+  const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(t => t.stop());
+
+      // Pick best supported format
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/webm')
+          ? 'audio/webm'
+          : MediaRecorder.isTypeSupported('audio/mp4')
+            ? 'audio/mp4'
+            : '';
+
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        // Stop all tracks
+        stream.getTracks().forEach(t => t.stop());
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+        setDuration(0);
+
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        if (blob.size < 1000) {
+          toast.error('Registrazione troppo breve');
+          setIsRecording(false);
+          return;
+        }
+
+        // Transcribe via Groq
+        setIsTranscribing(true);
+        try {
+          const formData = new FormData();
+          formData.append('audio', blob, 'recording.webm');
+          formData.append('language', 'it');
+
+          const { data, error } = await supabase.functions.invoke('transcribe-audio', {
+            body: formData,
+          });
+
+          if (error) throw error;
+          if (data?.error) { toast.error(data.error); return; }
+
+          const transcript = data?.transcript?.trim();
+          if (transcript) {
+            const separator = accumulatedRef.current.trim() ? ' ' : '';
+            accumulatedRef.current = accumulatedRef.current + separator + transcript;
+            onTranscript(accumulatedRef.current);
+            setShowClean(accumulatedRef.current.trim().length > 20);
+          } else {
+            toast.info('Nessun parlato rilevato');
+          }
+        } catch (e) {
+          console.error('Transcription error:', e);
+          toast.error('Errore nella trascrizione');
+        } finally {
+          setIsTranscribing(false);
+          setIsRecording(false);
+        }
+      };
+
+      recorder.start(1000); // collect chunks every second
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+      setShowClean(false);
+      setDuration(0);
+
+      timerRef.current = setInterval(() => {
+        setDuration(d => d + 1);
+      }, 1000);
     } catch {
       toast.error('Permesso microfono negato.');
-      return;
     }
+  }, [onTranscript]);
 
-    accumulatedRef.current = currentValue;
-    intentionalStopRef.current = false;
-    isListeningRef.current = true;
-    didDictateRef.current = false;
-    setShowClean(false);
-
-    const recognition = createRecognition();
-    if (!recognition) {
-      toast.error('Il tuo browser non supporta il riconoscimento vocale.');
-      return;
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
     }
-
-    recognitionRef.current = recognition;
-
-    try {
-      recognition.start();
-      setIsListening(true);
-    } catch {
-      toast.error('Impossibile avviare il riconoscimento vocale.');
-      isListeningRef.current = false;
-    }
-  }, [currentValue, createRecognition]);
+  }, []);
 
   const toggle = useCallback(() => {
-    if (isListening) {
-      stopListening();
-    } else {
-      startListening();
+    if (isRecording) {
+      stopRecording();
+    } else if (!isTranscribing) {
+      startRecording();
     }
-  }, [isListening, startListening, stopListening]);
+  }, [isRecording, isTranscribing, startRecording, stopRecording]);
 
   const cleanTranscription = useCallback(async () => {
     const textToClean = accumulatedRef.current.trim();
@@ -194,15 +161,11 @@ export default function VoiceInput({ onTranscript, currentValue = '', className 
     }
   }, [onTranscript]);
 
-  useEffect(() => {
-    return () => {
-      intentionalStopRef.current = true;
-      isListeningRef.current = false;
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch {}
-      }
-    };
-  }, []);
+  const formatDuration = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className={`inline-flex flex-col items-center gap-1 ${className}`}>
@@ -210,17 +173,26 @@ export default function VoiceInput({ onTranscript, currentValue = '', className 
         <button
           type="button"
           onClick={toggle}
+          disabled={isTranscribing}
           className={`rounded-full p-2 transition-all ${
-            isListening
+            isRecording
               ? 'bg-destructive text-destructive-foreground animate-pulse shadow-lg shadow-destructive/30'
-              : 'bg-muted text-muted-foreground hover:bg-primary/20 hover:text-primary'
+              : isTranscribing
+                ? 'bg-muted text-muted-foreground cursor-wait'
+                : 'bg-muted text-muted-foreground hover:bg-primary/20 hover:text-primary'
           }`}
-          title={isListening ? 'Ferma dettatura' : 'Avvia dettatura vocale'}
+          title={isRecording ? 'Ferma registrazione' : 'Avvia registrazione vocale'}
         >
-          {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+          {isTranscribing ? (
+            <Loader2 size={18} className="animate-spin" />
+          ) : isRecording ? (
+            <Square size={18} />
+          ) : (
+            <Mic size={18} />
+          )}
         </button>
 
-        {showClean && !isListening && (
+        {showClean && !isRecording && !isTranscribing && (
           <button
             type="button"
             onClick={cleanTranscription}
@@ -233,9 +205,14 @@ export default function VoiceInput({ onTranscript, currentValue = '', className 
         )}
       </div>
 
-      {isListening && (
+      {isRecording && (
         <span className="text-[10px] text-destructive font-medium animate-pulse">
-          Parla ora...
+          🔴 {formatDuration(duration)}
+        </span>
+      )}
+      {isTranscribing && (
+        <span className="text-[10px] text-primary font-medium animate-pulse">
+          Trascrizione...
         </span>
       )}
       {isCleaning && (
