@@ -331,7 +331,7 @@ serve(async (req) => {
       reminderPushes += await sendPush(supabaseUrl, serviceKey, reminder.user_id, '⏰ Promemoria', reminder.text, { url: '/reminders' });
     }
 
-    const result = { checked: romeTime, date: romeDate, day: romeDayKey, users: allProgress?.length || 0, question_sent: questionPushes, conflict_sent: conflictPushes, sfogo_sent: sfogoPushes, reminder_sent: reminderPushes, total_sent: questionPushes + conflictPushes + sfogoPushes + reminderPushes };
+    const result = { checked: romeTime, date: romeDate, day: romeDayKey, users: allProgress?.length || 0, question_sent: questionPushes, conflict_sent: conflictPushes, sfogo_sent: sfogoPushes, overton_sent: overtonPushes, reminder_sent: reminderPushes, total_sent: questionPushes + conflictPushes + sfogoPushes + overtonPushes + reminderPushes };
     console.log('Result:', JSON.stringify(result));
 
     return new Response(JSON.stringify(result), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
