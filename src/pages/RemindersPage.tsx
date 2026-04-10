@@ -154,6 +154,25 @@ export default function RemindersPage() {
     fetchReminders();
   };
 
+  const startEdit = (r: Reminder) => {
+    setEditingId(r.id);
+    setEditText(r.text);
+  };
+
+  const saveEdit = async () => {
+    if (!editingId || !editText.trim()) return;
+    await supabase.from('reminders').update({ text: editText.trim() }).eq('id', editingId);
+    setEditingId(null);
+    setEditText('');
+    fetchReminders();
+    toast.success('Promemoria aggiornato');
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditText('');
+  };
+
   const testPush = async () => {
     if (!user) return;
     setTesting(true);
@@ -459,12 +478,17 @@ export default function RemindersPage() {
 
       {/* ── ADD REMINDER FORM ── */}
       <div className="mb-6 rounded-2xl border border-border bg-card p-4 space-y-3">
-        <input
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder="Testo del promemoria..."
-          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-        />
+        <div className="relative">
+          <input
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder="Testo del promemoria..."
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 pr-12 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          <div className="absolute right-2 top-1.5">
+            <VoiceInput onTranscript={setText} currentValue={text} />
+          </div>
+        </div>
         <div className="space-y-2">
           <p className="text-xs font-medium text-muted-foreground">Orari (HH:MM)</p>
           {times.map((t, i) => (
@@ -509,17 +533,45 @@ export default function RemindersPage() {
       ) : (
         <div className="space-y-3">
           {reminders.map(r => (
-            <div key={r.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
-              <button onClick={() => toggle(r.id, r.active)}>
-                <Clock size={18} className={r.active ? 'text-primary' : 'text-muted-foreground'} />
-              </button>
-              <div className="flex-1 min-w-0">
-                <span className={`block text-sm ${r.active ? 'text-foreground' : 'text-muted-foreground line-through'}`}>{r.text}</span>
-                {r.times && r.times.length > 0 && <span className="text-xs text-muted-foreground">{r.times.join(', ')}</span>}
-              </div>
-              <button onClick={() => remove(r.id)} className="text-muted-foreground hover:text-destructive shrink-0">
-                <Trash2 size={16} />
-              </button>
+            <div key={r.id} className="rounded-2xl border border-border bg-card p-4">
+              {editingId === r.id ? (
+                <div className="space-y-2">
+                  <div className="relative">
+                    <input
+                      value={editText}
+                      onChange={e => setEditText(e.target.value)}
+                      className="w-full rounded-xl border border-border bg-background px-4 py-2 pr-12 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <div className="absolute right-2 top-0.5">
+                      <VoiceInput onTranscript={setEditText} currentValue={editText} />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <button onClick={cancelEdit} className="p-1.5 text-muted-foreground hover:text-destructive">
+                      <XCircle size={16} />
+                    </button>
+                    <button onClick={saveEdit} className="p-1.5 text-muted-foreground hover:text-primary">
+                      <Check size={16} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <button onClick={() => toggle(r.id, r.active)}>
+                    <Clock size={18} className={r.active ? 'text-primary' : 'text-muted-foreground'} />
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <span className={`block text-sm ${r.active ? 'text-foreground' : 'text-muted-foreground line-through'}`}>{r.text}</span>
+                    {r.times && r.times.length > 0 && <span className="text-xs text-muted-foreground">{r.times.join(', ')}</span>}
+                  </div>
+                  <button onClick={() => startEdit(r)} className="text-muted-foreground hover:text-primary shrink-0">
+                    <Pencil size={16} />
+                  </button>
+                  <button onClick={() => remove(r.id)} className="text-muted-foreground hover:text-destructive shrink-0">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
