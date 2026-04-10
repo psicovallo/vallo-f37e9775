@@ -1,5 +1,6 @@
 import { Copy, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
+import SaveToReminder from '@/components/SaveToReminder';
 
 export default function QuestionActions({ text }: { text: string }) {
   const shareText = `Domanda dal Consiglio dei Maestri:\n\n${text}`;
@@ -16,6 +17,7 @@ export default function QuestionActions({ text }: { text: string }) {
   };
   return (
     <div className="flex justify-end gap-2">
+      <SaveToReminder text={text} />
       <button onClick={handleCopy} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:text-primary hover:bg-primary/10"><Copy size={16} /></button>
       <button onClick={handleShare} className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:text-primary hover:bg-primary/10"><Share2 size={16} /></button>
     </div>

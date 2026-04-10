@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Trash2, Clock, BellRing, X, Bell, Zap, Swords, Flame, Settings } from 'lucide-react';
+import { Plus, Trash2, Clock, BellRing, X, Bell, Zap, Swords, Flame, Settings, Pencil, Check, XCircle } from 'lucide-react';
+import VoiceInput from '@/components/VoiceInput';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -60,6 +61,8 @@ export default function RemindersPage() {
   const [notifSettings, setNotifSettings] = useState<NotifSettings | null>(null);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
 
   const fetchReminders = async () => {
     const { data } = await supabase
