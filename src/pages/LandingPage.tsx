@@ -67,7 +67,7 @@ export default function LandingPage() {
           <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 space-y-3">
             <h2 className="text-lg font-bold text-primary uppercase">E se ti dicessi che puoi avere i superpoteri?</h2>
             <p>
-              Pensa a Tony Stark prima di diventare un eroe. Un uomo comune, vulnerabile. Poi trova la sua arma segreta. Indossa l'armatura di Iron Mask e all'improvviso... smette di essere carne da macello. Diventa un Dio tra i mortali. Non chiede più permesso per entrare in una stanza; è la stanza che si adatta a lui.
+              Pensa a Tony Stark prima di diventare un eroe. Un uomo comune, vulnerabile. Poi trova la sua arma segreta. Indossa l'armatura di Iron Man e all'improvviso... smette di essere carne da macello. Diventa un Dio tra i mortali. Non chiede più permesso per entrare in una stanza; è la stanza che si adatta a lui.
             </p>
             <p className="font-semibold">Questa pagina è la tua armatura.</p>
           </div>
