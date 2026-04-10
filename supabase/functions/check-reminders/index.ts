@@ -163,32 +163,41 @@ serve(async (req) => {
         }
 
         if (shouldSendQ) {
-          const { data: assignments } = await supabase
-            .from('question_assignments')
-            .select('*')
-            .eq('user_id', userId)
-            .order('sort_order', { ascending: true });
-
-          if (assignments?.length) {
-            const { count: todayCount } = await supabase
-              .from('question_deliveries')
-              .select('id', { count: 'exact', head: true })
+          // Overton Override: 50% chance to send Overton reminder instead
+          const userOverton = overtonByUser[userId];
+          if (userOverton && Math.random() < 0.5 && overtonStepTexts[userId]) {
+            const stepText = overtonStepTexts[userId];
+            const title = `🎯 Overton Step ${userOverton.current_step}`;
+            const body = `Il Consiglio osserva. La finestra è aperta sullo Step ${userOverton.current_step}. ${stepText.slice(0, 80)}`;
+            overtonPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: '/overton' });
+          } else {
+            const { data: assignments } = await supabase
+              .from('question_assignments')
+              .select('*')
               .eq('user_id', userId)
-              .gte('delivered_at', `${romeDate}T00:00:00`)
-              .lte('delivered_at', `${romeDate}T23:59:59`);
+              .order('sort_order', { ascending: true });
 
-            const idx = (todayCount || 0) % assignments.length;
-            const assignment = assignments[idx];
+            if (assignments?.length) {
+              const { count: todayCount } = await supabase
+                .from('question_deliveries')
+                .select('id', { count: 'exact', head: true })
+                .eq('user_id', userId)
+                .gte('delivered_at', `${romeDate}T00:00:00`)
+                .lte('delivered_at', `${romeDate}T23:59:59`);
 
-            await supabase.from('question_deliveries').insert({
-              user_id: userId,
-              question_index: assignment.sort_order,
-              delivered_at: now.toISOString(),
-            });
+              const idx = (todayCount || 0) % assignments.length;
+              const assignment = assignments[idx];
 
-            const title = `🔥 Domanda ${assignment.sort_order}`;
-            const body = assignment.question_text.slice(0, 100) + (assignment.question_text.length > 100 ? '...' : '');
-            questionPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: '/question' });
+              await supabase.from('question_deliveries').insert({
+                user_id: userId,
+                question_index: assignment.sort_order,
+                delivered_at: now.toISOString(),
+              });
+
+              const title = `🔥 Domanda ${assignment.sort_order}`;
+              const body = assignment.question_text.slice(0, 100) + (assignment.question_text.length > 100 ? '...' : '');
+              questionPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: '/question' });
+            }
           }
         }
       }
