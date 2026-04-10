@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2, Lock, Check, Timer } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import VoiceInput from '@/components/VoiceInput';
 
 const STEP_LABELS = [
   { num: 1, label: 'IMPENSABILE', subtitle: 'Il Tabù' },
@@ -213,12 +214,17 @@ export default function OvertonPage() {
               <label className="text-xs font-bold text-neutral-300 uppercase tracking-wider">
                 Qual è l'azione che oggi ritieni impossibile o inaccettabile compiere, e che cambierebbe le regole del tuo ologramma?
               </label>
-              <Textarea
-                value={goalInput}
-                onChange={e => setGoalInput(e.target.value)}
-                placeholder="Scrivi qui il tuo obiettivo impossibile..."
-                className="bg-neutral-900 border-neutral-700 text-white placeholder:text-neutral-600 min-h-[120px]"
-              />
+              <div className="relative">
+                <Textarea
+                  value={goalInput}
+                  onChange={e => setGoalInput(e.target.value)}
+                  placeholder="Scrivi qui il tuo obiettivo impossibile..."
+                  className="bg-neutral-900 border-neutral-700 text-white placeholder:text-neutral-600 min-h-[120px] pr-12"
+                />
+                <div className="absolute right-3 top-3">
+                  <VoiceInput onTranscript={setGoalInput} currentValue={goalInput} />
+                </div>
+              </div>
               <Button
                 onClick={handleCreateShift}
                 disabled={generating || !goalInput.trim()}

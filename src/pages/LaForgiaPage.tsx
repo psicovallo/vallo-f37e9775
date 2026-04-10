@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, Lock } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import VoiceInput from '@/components/VoiceInput';
+import SaveToReminder from '@/components/SaveToReminder';
 
 interface Challenge {
   id: string;
@@ -204,9 +206,14 @@ export default function LaForgiaPage() {
             </div>
 
             {/* Question */}
-            <p className="text-xl md:text-2xl font-bold text-center leading-relaxed mb-12 max-w-md">
-              {challenge.question}
-            </p>
+            <div className="text-center mb-12 max-w-md space-y-2">
+              <p className="text-xl md:text-2xl font-bold leading-relaxed">
+                {challenge.question}
+              </p>
+              <div className="flex justify-center">
+                <SaveToReminder text={challenge.question} />
+              </div>
+            </div>
 
             {/* Input area */}
             {challenge.challenge_type === 'binary' ? (
@@ -233,8 +240,14 @@ export default function LaForgiaPage() {
                     onKeyDown={e => { if (e.key === 'Enter') e.preventDefault(); }}
                     placeholder="Rispondi in massimo 50 caratteri"
                     rows={2}
-                    className="w-full bg-neutral-900 border-2 border-neutral-700 rounded-none p-4 text-white text-sm placeholder:text-neutral-600 focus:outline-none focus:border-red-700 resize-none"
+                    className="w-full bg-neutral-900 border-2 border-neutral-700 rounded-none p-4 pr-12 text-white text-sm placeholder:text-neutral-600 focus:outline-none focus:border-red-700 resize-none"
                   />
+                  <div className="absolute right-2 top-2">
+                    <VoiceInput
+                      onTranscript={t => { if (t.length <= 50) setTextResponse(t); }}
+                      currentValue={textResponse}
+                    />
+                  </div>
                   <span className={`absolute bottom-2 right-3 text-[10px] ${textResponse.length >= 45 ? 'text-red-500' : 'text-neutral-500'}`}>
                     {textResponse.length}/50
                   </span>
