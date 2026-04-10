@@ -22,6 +22,7 @@ import DNAQuestionPage from "@/pages/DNAQuestionPage";
 import ProfilePage from "@/pages/ProfilePage";
 import LaForgiaPage from "@/pages/LaForgiaPage";
 import TribunalePage from "@/pages/TribunalePage";
+import OvertonPage from "@/pages/OvertonPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();

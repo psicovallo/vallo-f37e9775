@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Bell, Shield, Flame, PenLine, Swords, Share2 } from 'lucide-react';
+import { Home, Bell, Shield, Flame, PenLine, Swords, Share2, Crosshair } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
