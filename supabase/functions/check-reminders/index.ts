@@ -84,6 +84,30 @@ serve(async (req) => {
     let conflictPushes = 0;
     let sfogoPushes = 0;
     let reminderPushes = 0;
+    let overtonPushes = 0;
+
+    // Pre-load active Overton shifts for all users
+    const { data: activeOverton } = await supabase
+      .from('overton_shifts')
+      .select('user_id, current_step, goal_text, id')
+      .eq('status', 'active');
+    const overtonByUser: Record<string, any> = {};
+    for (const ov of activeOverton || []) {
+      overtonByUser[ov.user_id] = ov;
+    }
+    // Pre-load current step text
+    const overtonStepTexts: Record<string, string> = {};
+    if (activeOverton?.length) {
+      const shiftIds = activeOverton.map(o => o.id);
+      const { data: stepRows } = await supabase
+        .from('overton_steps')
+        .select('shift_id, step_number, action_text')
+        .in('shift_id', shiftIds);
+      for (const ov of activeOverton) {
+        const stepData = stepRows?.find(s => s.shift_id === ov.id && s.step_number === ov.current_step);
+        if (stepData) overtonStepTexts[ov.user_id] = stepData.action_text;
+      }
+    }
 
     for (const progress of allProgress || []) {
       const userId = progress.user_id;
