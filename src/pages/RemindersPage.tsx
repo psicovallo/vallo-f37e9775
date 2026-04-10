@@ -525,13 +525,40 @@ export default function RemindersPage() {
         <div className="mb-4 rounded-xl border border-border bg-secondary p-3 text-xs text-foreground font-mono break-all">{testResult}</div>
       )}
 
-      {/* ── REMINDERS LIST ── */}
+      {/* ── ACTIVE REMINDERS OVERVIEW ── */}
+      {!loading && reminders.filter(r => r.active).length > 0 && (
+        <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+          <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Bell size={16} className="text-primary" />
+            Promemoria Attivi ({reminders.filter(r => r.active).length})
+          </h2>
+          <div className="space-y-2">
+            {reminders.filter(r => r.active).map(r => (
+              <div key={r.id} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3">
+                <div className="flex-1 min-w-0">
+                  <span className="block text-sm text-foreground">{r.text}</span>
+                  {r.times && r.times.length > 0 && (
+                    <span className="text-xs text-muted-foreground">{r.times.join(', ')}</span>
+                  )}
+                </div>
+                <Switch
+                  checked={true}
+                  onCheckedChange={() => toggle(r.id, true)}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── ALL REMINDERS LIST ── */}
       {loading ? (
         <p className="text-center text-muted-foreground">Caricamento...</p>
       ) : reminders.length === 0 ? (
         <p className="text-center text-muted-foreground py-8">Nessun promemoria</p>
       ) : (
         <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-foreground">Tutti i promemoria</h2>
           {reminders.map(r => (
             <div key={r.id} className="rounded-2xl border border-border bg-card p-4">
               {editingId === r.id ? (
