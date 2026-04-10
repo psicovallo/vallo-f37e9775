@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Bell, Shield, Flame, PenLine, Swords, Share2 } from 'lucide-react';
+import { Home, Bell, Shield, Flame, PenLine, Swords, Share2, Crosshair } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -10,6 +10,7 @@ const tabs = [
   { to: '/question', label: 'Domanda', icon: Flame },
   { to: '/sfogo', label: 'Sfogo', icon: PenLine },
   { to: '/sos-conflitti', label: 'SOS DNA', icon: Swords },
+  { to: '/overton', label: 'Overton', icon: Crosshair },
   { to: '/reminders', label: 'Promemoria', icon: Bell },
 ];
 

@@ -237,6 +237,83 @@ export type Database = {
         }
         Relationships: []
       }
+      overton_shifts: {
+        Row: {
+          created_at: string
+          current_step: number
+          goal_text: string
+          id: string
+          status: string
+          step_confirmed_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_step?: number
+          goal_text: string
+          id?: string
+          status?: string
+          step_confirmed_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_step?: number
+          goal_text?: string
+          id?: string
+          status?: string
+          step_confirmed_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      overton_steps: {
+        Row: {
+          action_text: string
+          confirmed: boolean
+          confirmed_at: string | null
+          created_at: string
+          id: string
+          label: string
+          shift_id: string
+          step_number: number
+          user_id: string
+        }
+        Insert: {
+          action_text: string
+          confirmed?: boolean
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          label: string
+          shift_id: string
+          step_number: number
+          user_id: string
+        }
+        Update: {
+          action_text?: string
+          confirmed?: boolean
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+          shift_id?: string
+          step_number?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "overton_steps_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "overton_shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       phrases: {
         Row: {
           category: string

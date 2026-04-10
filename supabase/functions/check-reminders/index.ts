@@ -84,6 +84,30 @@ serve(async (req) => {
     let conflictPushes = 0;
     let sfogoPushes = 0;
     let reminderPushes = 0;
+    let overtonPushes = 0;
+
+    // Pre-load active Overton shifts for all users
+    const { data: activeOverton } = await supabase
+      .from('overton_shifts')
+      .select('user_id, current_step, goal_text, id')
+      .eq('status', 'active');
+    const overtonByUser: Record<string, any> = {};
+    for (const ov of activeOverton || []) {
+      overtonByUser[ov.user_id] = ov;
+    }
+    // Pre-load current step text
+    const overtonStepTexts: Record<string, string> = {};
+    if (activeOverton?.length) {
+      const shiftIds = activeOverton.map(o => o.id);
+      const { data: stepRows } = await supabase
+        .from('overton_steps')
+        .select('shift_id, step_number, action_text')
+        .in('shift_id', shiftIds);
+      for (const ov of activeOverton) {
+        const stepData = stepRows?.find(s => s.shift_id === ov.id && s.step_number === ov.current_step);
+        if (stepData) overtonStepTexts[ov.user_id] = stepData.action_text;
+      }
+    }
 
     for (const progress of allProgress || []) {
       const userId = progress.user_id;
@@ -139,32 +163,41 @@ serve(async (req) => {
         }
 
         if (shouldSendQ) {
-          const { data: assignments } = await supabase
-            .from('question_assignments')
-            .select('*')
-            .eq('user_id', userId)
-            .order('sort_order', { ascending: true });
-
-          if (assignments?.length) {
-            const { count: todayCount } = await supabase
-              .from('question_deliveries')
-              .select('id', { count: 'exact', head: true })
+          // Overton Override: 50% chance to send Overton reminder instead
+          const userOverton = overtonByUser[userId];
+          if (userOverton && Math.random() < 0.5 && overtonStepTexts[userId]) {
+            const stepText = overtonStepTexts[userId];
+            const title = `🎯 Overton Step ${userOverton.current_step}`;
+            const body = `Il Consiglio osserva. La finestra è aperta sullo Step ${userOverton.current_step}. ${stepText.slice(0, 80)}`;
+            overtonPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: '/overton' });
+          } else {
+            const { data: assignments } = await supabase
+              .from('question_assignments')
+              .select('*')
               .eq('user_id', userId)
-              .gte('delivered_at', `${romeDate}T00:00:00`)
-              .lte('delivered_at', `${romeDate}T23:59:59`);
+              .order('sort_order', { ascending: true });
 
-            const idx = (todayCount || 0) % assignments.length;
-            const assignment = assignments[idx];
+            if (assignments?.length) {
+              const { count: todayCount } = await supabase
+                .from('question_deliveries')
+                .select('id', { count: 'exact', head: true })
+                .eq('user_id', userId)
+                .gte('delivered_at', `${romeDate}T00:00:00`)
+                .lte('delivered_at', `${romeDate}T23:59:59`);
 
-            await supabase.from('question_deliveries').insert({
-              user_id: userId,
-              question_index: assignment.sort_order,
-              delivered_at: now.toISOString(),
-            });
+              const idx = (todayCount || 0) % assignments.length;
+              const assignment = assignments[idx];
 
-            const title = `🔥 Domanda ${assignment.sort_order}`;
-            const body = assignment.question_text.slice(0, 100) + (assignment.question_text.length > 100 ? '...' : '');
-            questionPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: '/question' });
+              await supabase.from('question_deliveries').insert({
+                user_id: userId,
+                question_index: assignment.sort_order,
+                delivered_at: now.toISOString(),
+              });
+
+              const title = `🔥 Domanda ${assignment.sort_order}`;
+              const body = assignment.question_text.slice(0, 100) + (assignment.question_text.length > 100 ? '...' : '');
+              questionPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: '/question' });
+            }
           }
         }
       }
@@ -298,7 +331,7 @@ serve(async (req) => {
       reminderPushes += await sendPush(supabaseUrl, serviceKey, reminder.user_id, '⏰ Promemoria', reminder.text, { url: '/reminders' });
     }
 
-    const result = { checked: romeTime, date: romeDate, day: romeDayKey, users: allProgress?.length || 0, question_sent: questionPushes, conflict_sent: conflictPushes, sfogo_sent: sfogoPushes, reminder_sent: reminderPushes, total_sent: questionPushes + conflictPushes + sfogoPushes + reminderPushes };
+    const result = { checked: romeTime, date: romeDate, day: romeDayKey, users: allProgress?.length || 0, question_sent: questionPushes, conflict_sent: conflictPushes, sfogo_sent: sfogoPushes, overton_sent: overtonPushes, reminder_sent: reminderPushes, total_sent: questionPushes + conflictPushes + sfogoPushes + overtonPushes + reminderPushes };
     console.log('Result:', JSON.stringify(result));
 
     return new Response(JSON.stringify(result), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
