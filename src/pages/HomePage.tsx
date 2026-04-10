@@ -144,6 +144,14 @@ export default function HomePage() {
           <span className="text-[10px] text-neutral-400 text-center">Riprogrammazione attiva</span>
         </Link>
         <Link
+          to="/overton"
+          className="flex flex-col items-center gap-2 rounded-2xl border border-amber-700/40 bg-amber-950/30 p-4 transition-colors hover:border-amber-500 active:scale-[0.97]"
+        >
+          <span className="text-2xl">🎯</span>
+          <span className="text-xs font-medium text-foreground text-center">Overton Shift</span>
+          <span className="text-[10px] text-muted-foreground text-center">Sposta l'impossibile</span>
+        </Link>
+        <Link
           to="/contract"
           className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-primary active:scale-[0.97]"
         >
