@@ -87,6 +87,7 @@ export default function QuestionPage() {
   const [textValid, setTextValid] = useState(false);
   const [noteId, setNoteId] = useState<string | null>(null);
   const [timerRestarted, setTimerRestarted] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const readTimerRef = useRef<ReturnType<typeof setInterval>>();
   const noteSaveRef = useRef<ReturnType<typeof setTimeout>>();
@@ -281,6 +282,41 @@ export default function QuestionPage() {
     }
   };
 
+  const triggerAutoGenerate = useCallback(async () => {
+    if (!user || generating) return;
+    setGenerating(true);
+    try {
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(`https://${projectId}.supabase.co/functions/v1/generate-questions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+      if (!res.ok) throw new Error('Generation failed');
+      const data = await res.json();
+      console.log('Auto-generated questions:', data.generated);
+      toast.success(`Il Consiglio ha generato ${data.generated} nuove domande 🔥`);
+    } catch (e) {
+      console.error('Auto-generate error:', e);
+      toast.error('Errore nella generazione delle domande');
+    } finally {
+      setGenerating(false);
+    }
+  }, [user, generating]);
+
+  const checkAndAutoGenerate = useCallback(async () => {
+    if (!user) return;
+    const { count } = await supabase
+      .from('question_assignments')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .neq('status', 'risolta');
+
+    if ((count || 0) <= 2) {
+      await triggerAutoGenerate();
+    }
+  }, [user, triggerAutoGenerate]);
+
   const handleButtonClick = async (buttonLabel: string) => {
     if (!user || !assignment || submitting) return;
 
@@ -321,6 +357,9 @@ export default function QuestionPage() {
 
     setCompleted(true);
     setSubmitting(false);
+
+    // Auto-generate new questions if running low
+    checkAndAutoGenerate();
   };
 
   const formatTime = (seconds: number) => {
@@ -332,11 +371,32 @@ export default function QuestionPage() {
   if (allDone) {
     return (
       <div className="mx-auto max-w-lg px-4 pb-24 pt-16 text-center">
-        <div className="mb-6 text-6xl">🔥</div>
-        <h1 className="mb-4 text-2xl font-bold text-foreground">Tutte le domande completate</h1>
-        <p className="text-muted-foreground">
-          Hai attraversato ogni singola domanda. Non sei più la stessa persona che ha iniziato.
-        </p>
+        {generating ? (
+          <>
+            <div className="mb-6 h-10 w-10 mx-auto animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <h1 className="mb-4 text-2xl font-bold text-foreground">Il Consiglio sta elaborando...</h1>
+            <p className="text-muted-foreground">
+              I 15 Maestri stanno analizzando le tue risposte per generare domande più profonde.
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="mb-6 text-6xl">🔥</div>
+            <h1 className="mb-4 text-2xl font-bold text-foreground">Nuove domande in arrivo</h1>
+            <p className="text-muted-foreground mb-6">
+              Il Consiglio dei 15 Maestri sta preparando il prossimo livello basato sulle tue risposte.
+            </p>
+            <button
+              onClick={async () => {
+                await triggerAutoGenerate();
+                window.location.reload();
+              }}
+              className="rounded-2xl bg-primary px-6 py-3.5 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.97]"
+            >
+              🔥 Genera nuove domande
+            </button>
+          </>
+        )}
       </div>
     );
   }
@@ -534,10 +594,11 @@ export default function QuestionPage() {
                 .order('sort_order', { ascending: true })
                 .limit(1);
               if (nextAssignments && nextAssignments.length > 0) {
-                // Reload to show next question
                 window.location.reload();
               } else {
-                setAllDone(true);
+                // Auto-generate before showing allDone
+                await checkAndAutoGenerate();
+                window.location.reload();
               }
             }}
             className="mt-4 w-full rounded-2xl bg-primary px-4 py-3.5 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.97]"
