@@ -87,6 +87,7 @@ export default function QuestionPage() {
   const [textValid, setTextValid] = useState(false);
   const [noteId, setNoteId] = useState<string | null>(null);
   const [timerRestarted, setTimerRestarted] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const readTimerRef = useRef<ReturnType<typeof setInterval>>();
   const noteSaveRef = useRef<ReturnType<typeof setTimeout>>();
