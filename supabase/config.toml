@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.adjust-conflict-question]
 verify_jwt = false
+
+[functions.generate-overton-steps]
+verify_jwt = false
