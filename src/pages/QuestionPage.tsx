@@ -371,11 +371,32 @@ export default function QuestionPage() {
   if (allDone) {
     return (
       <div className="mx-auto max-w-lg px-4 pb-24 pt-16 text-center">
-        <div className="mb-6 text-6xl">🔥</div>
-        <h1 className="mb-4 text-2xl font-bold text-foreground">Tutte le domande completate</h1>
-        <p className="text-muted-foreground">
-          Hai attraversato ogni singola domanda. Non sei più la stessa persona che ha iniziato.
-        </p>
+        {generating ? (
+          <>
+            <div className="mb-6 h-10 w-10 mx-auto animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <h1 className="mb-4 text-2xl font-bold text-foreground">Il Consiglio sta elaborando...</h1>
+            <p className="text-muted-foreground">
+              I 15 Maestri stanno analizzando le tue risposte per generare domande più profonde.
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="mb-6 text-6xl">🔥</div>
+            <h1 className="mb-4 text-2xl font-bold text-foreground">Nuove domande in arrivo</h1>
+            <p className="text-muted-foreground mb-6">
+              Il Consiglio dei 15 Maestri sta preparando il prossimo livello basato sulle tue risposte.
+            </p>
+            <button
+              onClick={async () => {
+                await triggerAutoGenerate();
+                window.location.reload();
+              }}
+              className="rounded-2xl bg-primary px-6 py-3.5 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.97]"
+            >
+              🔥 Genera nuove domande
+            </button>
+          </>
+        )}
       </div>
     );
   }
