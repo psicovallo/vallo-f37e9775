@@ -594,10 +594,11 @@ export default function QuestionPage() {
                 .order('sort_order', { ascending: true })
                 .limit(1);
               if (nextAssignments && nextAssignments.length > 0) {
-                // Reload to show next question
                 window.location.reload();
               } else {
-                setAllDone(true);
+                // Auto-generate before showing allDone
+                await checkAndAutoGenerate();
+                window.location.reload();
               }
             }}
             className="mt-4 w-full rounded-2xl bg-primary px-4 py-3.5 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.97]"
