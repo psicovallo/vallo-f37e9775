@@ -87,7 +87,7 @@ export default function RemindersPage() {
     if (!user) return;
     const { data } = await supabase
       .from('question_progress')
-      .select('notify_questions, notify_dna, notify_sfogo, daily_times, dna_daily_times, sfogo_daily_times, questions_per_day, dna_per_day, sfogo_per_day, questions_frequency, dna_frequency, sfogo_frequency, notification_window_start, notification_window_end, notify_days')
+      .select('notify_questions, notify_dna, notify_sfogo, notify_overton, daily_times, dna_daily_times, sfogo_daily_times, questions_per_day, dna_per_day, sfogo_per_day, questions_frequency, dna_frequency, sfogo_frequency, notification_window_start, notification_window_end, notify_days, custom_questions_text, custom_dna_text, custom_sfogo_text, custom_overton_text')
       .eq('user_id', user.id)
       .maybeSingle();
     if (data) {
@@ -100,7 +100,7 @@ export default function RemindersPage() {
     fetchNotifSettings();
   }, [user]);
 
-  const toggleNotifSetting = async (field: 'notify_questions' | 'notify_dna' | 'notify_sfogo', current: boolean) => {
+  const toggleNotifSetting = async (field: 'notify_questions' | 'notify_dna' | 'notify_sfogo' | 'notify_overton', current: boolean) => {
     if (!user) return;
     await supabase.from('question_progress')
       .update({ [field]: !current } as any)
