@@ -448,6 +448,34 @@ export default function RemindersPage() {
             )}
           </div>
 
+          {/* Overton switch */}
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Target size={14} className="text-primary" />
+                  Overton Shift
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Solleciti per lo step Overton attivo (sostituisce il 50% delle Domande)
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEditorCategory('overton')}
+                  className="rounded-lg p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                  title="Modifica notifica"
+                >
+                  <Pencil size={14} />
+                </button>
+                <Switch
+                  checked={notifSettings.notify_overton ?? true}
+                  onCheckedChange={() => toggleNotifSetting('notify_overton', notifSettings.notify_overton ?? true)}
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="border-t border-border pt-4 space-y-3">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <Settings size={14} className="text-muted-foreground" />
