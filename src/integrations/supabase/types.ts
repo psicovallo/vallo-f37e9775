@@ -237,6 +237,36 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_log: {
+        Row: {
+          body: string
+          category: string
+          id: string
+          sent_at: string
+          title: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          body: string
+          category: string
+          id?: string
+          sent_at?: string
+          title: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string
+          category?: string
+          id?: string
+          sent_at?: string
+          title?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       overton_shifts: {
         Row: {
           created_at: string
@@ -620,6 +650,10 @@ export type Database = {
           answered_at: string | null
           created_at: string
           current_question_index: number
+          custom_dna_text: string | null
+          custom_overton_text: string | null
+          custom_questions_text: string | null
+          custom_sfogo_text: string | null
           daily_times: string[] | null
           daily_times_date: string | null
           dna_daily_times: string[] | null
@@ -631,6 +665,7 @@ export type Database = {
           notification_window_start: string | null
           notify_days: string[]
           notify_dna: boolean
+          notify_overton: boolean
           notify_questions: boolean
           notify_sfogo: boolean
           onboarding_completed: boolean
@@ -652,6 +687,10 @@ export type Database = {
           answered_at?: string | null
           created_at?: string
           current_question_index?: number
+          custom_dna_text?: string | null
+          custom_overton_text?: string | null
+          custom_questions_text?: string | null
+          custom_sfogo_text?: string | null
           daily_times?: string[] | null
           daily_times_date?: string | null
           dna_daily_times?: string[] | null
@@ -663,6 +702,7 @@ export type Database = {
           notification_window_start?: string | null
           notify_days?: string[]
           notify_dna?: boolean
+          notify_overton?: boolean
           notify_questions?: boolean
           notify_sfogo?: boolean
           onboarding_completed?: boolean
@@ -684,6 +724,10 @@ export type Database = {
           answered_at?: string | null
           created_at?: string
           current_question_index?: number
+          custom_dna_text?: string | null
+          custom_overton_text?: string | null
+          custom_questions_text?: string | null
+          custom_sfogo_text?: string | null
           daily_times?: string[] | null
           daily_times_date?: string | null
           dna_daily_times?: string[] | null
@@ -695,6 +739,7 @@ export type Database = {
           notification_window_start?: string | null
           notify_days?: string[]
           notify_dna?: boolean
+          notify_overton?: boolean
           notify_questions?: boolean
           notify_sfogo?: boolean
           onboarding_completed?: boolean

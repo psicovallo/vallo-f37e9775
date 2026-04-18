@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import SaveToReminder from '@/components/SaveToReminder';
 
 export default function QuestionActions({ text }: { text: string }) {
-  const shareText = `Domanda dal Consiglio dei Maestri:\n\n${text}`;
+  const shareText = text;
   const handleCopy = async () => {
     await navigator.clipboard.writeText(shareText);
     toast.success('Domanda copiata ✓');

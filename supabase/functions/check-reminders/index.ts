@@ -39,18 +39,34 @@ function generateRandomTimes(start: string, end: string, count: number): string[
   return [...times].sort();
 }
 
-async function sendPush(supabaseUrl: string, serviceKey: string, userId: string, title: string, body: string, data: Record<string, string>) {
+async function sendPush(supabaseUrl: string, serviceKey: string, userId: string, title: string, body: string, data: Record<string, string>, category: string) {
   try {
     const res = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-      body: JSON.stringify({ user_ids: [userId], title, body, data }),
+      body: JSON.stringify({ user_ids: [userId], title, body, data, category: 'skip-log' }),
     });
     const text = await res.text();
     let result: any = {};
     try { result = JSON.parse(text); } catch {}
-    console.log(`Push ${userId}: ${title} => sent=${result.sent || 0}`);
-    return Number(result.sent || 0);
+    const sent = Number(result.sent || 0);
+    console.log(`Push ${userId}: ${title} => sent=${sent}`);
+
+    // Log notification (best-effort, non-blocking)
+    try {
+      const sb = createClient(supabaseUrl, serviceKey);
+      await sb.from('notification_log').insert({
+        user_id: userId,
+        category,
+        title,
+        body,
+        url: data?.url || null,
+      });
+    } catch (logErr) {
+      console.error('log error:', logErr);
+    }
+
+    return sent;
   } catch (e) {
     console.error(`Push error ${userId}:`, e);
     return 0;
@@ -165,11 +181,13 @@ serve(async (req) => {
         if (shouldSendQ) {
           // Overton Override: 50% chance to send Overton reminder instead
           const userOverton = overtonByUser[userId];
-          if (userOverton && Math.random() < 0.5 && overtonStepTexts[userId]) {
+          if (userOverton && Math.random() < 0.5 && overtonStepTexts[userId] && progress.notify_overton !== false) {
             const stepText = overtonStepTexts[userId];
             const title = `🎯 Overton Step ${userOverton.current_step}`;
-            const body = `Il Consiglio osserva. La finestra è aperta sullo Step ${userOverton.current_step}. ${stepText.slice(0, 80)}`;
-            overtonPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: '/overton' });
+            const body = progress.custom_overton_text?.trim()
+              ? progress.custom_overton_text.trim()
+              : `Il Consiglio osserva. La finestra è aperta sullo Step ${userOverton.current_step}. ${stepText.slice(0, 80)}`;
+            overtonPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: '/overton' }, 'overton');
           } else {
             const { data: assignments } = await supabase
               .from('question_assignments')
@@ -195,8 +213,10 @@ serve(async (req) => {
               });
 
               const title = `🔥 Domanda ${assignment.sort_order}`;
-              const body = assignment.question_text.slice(0, 100) + (assignment.question_text.length > 100 ? '...' : '');
-              questionPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: '/question' });
+              const body = progress.custom_questions_text?.trim()
+                ? progress.custom_questions_text.trim()
+                : assignment.question_text.slice(0, 100) + (assignment.question_text.length > 100 ? '...' : '');
+              questionPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: '/question' }, 'questions');
             }
           }
         }
@@ -253,8 +273,10 @@ serve(async (req) => {
             const randomQ = questions[Math.floor(Math.random() * questions.length)];
             const profileName = (randomQ as any).conflict_profiles?.name || 'Bersaglio';
             const title = `⚔️ DNA: ${profileName}`;
-            const body = randomQ.question_text.slice(0, 100) + (randomQ.question_text.length > 100 ? '...' : '');
-            conflictPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: `/dna-question?id=${randomQ.id}` });
+            const body = progress.custom_dna_text?.trim()
+              ? progress.custom_dna_text.trim()
+              : randomQ.question_text.slice(0, 100) + (randomQ.question_text.length > 100 ? '...' : '');
+            conflictPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: `/dna-question?id=${randomQ.id}` }, 'dna');
           }
         }
       }
@@ -313,8 +335,10 @@ serve(async (req) => {
             const qMatch = randomNote.text.match(/Q:\s*(.*?)(?:\nA:|$)/s);
             const questionText = qMatch ? qMatch[1].trim() : randomNote.text.slice(0, 100);
             const title = '🔥 Riflessione Sfogo';
-            const body = questionText.slice(0, 100) + (questionText.length > 100 ? '...' : '');
-            sfogoPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: `/sfogo-question?id=${randomNote.id}` });
+            const body = progress.custom_sfogo_text?.trim()
+              ? progress.custom_sfogo_text.trim()
+              : questionText.slice(0, 100) + (questionText.length > 100 ? '...' : '');
+            sfogoPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: `/sfogo-question?id=${randomNote.id}` }, 'sfogo');
           }
         }
       }
@@ -328,7 +352,7 @@ serve(async (req) => {
       .contains('times', [romeTime]);
 
     for (const reminder of scheduledReminders || []) {
-      reminderPushes += await sendPush(supabaseUrl, serviceKey, reminder.user_id, '⏰ Promemoria', reminder.text, { url: '/reminders' });
+      reminderPushes += await sendPush(supabaseUrl, serviceKey, reminder.user_id, '⏰ Promemoria', reminder.text, { url: '/reminders' }, 'reminder');
     }
 
     const result = { checked: romeTime, date: romeDate, day: romeDayKey, users: allProgress?.length || 0, question_sent: questionPushes, conflict_sent: conflictPushes, sfogo_sent: sfogoPushes, overton_sent: overtonPushes, reminder_sent: reminderPushes, total_sent: questionPushes + conflictPushes + sfogoPushes + overtonPushes + reminderPushes };

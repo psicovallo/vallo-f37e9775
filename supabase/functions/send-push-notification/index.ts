@@ -18,7 +18,7 @@ serve(async (req) => {
   }
 
   try {
-    const { user_ids, title, body, data } = await req.json();
+    const { user_ids, title, body, data, category } = await req.json();
 
     if (!user_ids?.length || !title || !body) {
       return new Response(JSON.stringify({ error: 'Missing required fields: user_ids, title, body' }), {
@@ -77,8 +77,25 @@ serve(async (req) => {
       await supabase.from('push_subscriptions').delete().in('id', expiredIds);
     }
 
+    // Log notifications (best-effort)
+    const sentCount = results.filter(r => r.status === 'sent').length;
+    if (sentCount > 0 && category !== 'skip-log') {
+      try {
+        const rows = user_ids.map((uid: string) => ({
+          user_id: uid,
+          category: category || 'manual',
+          title,
+          body,
+          url: data?.url || null,
+        }));
+        await supabase.from('notification_log').insert(rows);
+      } catch (logErr) {
+        console.error('log error:', logErr);
+      }
+    }
+
     return new Response(JSON.stringify({
-      sent: results.filter(r => r.status === 'sent').length,
+      sent: sentCount,
       results,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

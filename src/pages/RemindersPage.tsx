@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Trash2, Clock, BellRing, X, Bell, Zap, Swords, Flame, Settings, Pencil, Check, XCircle } from 'lucide-react';
+import { Plus, Trash2, Clock, BellRing, X, Bell, Zap, Swords, Flame, Settings, Pencil, Check, XCircle, Target } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import NotificationCategoryEditor from '@/components/NotificationCategoryEditor';
+import NotificationHistory from '@/components/NotificationHistory';
 
 interface Reminder {
   id: string;
@@ -20,6 +22,7 @@ interface NotifSettings {
   notify_questions: boolean;
   notify_dna: boolean;
   notify_sfogo: boolean;
+  notify_overton: boolean;
   daily_times: string[] | null;
   dna_daily_times: string[] | null;
   sfogo_daily_times: string[] | null;
@@ -32,7 +35,13 @@ interface NotifSettings {
   notification_window_start: string | null;
   notification_window_end: string | null;
   notify_days: string[];
+  custom_questions_text: string | null;
+  custom_dna_text: string | null;
+  custom_sfogo_text: string | null;
+  custom_overton_text: string | null;
 }
+
+type EditorCategory = 'questions' | 'dna' | 'sfogo' | 'overton';
 
 const ALL_DAYS = [
   { key: 'lun', label: 'L' },
@@ -63,6 +72,7 @@ export default function RemindersPage() {
   const [testing, setTesting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const [editorCategory, setEditorCategory] = useState<EditorCategory | null>(null);
 
   const fetchReminders = async () => {
     const { data } = await supabase
@@ -77,7 +87,7 @@ export default function RemindersPage() {
     if (!user) return;
     const { data } = await supabase
       .from('question_progress')
-      .select('notify_questions, notify_dna, notify_sfogo, daily_times, dna_daily_times, sfogo_daily_times, questions_per_day, dna_per_day, sfogo_per_day, questions_frequency, dna_frequency, sfogo_frequency, notification_window_start, notification_window_end, notify_days')
+      .select('notify_questions, notify_dna, notify_sfogo, notify_overton, daily_times, dna_daily_times, sfogo_daily_times, questions_per_day, dna_per_day, sfogo_per_day, questions_frequency, dna_frequency, sfogo_frequency, notification_window_start, notification_window_end, notify_days, custom_questions_text, custom_dna_text, custom_sfogo_text, custom_overton_text')
       .eq('user_id', user.id)
       .maybeSingle();
     if (data) {
@@ -90,7 +100,7 @@ export default function RemindersPage() {
     fetchNotifSettings();
   }, [user]);
 
-  const toggleNotifSetting = async (field: 'notify_questions' | 'notify_dna' | 'notify_sfogo', current: boolean) => {
+  const toggleNotifSetting = async (field: 'notify_questions' | 'notify_dna' | 'notify_sfogo' | 'notify_overton', current: boolean) => {
     if (!user) return;
     await supabase.from('question_progress')
       .update({ [field]: !current } as any)
@@ -227,10 +237,19 @@ export default function RemindersPage() {
                   </p>
                 ) : null}
               </div>
-              <Switch
-                checked={notifSettings.notify_questions}
-                onCheckedChange={() => toggleNotifSetting('notify_questions', notifSettings.notify_questions)}
-              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEditorCategory('questions')}
+                  className="rounded-lg p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                  title="Modifica notifica"
+                >
+                  <Pencil size={14} />
+                </button>
+                <Switch
+                  checked={notifSettings.notify_questions}
+                  onCheckedChange={() => toggleNotifSetting('notify_questions', notifSettings.notify_questions)}
+                />
+              </div>
             </div>
             {notifSettings.notify_questions && (
               <div className="ml-6 space-y-2">
@@ -294,10 +313,19 @@ export default function RemindersPage() {
                   </p>
                 ) : null}
               </div>
-              <Switch
-                checked={notifSettings.notify_dna}
-                onCheckedChange={() => toggleNotifSetting('notify_dna', notifSettings.notify_dna)}
-              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEditorCategory('dna')}
+                  className="rounded-lg p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                  title="Modifica notifica"
+                >
+                  <Pencil size={14} />
+                </button>
+                <Switch
+                  checked={notifSettings.notify_dna}
+                  onCheckedChange={() => toggleNotifSetting('notify_dna', notifSettings.notify_dna)}
+                />
+              </div>
             </div>
             {notifSettings.notify_dna && (
               <div className="ml-6 space-y-2">
@@ -361,10 +389,19 @@ export default function RemindersPage() {
                   </p>
                 ) : null}
               </div>
-              <Switch
-                checked={notifSettings.notify_sfogo}
-                onCheckedChange={() => toggleNotifSetting('notify_sfogo', notifSettings.notify_sfogo)}
-              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEditorCategory('sfogo')}
+                  className="rounded-lg p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                  title="Modifica notifica"
+                >
+                  <Pencil size={14} />
+                </button>
+                <Switch
+                  checked={notifSettings.notify_sfogo}
+                  onCheckedChange={() => toggleNotifSetting('notify_sfogo', notifSettings.notify_sfogo)}
+                />
+              </div>
             </div>
             {notifSettings.notify_sfogo && (
               <div className="ml-6 space-y-2">
@@ -409,6 +446,34 @@ export default function RemindersPage() {
                 </p>
               </div>
             )}
+          </div>
+
+          {/* Overton switch */}
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Target size={14} className="text-primary" />
+                  Overton Shift
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Solleciti per lo step Overton attivo (sostituisce il 50% delle Domande)
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEditorCategory('overton')}
+                  className="rounded-lg p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                  title="Modifica notifica"
+                >
+                  <Pencil size={14} />
+                </button>
+                <Switch
+                  checked={notifSettings.notify_overton ?? true}
+                  onCheckedChange={() => toggleNotifSetting('notify_overton', notifSettings.notify_overton ?? true)}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="border-t border-border pt-4 space-y-3">
@@ -602,6 +667,42 @@ export default function RemindersPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* ── NOTIFICATION HISTORY ── */}
+      <NotificationHistory />
+
+      {/* ── EDITOR DIALOG ── */}
+      {editorCategory && notifSettings && (
+        <NotificationCategoryEditor
+          open={editorCategory !== null}
+          onOpenChange={(v) => { if (!v) setEditorCategory(null); }}
+          category={editorCategory}
+          label={
+            editorCategory === 'questions' ? 'Domande di Riflessione' :
+            editorCategory === 'dna' ? 'SOS DNA' :
+            editorCategory === 'sfogo' ? 'Area Sfogo' : 'Overton Shift'
+          }
+          initialCustomText={
+            (editorCategory === 'questions' ? notifSettings.custom_questions_text :
+             editorCategory === 'dna' ? notifSettings.custom_dna_text :
+             editorCategory === 'sfogo' ? notifSettings.custom_sfogo_text :
+             notifSettings.custom_overton_text) || ''
+          }
+          initialPerCount={
+            editorCategory === 'questions' ? (notifSettings.questions_per_day || 6) :
+            editorCategory === 'dna' ? (notifSettings.dna_per_day || 6) :
+            editorCategory === 'sfogo' ? (notifSettings.sfogo_per_day || 6) : 6
+          }
+          initialFrequency={
+            editorCategory === 'questions' ? (notifSettings.questions_frequency || 'day') :
+            editorCategory === 'dna' ? (notifSettings.dna_frequency || 'day') :
+            editorCategory === 'sfogo' ? (notifSettings.sfogo_frequency || 'day') : 'day'
+          }
+          initialWindowStart={notifSettings.notification_window_start || '06:00'}
+          initialWindowEnd={notifSettings.notification_window_end || '23:00'}
+          onSaved={fetchNotifSettings}
+        />
       )}
     </div>
   );

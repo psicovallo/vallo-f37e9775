@@ -377,7 +377,7 @@ export default function ProfilePage() {
             <div className="flex justify-end gap-2 mt-2">
               <button
                 onClick={async () => {
-                  await navigator.clipboard.writeText(`Analisi del Consiglio dei 15:\n\n${profile.ai_profile_analysis}`);
+                  await navigator.clipboard.writeText(profile.ai_profile_analysis);
                   toast.success('Analisi copiata ✓');
                 }}
                 className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:text-primary hover:bg-primary/10"
@@ -386,7 +386,7 @@ export default function ProfilePage() {
               </button>
               <button
                 onClick={async () => {
-                  const shareText = `Analisi del Consiglio dei 15:\n\n${profile.ai_profile_analysis}`;
+                  const shareText = profile.ai_profile_analysis;
                   if (navigator.share) {
                     try { await navigator.share({ text: shareText }); } catch {}
                   } else {
