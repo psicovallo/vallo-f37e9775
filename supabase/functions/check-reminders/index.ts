@@ -39,7 +39,7 @@ function generateRandomTimes(start: string, end: string, count: number): string[
   return [...times].sort();
 }
 
-async function sendPush(supabaseUrl: string, serviceKey: string, userId: string, title: string, body: string, data: Record<string, string>) {
+async function sendPush(supabaseUrl: string, serviceKey: string, userId: string, title: string, body: string, data: Record<string, string>, category: string) {
   try {
     const res = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
       method: 'POST',
@@ -49,8 +49,24 @@ async function sendPush(supabaseUrl: string, serviceKey: string, userId: string,
     const text = await res.text();
     let result: any = {};
     try { result = JSON.parse(text); } catch {}
-    console.log(`Push ${userId}: ${title} => sent=${result.sent || 0}`);
-    return Number(result.sent || 0);
+    const sent = Number(result.sent || 0);
+    console.log(`Push ${userId}: ${title} => sent=${sent}`);
+
+    // Log notification (best-effort, non-blocking)
+    try {
+      const sb = createClient(supabaseUrl, serviceKey);
+      await sb.from('notification_log').insert({
+        user_id: userId,
+        category,
+        title,
+        body,
+        url: data?.url || null,
+      });
+    } catch (logErr) {
+      console.error('log error:', logErr);
+    }
+
+    return sent;
   } catch (e) {
     console.error(`Push error ${userId}:`, e);
     return 0;
