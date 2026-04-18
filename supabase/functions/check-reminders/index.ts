@@ -181,11 +181,13 @@ serve(async (req) => {
         if (shouldSendQ) {
           // Overton Override: 50% chance to send Overton reminder instead
           const userOverton = overtonByUser[userId];
-          if (userOverton && Math.random() < 0.5 && overtonStepTexts[userId]) {
+          if (userOverton && Math.random() < 0.5 && overtonStepTexts[userId] && progress.notify_overton !== false) {
             const stepText = overtonStepTexts[userId];
             const title = `🎯 Overton Step ${userOverton.current_step}`;
-            const body = `Il Consiglio osserva. La finestra è aperta sullo Step ${userOverton.current_step}. ${stepText.slice(0, 80)}`;
-            overtonPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: '/overton' });
+            const body = progress.custom_overton_text?.trim()
+              ? progress.custom_overton_text.trim()
+              : `Il Consiglio osserva. La finestra è aperta sullo Step ${userOverton.current_step}. ${stepText.slice(0, 80)}`;
+            overtonPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: '/overton' }, 'overton');
           } else {
             const { data: assignments } = await supabase
               .from('question_assignments')
@@ -211,8 +213,10 @@ serve(async (req) => {
               });
 
               const title = `🔥 Domanda ${assignment.sort_order}`;
-              const body = assignment.question_text.slice(0, 100) + (assignment.question_text.length > 100 ? '...' : '');
-              questionPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: '/question' });
+              const body = progress.custom_questions_text?.trim()
+                ? progress.custom_questions_text.trim()
+                : assignment.question_text.slice(0, 100) + (assignment.question_text.length > 100 ? '...' : '');
+              questionPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: '/question' }, 'questions');
             }
           }
         }
