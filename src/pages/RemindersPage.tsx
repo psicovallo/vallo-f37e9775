@@ -250,6 +250,7 @@ export default function RemindersPage() {
                   onCheckedChange={() => toggleNotifSetting('notify_questions', notifSettings.notify_questions)}
                 />
               </div>
+            </div>
             {notifSettings.notify_questions && (
               <div className="ml-6 space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
