@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Trash2, Clock, BellRing, X, Bell, Zap, Swords, Flame, Settings, Pencil, Check, XCircle } from 'lucide-react';
+import { Plus, Trash2, Clock, BellRing, X, Bell, Zap, Swords, Flame, Settings, Pencil, Check, XCircle, Target } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import NotificationCategoryEditor from '@/components/NotificationCategoryEditor';
+import NotificationHistory from '@/components/NotificationHistory';
 
 interface Reminder {
   id: string;
@@ -20,6 +22,7 @@ interface NotifSettings {
   notify_questions: boolean;
   notify_dna: boolean;
   notify_sfogo: boolean;
+  notify_overton: boolean;
   daily_times: string[] | null;
   dna_daily_times: string[] | null;
   sfogo_daily_times: string[] | null;
@@ -32,7 +35,13 @@ interface NotifSettings {
   notification_window_start: string | null;
   notification_window_end: string | null;
   notify_days: string[];
+  custom_questions_text: string | null;
+  custom_dna_text: string | null;
+  custom_sfogo_text: string | null;
+  custom_overton_text: string | null;
 }
+
+type EditorCategory = 'questions' | 'dna' | 'sfogo' | 'overton';
 
 const ALL_DAYS = [
   { key: 'lun', label: 'L' },
