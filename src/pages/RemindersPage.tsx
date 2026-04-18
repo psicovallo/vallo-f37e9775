@@ -668,6 +668,42 @@ export default function RemindersPage() {
           ))}
         </div>
       )}
+
+      {/* ── NOTIFICATION HISTORY ── */}
+      <NotificationHistory />
+
+      {/* ── EDITOR DIALOG ── */}
+      {editorCategory && notifSettings && (
+        <NotificationCategoryEditor
+          open={editorCategory !== null}
+          onOpenChange={(v) => { if (!v) setEditorCategory(null); }}
+          category={editorCategory}
+          label={
+            editorCategory === 'questions' ? 'Domande di Riflessione' :
+            editorCategory === 'dna' ? 'SOS DNA' :
+            editorCategory === 'sfogo' ? 'Area Sfogo' : 'Overton Shift'
+          }
+          initialCustomText={
+            (editorCategory === 'questions' ? notifSettings.custom_questions_text :
+             editorCategory === 'dna' ? notifSettings.custom_dna_text :
+             editorCategory === 'sfogo' ? notifSettings.custom_sfogo_text :
+             notifSettings.custom_overton_text) || ''
+          }
+          initialPerCount={
+            editorCategory === 'questions' ? (notifSettings.questions_per_day || 6) :
+            editorCategory === 'dna' ? (notifSettings.dna_per_day || 6) :
+            editorCategory === 'sfogo' ? (notifSettings.sfogo_per_day || 6) : 6
+          }
+          initialFrequency={
+            editorCategory === 'questions' ? (notifSettings.questions_frequency || 'day') :
+            editorCategory === 'dna' ? (notifSettings.dna_frequency || 'day') :
+            editorCategory === 'sfogo' ? (notifSettings.sfogo_frequency || 'day') : 'day'
+          }
+          initialWindowStart={notifSettings.notification_window_start || '06:00'}
+          initialWindowEnd={notifSettings.notification_window_end || '23:00'}
+          onSaved={fetchNotifSettings}
+        />
+      )}
     </div>
   );
 }
