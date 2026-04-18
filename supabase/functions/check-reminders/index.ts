@@ -44,7 +44,7 @@ async function sendPush(supabaseUrl: string, serviceKey: string, userId: string,
     const res = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${serviceKey}` },
-      body: JSON.stringify({ user_ids: [userId], title, body, data }),
+      body: JSON.stringify({ user_ids: [userId], title, body, data, category: 'skip-log' }),
     });
     const text = await res.text();
     let result: any = {};
