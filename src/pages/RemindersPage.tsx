@@ -389,10 +389,19 @@ export default function RemindersPage() {
                   </p>
                 ) : null}
               </div>
-              <Switch
-                checked={notifSettings.notify_sfogo}
-                onCheckedChange={() => toggleNotifSetting('notify_sfogo', notifSettings.notify_sfogo)}
-              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEditorCategory('sfogo')}
+                  className="rounded-lg p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                  title="Modifica notifica"
+                >
+                  <Pencil size={14} />
+                </button>
+                <Switch
+                  checked={notifSettings.notify_sfogo}
+                  onCheckedChange={() => toggleNotifSetting('notify_sfogo', notifSettings.notify_sfogo)}
+                />
+              </div>
             </div>
             {notifSettings.notify_sfogo && (
               <div className="ml-6 space-y-2">
