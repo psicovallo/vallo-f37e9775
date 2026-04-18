@@ -352,7 +352,7 @@ serve(async (req) => {
       .contains('times', [romeTime]);
 
     for (const reminder of scheduledReminders || []) {
-      reminderPushes += await sendPush(supabaseUrl, serviceKey, reminder.user_id, '⏰ Promemoria', reminder.text, { url: '/reminders' });
+      reminderPushes += await sendPush(supabaseUrl, serviceKey, reminder.user_id, '⏰ Promemoria', reminder.text, { url: '/reminders' }, 'reminder');
     }
 
     const result = { checked: romeTime, date: romeDate, day: romeDayKey, users: allProgress?.length || 0, question_sent: questionPushes, conflict_sent: conflictPushes, sfogo_sent: sfogoPushes, overton_sent: overtonPushes, reminder_sent: reminderPushes, total_sent: questionPushes + conflictPushes + sfogoPushes + overtonPushes + reminderPushes };
