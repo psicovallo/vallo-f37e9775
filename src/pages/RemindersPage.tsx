@@ -72,6 +72,7 @@ export default function RemindersPage() {
   const [testing, setTesting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const [editorCategory, setEditorCategory] = useState<EditorCategory | null>(null);
 
   const fetchReminders = async () => {
     const { data } = await supabase
