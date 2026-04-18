@@ -273,8 +273,10 @@ serve(async (req) => {
             const randomQ = questions[Math.floor(Math.random() * questions.length)];
             const profileName = (randomQ as any).conflict_profiles?.name || 'Bersaglio';
             const title = `⚔️ DNA: ${profileName}`;
-            const body = randomQ.question_text.slice(0, 100) + (randomQ.question_text.length > 100 ? '...' : '');
-            conflictPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: `/dna-question?id=${randomQ.id}` });
+            const body = progress.custom_dna_text?.trim()
+              ? progress.custom_dna_text.trim()
+              : randomQ.question_text.slice(0, 100) + (randomQ.question_text.length > 100 ? '...' : '');
+            conflictPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: `/dna-question?id=${randomQ.id}` }, 'dna');
           }
         }
       }
@@ -333,8 +335,10 @@ serve(async (req) => {
             const qMatch = randomNote.text.match(/Q:\s*(.*?)(?:\nA:|$)/s);
             const questionText = qMatch ? qMatch[1].trim() : randomNote.text.slice(0, 100);
             const title = '🔥 Riflessione Sfogo';
-            const body = questionText.slice(0, 100) + (questionText.length > 100 ? '...' : '');
-            sfogoPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: `/sfogo-question?id=${randomNote.id}` });
+            const body = progress.custom_sfogo_text?.trim()
+              ? progress.custom_sfogo_text.trim()
+              : questionText.slice(0, 100) + (questionText.length > 100 ? '...' : '');
+            sfogoPushes += await sendPush(supabaseUrl, serviceKey, userId, title, body, { url: `/sfogo-question?id=${randomNote.id}` }, 'sfogo');
           }
         }
       }
