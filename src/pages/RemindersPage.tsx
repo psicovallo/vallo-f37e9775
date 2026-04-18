@@ -237,11 +237,19 @@ export default function RemindersPage() {
                   </p>
                 ) : null}
               </div>
-              <Switch
-                checked={notifSettings.notify_questions}
-                onCheckedChange={() => toggleNotifSetting('notify_questions', notifSettings.notify_questions)}
-              />
-            </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEditorCategory('questions')}
+                  className="rounded-lg p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                  title="Modifica notifica"
+                >
+                  <Pencil size={14} />
+                </button>
+                <Switch
+                  checked={notifSettings.notify_questions}
+                  onCheckedChange={() => toggleNotifSetting('notify_questions', notifSettings.notify_questions)}
+                />
+              </div>
             {notifSettings.notify_questions && (
               <div className="ml-6 space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
