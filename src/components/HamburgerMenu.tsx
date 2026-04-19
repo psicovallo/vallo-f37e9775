@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Menu, X, User, Zap, Bell, BookOpen, LogOut, Globe, Save, Shield, ScrollText, Share2, MessageSquare } from 'lucide-react';
+import { Menu, X, User, Zap, Bell, BookOpen, LogOut, Globe, Save, Shield, ScrollText, Share2, MessageSquare, Compass } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -111,9 +111,18 @@ export default function HamburgerMenu() {
             className="w-full flex items-center gap-3 rounded-xl p-3 text-sm text-foreground hover:bg-muted transition-colors">
             <Bell size={18} /> Neural Reminders
           </Link>
-          <button onClick={() => { setShowManual(true); setShowProfile(false); setShowQuantum(false); }}
+          <Link to="/manuale" onClick={() => setOpen(false)}
             className="w-full flex items-center gap-3 rounded-xl p-3 text-sm text-foreground hover:bg-muted transition-colors">
             <BookOpen size={18} /> Manuale Operativo
+          </Link>
+          <button onClick={async () => {
+            if (!user) return;
+            await supabase.from('profiles').update({ tour_completed: false } as any).eq('user_id', user.id);
+            toast.success('Tour resettato. Torna alla Home per rifarlo.');
+            setOpen(false);
+          }}
+            className="w-full flex items-center gap-3 rounded-xl p-3 text-sm text-foreground hover:bg-muted transition-colors">
+            <Compass size={18} /> Rifai il Tour Guidato
           </button>
           <div className="my-2 border-t border-border" />
           <Link to="/landing" onClick={() => setOpen(false)}

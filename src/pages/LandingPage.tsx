@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shield, ScrollText, Share2 } from 'lucide-react';
+import { Shield, ScrollText, Share2, BookOpen } from 'lucide-react';
 
 const SHARE_MESSAGE = `Smetti di trascinarti nel fango della normalità. Ho trovato il codice per camminare a un palmo da terra mentre gli altri mormorano nell'ombra. Senti il brivido di chi ha finalmente indossato l'Armatura. Diventa il Dio della tua realtà: https://www.psicovallo.com`;
 
@@ -85,6 +85,25 @@ export default function LandingPage() {
 
           <p className="font-medium text-primary">Questo non è un film. È scienza dell'ingegneria relazionale.</p>
         </div>
+
+        {/* Come funziona — link al manuale */}
+        <div className="rounded-2xl border border-border bg-card p-5 space-y-3">
+          <h2 className="text-base font-black uppercase text-foreground flex items-center gap-2">
+            <BookOpen size={18} className="text-primary" /> Come funziona
+          </h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Vallo è un sistema di strumenti brutalisti: <strong className="text-foreground">Domanda Attiva</strong> (riflessione quotidiana),
+            <strong className="text-foreground"> SOS DNA</strong> (frasi calibrate per scontri reali),
+            <strong className="text-foreground"> Area Sfogo</strong> (scarico mentale guidato dall'AI),
+            <strong className="text-foreground"> La Forgia</strong> (sfide quotidiane),
+            <strong className="text-foreground"> Overton Shift</strong> (riprogrammazione in 5 step).
+          </p>
+          <Link to="/manuale" className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline">
+            Apri il Manuale completo →
+          </Link>
+        </div>
+
+        <div className="hidden">{/* spacer */}</div>
 
         {/* CTA */}
         <div className="space-y-4 pt-4">
