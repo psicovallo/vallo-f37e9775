@@ -3,14 +3,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { toast } from 'sonner';
-import { Flame, Clock, Bell, ChevronRight, Target, PenLine } from 'lucide-react';
+import { Flame, Clock, Bell, ChevronRight, Target, PenLine, Skull, Euro } from 'lucide-react';
 
 const TIME_OPTIONS = Array.from({ length: 15 }, (_, i) => {
   const h = i + 7;
   return `${h.toString().padStart(2, '0')}:00`;
 });
 
-type Step = 'patto' | 'obiettivo' | 'pietra_miliare' | 'attivazione';
+type Step = 'patto' | 'obiettivo' | 'debito' | 'pietra_miliare' | 'attivazione';
 
 const SEED_QUESTIONS = [
   { text: 'Se oggi dovessi smettere di raccontarti la scusa che usi più spesso, cosa resterebbe della tua giornata?', category: 'Lo Specchio della Realtà' },
@@ -28,11 +28,31 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
   const { user } = useAuth();
   const { isSupported, requestPermission } = usePushNotifications();
   const [step, setStep] = useState<Step>('patto');
-  const [objective, setObjective] = useState('Dimagrimento');
+  const [objective, setObjective] = useState('Dominio Finanziario');
+  const [monthlyCost, setMonthlyCost] = useState('');
+  const [costError, setCostError] = useState('');
   const [milestoneZero, setMilestoneZero] = useState('');
   const [windowStart, setWindowStart] = useState('08:00');
   const [windowEnd, setWindowEnd] = useState('22:00');
   const [loading, setLoading] = useState(false);
+
+  const validateCost = (): boolean => {
+    const n = parseFloat(monthlyCost.replace(',', '.'));
+    if (!monthlyCost.trim()) {
+      setCostError('VUOTO. Non sai nemmeno quanto costi a te stesso? Inserisci il numero.');
+      return false;
+    }
+    if (isNaN(n) || n <= 0) {
+      setCostError('Numero non valido. Le tue approssimazioni sono il motivo per cui sei qui.');
+      return false;
+    }
+    if (n < 200) {
+      setCostError('Stai mentendo o vivi sotto un ponte. Sii onesto: affitto, cibo, vizi. Riscrivi.');
+      return false;
+    }
+    setCostError('');
+    return true;
+  };
 
   const handleActivate = async () => {
     if (!user) return;
@@ -43,13 +63,14 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
 
     setLoading(true);
     try {
-      // Save objective and milestone on profile
+      const monthlyCostNum = parseFloat(monthlyCost.replace(',', '.'));
+      const composedMilestone = `[Costo mensile dichiarato: €${monthlyCostNum}]\n\n${milestoneZero}`;
+
       await supabase
         .from('profiles')
-        .update({ objective, milestone_zero: milestoneZero })
+        .update({ objective, milestone_zero: composedMilestone })
         .eq('user_id', user.id);
 
-      // Upsert question_progress for notification scheduling
       const { data: existing } = await supabase
         .from('question_progress')
         .select('id')
@@ -80,7 +101,6 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
         });
       }
 
-      // Create seed question_assignments
       const assignments = SEED_QUESTIONS.map((q, i) => ({
         user_id: user.id,
         question_text: q.text,
@@ -92,88 +112,88 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
 
       await supabase.from('question_assignments').insert(assignments);
 
-      // Request push permission
       if (isSupported) {
         const ok = await requestPermission();
         if (!ok) {
-          toast.warning('Notifiche non attivate. Puoi attivarle dalle impostazioni del browser.');
+          toast.warning('Notifiche non attivate. Senza di esse, il sistema non può colpirti.');
         }
       }
 
-      toast.success('Percorso attivato.');
+      toast.success('Iniziazione completata. Il Vallo è alzato.');
       onComplete();
     } catch (err) {
-      toast.error("Errore durante l'attivazione");
+      toast.error("Errore durante l'iniziazione");
     } finally {
       setLoading(false);
     }
   };
 
-  const inputClass = "w-full rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary";
+  const inputClass = "w-full rounded-none border-2 border-border bg-card px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary";
+  const primaryBtn = "flex w-full items-center justify-center gap-2 rounded-none bg-primary px-4 py-4 text-sm font-black uppercase tracking-wider text-primary-foreground hover:bg-primary/90 disabled:opacity-50 active:scale-[0.97]";
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-lg flex-col px-4 pb-24 pt-8">
+    <div className="mx-auto flex min-h-screen max-w-lg flex-col px-4 pb-24 pt-8" style={{ backgroundColor: '#050505' }}>
       {step === 'patto' && (
         <div className="flex flex-1 flex-col">
           <div className="mb-8 text-center">
-            <Flame size={48} className="mx-auto mb-4 text-primary" />
-            <h1 className="mb-2 text-2xl font-bold text-foreground">Il Patto</h1>
-            <p className="text-sm text-muted-foreground">
-              Prima di procedere, devi sapere in cosa ti stai cacciando.
+            <Skull size={56} className="mx-auto mb-4 text-primary" />
+            <h1 className="mb-2 text-3xl font-black uppercase text-foreground tracking-tight">Il Patto</h1>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">
+              Leggi. Capisci. Firma con il sangue del tuo tempo.
             </p>
           </div>
 
-          <div className="flex-1 space-y-4">
-            <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="flex-1 space-y-3">
+            <div className="rounded-none border-2 border-primary/40 bg-card p-5">
               <p className="text-sm text-foreground leading-relaxed">
-                Questo non è un'app motivazionale. Non ci sono premi, badge, stelline o complimenti.
-                Questo è uno specchio. E gli specchi non mentono.
+                <strong className="text-primary">Psico Vallo non è un'app di supporto.</strong> Non è un coach,
+                non è un amico, non è terapia. È <strong>un'armatura</strong> e un <strong>cruscotto</strong>:
+                misura quanto stai derubando il tuo futuro e ti restituisce il conto, in euro, ogni giorno.
               </p>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="rounded-none border-2 border-border bg-card p-5">
+              <div className="flex items-start gap-3">
+                <Euro size={20} className="mt-0.5 shrink-0 text-primary" />
+                <div>
+                  <p className="text-sm font-black uppercase text-foreground">Debito Finanziario</p>
+                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                    Ogni cedimento dichiarato vale <strong className="text-primary">+100€</strong> di debito
+                    virtuale. Quando il debito sale sopra zero, l'intera app diventa <strong>grigia</strong>:
+                    è la tua "Paga dello Schiavo".
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-none border-2 border-border bg-card p-5">
               <div className="flex items-start gap-3">
                 <Bell size={20} className="mt-0.5 shrink-0 text-primary" />
                 <div>
-                  <p className="text-sm font-semibold text-foreground">6 notifiche al giorno</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    La stessa domanda tornerà finché non l'hai attraversata. Non puoi saltarla, non puoi ignorarla.
+                  <p className="text-sm font-black uppercase text-foreground">Notifiche Inevitabili</p>
+                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                    Domande, SOS, Sfogo. Tornano finché non le attraversi. Niente snooze, niente pietà.
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-5">
-              <div className="flex items-start gap-3">
-                <Clock size={20} className="mt-0.5 shrink-0 text-primary" />
-                <div>
-                  <p className="text-sm font-semibold text-foreground">Nessuna risposta immediata</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Dovrai guardare ogni domanda per giorni. 9 volte minimo. Solo allora potrai rispondere — e la risposta sarà filtrata senza pietà.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-card p-5">
+            <div className="rounded-none border-2 border-border bg-card p-5">
               <div className="flex items-start gap-3">
                 <Flame size={20} className="mt-0.5 shrink-0 text-primary" />
                 <div>
-                  <p className="text-sm font-semibold text-foreground">Zero gratificazione</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Il tono è severo. Le scuse vengono bloccate. Le parole vaghe rifiutate. Se cerchi comfort, questa non è l'app per te.
+                  <p className="text-sm font-black uppercase text-foreground">Zero Gratificazione</p>
+                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                    Nessun badge, nessuna stellina, nessun complimento. Solo il numero che cresce o che cala.
+                    Tu decidi da che parte.
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          <button
-            onClick={() => setStep('obiettivo')}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.97]"
-          >
-            HO CAPITO. ACCETTO IL PATTO
-            <ChevronRight size={18} />
+          <button onClick={() => setStep('obiettivo')} className={`mt-6 ${primaryBtn}`}>
+            ACCETTO IL GELO <ChevronRight size={18} />
           </button>
         </div>
       )}
@@ -181,21 +201,21 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
       {step === 'obiettivo' && (
         <div className="flex flex-1 flex-col">
           <div className="mb-8 text-center">
-            <Target size={48} className="mx-auto mb-4 text-primary" />
-            <h1 className="mb-2 text-2xl font-bold text-foreground">Il tuo obiettivo</h1>
-            <p className="text-sm text-muted-foreground">
-              Su cosa vuoi lavorare? Scegli il focus del percorso.
+            <Target size={56} className="mx-auto mb-4 text-primary" />
+            <h1 className="mb-2 text-3xl font-black uppercase text-foreground tracking-tight">Il Dominio</h1>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">
+              Su quale fronte vuoi smettere di perdere?
             </p>
           </div>
 
-          <div className="flex-1 space-y-3">
-            {['Dimagrimento', 'Autostima', 'Disciplina', 'Relazioni'].map((obj) => (
+          <div className="flex-1 space-y-2">
+            {['Dominio Finanziario', 'Dominio Fisico', 'Dominio Relazionale', 'Dominio della Disciplina'].map((obj) => (
               <button
                 key={obj}
                 onClick={() => setObjective(obj)}
-                className={`w-full rounded-2xl border p-4 text-left text-sm font-medium transition-all active:scale-[0.97] ${
+                className={`w-full rounded-none border-2 p-4 text-left text-sm font-black uppercase tracking-wide transition-none active:scale-[0.97] ${
                   objective === obj
-                    ? 'border-primary bg-primary/10 text-foreground ring-2 ring-primary ring-offset-2 ring-offset-background'
+                    ? 'border-primary bg-primary/10 text-foreground'
                     : 'border-border bg-card text-foreground hover:border-primary/50'
                 }`}
               >
@@ -204,12 +224,54 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
             ))}
           </div>
 
+          <button onClick={() => setStep('debito')} className={`mt-6 ${primaryBtn}`}>
+            CONFERMA IL FRONTE <ChevronRight size={18} />
+          </button>
+        </div>
+      )}
+
+      {step === 'debito' && (
+        <div className="flex flex-1 flex-col">
+          <div className="mb-8 text-center">
+            <Euro size={56} className="mx-auto mb-4 text-primary" />
+            <h1 className="mb-2 text-3xl font-black uppercase text-foreground tracking-tight">Il Tuo Costo</h1>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">
+              Quanto ti costa esistere ogni mese?
+            </p>
+          </div>
+
+          <div className="flex-1 space-y-4">
+            <div className="rounded-none border-2 border-primary/40 bg-card p-4">
+              <p className="text-xs text-foreground leading-relaxed">
+                Affitto, cibo, bollette, vizi, abbonamenti, sigarette, alcol, scemenze online.
+                <strong className="text-primary"> Tutto.</strong> Se non sai questo numero, non sai dove
+                stai sanguinando. Sii onesto. Le approssimazioni sono il primo cedimento.
+              </p>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-xs font-black uppercase tracking-widest text-muted-foreground">
+                Costo mensile reale (€)
+              </label>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={monthlyCost}
+                onChange={(e) => { setMonthlyCost(e.target.value); setCostError(''); }}
+                placeholder="Es. 1850"
+                className={`${inputClass} text-lg font-black tabular-nums`}
+              />
+              {costError && (
+                <p className="mt-2 text-xs font-bold uppercase text-destructive leading-relaxed">{costError}</p>
+              )}
+            </div>
+          </div>
+
           <button
-            onClick={() => setStep('pietra_miliare')}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.97]"
+            onClick={() => { if (validateCost()) setStep('pietra_miliare'); }}
+            className={`mt-6 ${primaryBtn}`}
           >
-            Conferma obiettivo
-            <ChevronRight size={18} />
+            DICHIARO IL NUMERO <ChevronRight size={18} />
           </button>
         </div>
       )}
@@ -217,10 +279,10 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
       {step === 'pietra_miliare' && (
         <div className="flex flex-1 flex-col">
           <div className="mb-8 text-center">
-            <PenLine size={48} className="mx-auto mb-4 text-primary" />
-            <h1 className="mb-2 text-2xl font-bold text-foreground">Pietra Miliare Zero</h1>
-            <p className="text-sm text-muted-foreground">
-              Perché sei qui oggi? Scrivi la verità, non quello che vorresti fosse vero.
+            <PenLine size={56} className="mx-auto mb-4 text-primary" />
+            <h1 className="mb-2 text-3xl font-black uppercase text-foreground tracking-tight">Pietra Zero</h1>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">
+              Perché sei qui. La verità, non il marketing che fai a te stesso.
             </p>
           </div>
 
@@ -228,11 +290,11 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
             <textarea
               value={milestoneZero}
               onChange={(e) => setMilestoneZero(e.target.value)}
-              placeholder="Perché sei qui oggi? Sii brutalmente onesto con te stesso..."
+              placeholder="Sii brutale. Cosa stai perdendo, a chi stai mentendo, cosa devi fermare..."
               rows={6}
               className={`${inputClass} resize-none`}
             />
-            <p className={`mt-2 text-xs ${milestoneZero.trim().length >= 20 ? 'text-primary' : 'text-muted-foreground'}`}>
+            <p className={`mt-2 text-xs font-bold uppercase ${milestoneZero.trim().length >= 20 ? 'text-primary' : 'text-muted-foreground'}`}>
               {milestoneZero.trim().length}/20 caratteri minimi
             </p>
           </div>
@@ -240,10 +302,9 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
           <button
             onClick={() => setStep('attivazione')}
             disabled={milestoneZero.trim().length < 20}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 active:scale-[0.97]"
+            className={`mt-6 ${primaryBtn}`}
           >
-            Conferma
-            <ChevronRight size={18} />
+            INCIDO LA PIETRA <ChevronRight size={18} />
           </button>
         </div>
       )}
@@ -251,53 +312,49 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
       {step === 'attivazione' && (
         <div className="flex flex-1 flex-col">
           <div className="mb-8 text-center">
-            <div className="mb-6 text-6xl">🔥</div>
-            <h1 className="mb-2 text-2xl font-bold text-foreground">Attivazione</h1>
-            <p className="text-sm text-muted-foreground">
-              Scegli quando vuoi ricevere le notifiche. 6 orari casuali dentro questa fascia.
+            <div className="mb-6"><Clock size={56} className="mx-auto text-primary" /></div>
+            <h1 className="mb-2 text-3xl font-black uppercase text-foreground tracking-tight">Iniziazione</h1>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">
+              In che fascia oraria il sistema può colpirti?
             </p>
           </div>
 
           <div className="flex-1 space-y-6">
             <div>
-              <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">Inizio fascia</label>
+              <label className="mb-2 block text-xs font-black uppercase tracking-widest text-muted-foreground">Inizio fascia</label>
               <select value={windowStart} onChange={(e) => setWindowStart(e.target.value)} className={inputClass}>
                 {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">Fine fascia</label>
+              <label className="mb-2 block text-xs font-black uppercase tracking-widest text-muted-foreground">Fine fascia</label>
               <select value={windowEnd} onChange={(e) => setWindowEnd(e.target.value)} className={inputClass}>
                 {TIME_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card p-4 text-center">
-              <p className="text-sm text-muted-foreground">
-                Le tue 6 notifiche arriveranno tra le <span className="font-semibold text-primary">{windowStart}</span> e le <span className="font-semibold text-primary">{windowEnd}</span>
+            <div className="rounded-none border-2 border-primary/40 bg-card p-4 text-center">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Sarai colpito tra le <span className="font-black text-primary">{windowStart}</span> e le <span className="font-black text-primary">{windowEnd}</span>
               </p>
             </div>
           </div>
 
-          <button
-            onClick={handleActivate}
-            disabled={loading}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-4 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 active:scale-[0.97]"
-          >
+          <button onClick={handleActivate} disabled={loading} className={`mt-6 ${primaryBtn}`}>
             {loading ? (
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
             ) : (
               <>
                 <Bell size={18} />
-                ATTIVA LE TUE RIFLESSIONI
+                ALZA IL VALLO
               </>
             )}
           </button>
 
           {!isSupported && (
-            <p className="mt-4 text-center text-xs text-destructive">
-              Il tuo browser non supporta le notifiche push. Prova con Chrome o Safari.
+            <p className="mt-4 text-center text-xs font-bold uppercase text-destructive">
+              Il tuo browser non supporta le notifiche push. Usa Chrome o Safari.
             </p>
           )}
         </div>
