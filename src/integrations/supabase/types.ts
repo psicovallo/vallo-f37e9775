@@ -356,6 +356,45 @@ export type Database = {
           },
         ]
       }
+      phalanx_pacts: {
+        Row: {
+          accepted_at: string | null
+          corrupted_at: string | null
+          created_at: string
+          general_id: string
+          id: string
+          invite_token: string
+          recruit_id: string | null
+          recruit_name: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          corrupted_at?: string | null
+          created_at?: string
+          general_id: string
+          id?: string
+          invite_token: string
+          recruit_id?: string | null
+          recruit_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          corrupted_at?: string | null
+          created_at?: string
+          general_id?: string
+          id?: string
+          invite_token?: string
+          recruit_id?: string | null
+          recruit_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       phrases: {
         Row: {
           category: string
@@ -426,6 +465,7 @@ export type Database = {
           milestone_zero: string | null
           name: string | null
           objective: string | null
+          phalanx_multiplier: number
           quantum_enabled: boolean
           sovereign_streak: number
           tour_completed: boolean
@@ -453,6 +493,7 @@ export type Database = {
           milestone_zero?: string | null
           name?: string | null
           objective?: string | null
+          phalanx_multiplier?: number
           quantum_enabled?: boolean
           sovereign_streak?: number
           tour_completed?: boolean
@@ -480,6 +521,7 @@ export type Database = {
           milestone_zero?: string | null
           name?: string | null
           objective?: string | null
+          phalanx_multiplier?: number
           quantum_enabled?: boolean
           sovereign_streak?: number
           tour_completed?: boolean
