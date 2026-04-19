@@ -40,6 +40,9 @@ export default function ProfilePage() {
   const [resendingConfirm, setResendingConfirm] = useState(false);
   const [deviceCount, setDeviceCount] = useState(0);
   const [registeringDevice, setRegisteringDevice] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [waEnabled, setWaEnabled] = useState(false);
+  const [savingWa, setSavingWa] = useState(false);
   const { isSupported, requestPermission } = usePushNotifications();
 
   const emailConfirmed = !!user?.email_confirmed_at;
@@ -57,7 +60,7 @@ export default function ProfilePage() {
     if (!user) return;
     supabase
       .from('profiles')
-      .select('name, objective, milestone_zero, communication_style, current_problems, vision, ai_profile_analysis, ai_profile_updated_at, lingua_madre')
+      .select('name, objective, milestone_zero, communication_style, current_problems, vision, ai_profile_analysis, ai_profile_updated_at, lingua_madre, phone_number, wa_notifications_enabled')
       .eq('user_id', user.id)
       .maybeSingle()
       .then(({ data }) => {
@@ -73,6 +76,8 @@ export default function ProfilePage() {
             ai_profile_updated_at: (data as any).ai_profile_updated_at || null,
             lingua_madre: (data as any).lingua_madre || 'italiano',
           });
+          setPhoneNumber((data as any).phone_number || '');
+          setWaEnabled(!!(data as any).wa_notifications_enabled);
         }
         setLoading(false);
       });
@@ -179,6 +184,26 @@ export default function ProfilePage() {
     setRegisteringDevice(false);
   };
 
+  const saveWhatsApp = async () => {
+    if (!user) return;
+    const cleaned = phoneNumber.trim().replace(/\s+/g, '');
+    if (waEnabled && !/^\+\d{8,15}$/.test(cleaned)) {
+      toast.error('Numero non valido. Usa formato internazionale: +393331234567');
+      return;
+    }
+    setSavingWa(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        phone_number: cleaned || null,
+        wa_notifications_enabled: waEnabled,
+      } as any)
+      .eq('user_id', user.id);
+    if (error) toast.error('Errore: ' + error.message);
+    else toast.success(waEnabled ? 'WhatsApp attivato' : 'WhatsApp disattivato');
+    setSavingWa(false);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -280,6 +305,40 @@ export default function ProfilePage() {
           <p className="text-[10px] text-muted-foreground">
             Registra ogni telefono/browser su cui vuoi ricevere le notifiche push.
           </p>
+        </div>
+
+        {/* WhatsApp Mandato */}
+        <div className="space-y-2 border-t border-border pt-3">
+          <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+            <MessageCircle size={12} /> Mandato via WhatsApp
+          </label>
+          <p className="text-[10px] text-muted-foreground">
+            Ricevi il Mandato di Comparizione anche su WhatsApp alle 22:00 quando salti il Roll Call. Doppio canale = doppia pressione.
+          </p>
+          <input
+            type="tel"
+            value={phoneNumber}
+            onChange={e => setPhoneNumber(e.target.value)}
+            placeholder="+393331234567"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              checked={waEnabled}
+              onChange={e => setWaEnabled(e.target.checked)}
+              className="accent-primary"
+            />
+            Attiva notifiche WhatsApp
+          </label>
+          <button
+            onClick={saveWhatsApp}
+            disabled={savingWa}
+            className="w-full flex items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-medium text-primary hover:bg-primary/20 disabled:opacity-50"
+          >
+            {savingWa ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+            {savingWa ? 'Salvataggio...' : 'Salva WhatsApp'}
+          </button>
         </div>
       </div>
 

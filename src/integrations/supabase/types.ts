@@ -557,6 +557,7 @@ export type Database = {
           name: string | null
           objective: string | null
           phalanx_multiplier: number
+          phone_number: string | null
           quantum_enabled: boolean
           sovereign_streak: number
           tour_completed: boolean
@@ -565,6 +566,7 @@ export type Database = {
           triage_reason: string | null
           user_id: string
           vision: string | null
+          wa_notifications_enabled: boolean
         }
         Insert: {
           ai_profile_analysis?: string | null
@@ -589,6 +591,7 @@ export type Database = {
           name?: string | null
           objective?: string | null
           phalanx_multiplier?: number
+          phone_number?: string | null
           quantum_enabled?: boolean
           sovereign_streak?: number
           tour_completed?: boolean
@@ -597,6 +600,7 @@ export type Database = {
           triage_reason?: string | null
           user_id: string
           vision?: string | null
+          wa_notifications_enabled?: boolean
         }
         Update: {
           ai_profile_analysis?: string | null
@@ -621,6 +625,7 @@ export type Database = {
           name?: string | null
           objective?: string | null
           phalanx_multiplier?: number
+          phone_number?: string | null
           quantum_enabled?: boolean
           sovereign_streak?: number
           tour_completed?: boolean
@@ -629,6 +634,7 @@ export type Database = {
           triage_reason?: string | null
           user_id?: string
           vision?: string | null
+          wa_notifications_enabled?: boolean
         }
         Relationships: []
       }
