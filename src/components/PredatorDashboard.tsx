@@ -504,7 +504,7 @@ export default function PredatorDashboard() {
                 Premi <strong>SOLO</strong> se hai davvero ceduto a un vizio (droghe, alcol, porno, scroll, abbuffata, gioco, fuga, procrastinazione grave...).
               </span>
               <span className="block text-destructive font-bold">
-                Conseguenze: +100€ debito · −15 lucidità · streak azzerata · Nucleo in necrosi.
+                Conseguenze: <strong>+€{vicePenalty} debito</strong> (1.5 giorni del tuo lavoro) · −15 lucidità · streak azzerata · Nucleo in necrosi.
               </span>
               <span className="block text-muted-foreground text-xs">
                 Non mentire al sistema. Se ti dichiari vittima quando non lo sei, sabotti il tuo cruscotto.
@@ -535,7 +535,7 @@ export default function PredatorDashboard() {
                 Premi <strong>SOLO</strong> se hai compiuto un'azione reale e difficile: lavoro concentrato, allenamento, conversazione che evitavi, decisione dura.
               </span>
               <span className="block text-emerald-500 font-bold">
-                Conseguenze: +1 streak · +2 lucidità · paga il debito (sconto in base alla streak).
+                Conseguenze: +1 streak · +2 lucidità · paga il debito (−€{sovBase} base · −€{sov7} con ≥7gg · −€{sov14} con ≥14gg).
               </span>
               <span className="block text-muted-foreground text-xs">
                 Non gonfiare la streak con azioni banali. Il numero serve a te.
