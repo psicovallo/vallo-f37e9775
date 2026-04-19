@@ -267,7 +267,7 @@ export default function PredatorDashboard() {
             </div>
             <div className="mt-1 text-xs font-bold uppercase text-red-300">Dichiara Vizio</div>
             <div className="mt-1 text-[10px] text-red-700 leading-tight">
-              Hai ceduto (porno, alcol, fuga, scroll, abbuffata...). +100€ debito.
+              Hai ceduto (droghe, alcol, porno, scroll, abbuffata, fuga...). +100€ debito.
             </div>
           </button>
           <button
@@ -301,7 +301,7 @@ export default function PredatorDashboard() {
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2 text-sm">
               <span className="block">
-                Premi <strong>SOLO</strong> se hai davvero ceduto a un vizio (porno, alcol, scroll compulsivo, abbuffata, fuga, procrastinazione grave...).
+                Premi <strong>SOLO</strong> se hai davvero ceduto a un vizio (droghe, alcol, porno, scroll compulsivo, abbuffata, gioco d'azzardo, fuga, procrastinazione grave...).
               </span>
               <span className="block text-destructive font-bold">
                 Conseguenze: +100€ debito · −15 lucidità · streak azzerata · app grigia.

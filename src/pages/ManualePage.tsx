@@ -61,6 +61,21 @@ export default function ManualePage() {
                 <p><strong className="text-primary">LUCIDITÀ</strong> — scala 0–100. Ogni Vizio ti toglie <strong className="num-brutal">15</strong>. Ogni Azione Sovrana te ne ridà <strong className="num-brutal">2</strong>. Sotto soglia critica, sei una marionetta del tuo umore.</p>
                 <p><strong className="text-primary">STREAK SOVRANA</strong> — giorni consecutivi di controllo. Un cedimento la azzera. Niente bonus a metà strada.</p>
               </div>
+              <div className="rounded-none border-2 border-destructive/60 bg-background/40 p-3 space-y-2">
+                <p className="text-xs font-black uppercase text-destructive">Cosa conta come VIZIO (dichiara senza pietà):</p>
+                <ul className="list-disc pl-5 text-xs space-y-1 text-foreground">
+                  <li><strong>Droghe</strong> — qualsiasi sostanza (cannabis, cocaina, MDMA, ketamina, psichedelici ricreativi, pasticche, oppiacei, abuso di farmaci).</li>
+                  <li><strong>Alcol</strong> fuori controllo (binge, bere per fuggire, sbronza).</li>
+                  <li><strong>Porno e masturbazione compulsiva</strong>, sexting di fuga, escort.</li>
+                  <li><strong>Abbuffate</strong> (food binge, zucchero compulsivo, junk food per coprire emozioni).</li>
+                  <li><strong>Scroll compulsivo</strong> (social, news, YouTube, reels, TikTok per ore).</li>
+                  <li><strong>Gioco d'azzardo</strong>, scommesse, trading impulsivo, crypto compulsiva.</li>
+                  <li><strong>Nicotina</strong> compulsiva (sigarette, vape, snus oltre il tuo limite).</li>
+                  <li><strong>Procrastinazione grave</strong> su un'azione che sapevi di dover fare.</li>
+                  <li><strong>Fuga relazionale</strong> (ghosting, evitamento di un confronto, bugia per quieto vivere).</li>
+                  <li><strong>Esplosione emotiva</strong> incontrollata (urla, violenza verbale, autosabotaggio).</li>
+                </ul>
+              </div>
               <p className="text-destructive font-black uppercase">
                 Regola: non mentire al sistema. Se ti dichiari sovrano mentre cedi, il sistema
                 ti espelle. Qui il punteggio non è il punto. Il punto è la verità.
