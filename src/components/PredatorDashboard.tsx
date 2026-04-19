@@ -226,8 +226,9 @@ export default function PredatorDashboard() {
       )}
 
       {/* DNA Core — Nucleo della Sovranità */}
-      <div className="rounded-none border-2 border-neutral-800 bg-neutral-950 p-4">
+      <div className="rounded-none border-2 border-neutral-800 bg-neutral-950 p-4 space-y-3">
         <DNACore debt={stats.financial_debt} lucidity={stats.lucidity_level} />
+        <NucleusStatusBanner debt={stats.financial_debt} streak={stats.sovereign_streak} />
       </div>
 
       {/* Giant debt counter */}
