@@ -282,6 +282,9 @@ export default function RemindersPage() {
         </section>
       )}
 
+      {/* ── PER-QUESTION SCHEDULE LIST ── */}
+      <QuestionsList />
+
       {/* ── MANUAL REMINDERS ── */}
       <section className="mb-6">
         <div className="flex items-center justify-between mb-3">
