@@ -10,45 +10,24 @@ interface GuidedTourProps {
 
 const STEPS = [
   {
-    emoji: '🏠',
-    title: 'HOME',
-    headline: 'Da qui comandi tutto.',
-    body: 'Una sola plancia. Sette strumenti. Niente decorazioni inutili. Ogni icona è un\'arma.',
+    emoji: '🩸',
+    title: 'IL CONTATORE ROSSO',
+    headline: 'Il tuo debito. La tua condanna.',
+    body: 'Qui vedi quanto stai derubando te stesso, in euro reali. Questo numero non è decorativo: è la tua condanna o la tua spinta. Quando sale sopra zero, tutta l\'app diventa grigia. Si chiama Paga dello Schiavo. Esci dal grigio o restaci.',
+    accent: 'text-destructive',
+  },
+  {
+    emoji: '⚠️',
+    title: 'DICHIARA CEDIMENTO',
+    headline: 'Il tasto della verità.',
+    body: 'Usalo solo se hai deciso di fallire ufficialmente. +100€ di debito, -15 di lucidità, streak azzerata. Non mentire al sistema: se ti fingi sovrano mentre cedi, il sistema ti espelle. Qui non si bara.',
     accent: 'text-primary',
   },
   {
-    emoji: '🔥',
-    title: 'DOMANDA ATTIVA',
-    headline: 'Il cuore del sistema.',
-    body: 'Ogni giorno una domanda. La leggi 9 volte, in 9 momenti diversi. Solo dopo puoi rispondere. Niente scorciatoie.',
-    accent: 'text-primary',
-  },
-  {
-    emoji: '⚔️',
-    title: 'SOS DNA',
-    headline: 'Quando lo scontro è reale.',
-    body: 'Profila il bersaglio. Il Consiglio dei 15 Maestri smonta i suoi veli e ti consegna le frecce. Tu le ripeti 5 volte e le lanci.',
-    accent: 'text-amber-500',
-  },
-  {
-    emoji: '✍️',
-    title: 'AREA SFOGO',
-    headline: 'Quando hai casino in testa.',
-    body: 'Scrivi tutto, senza filtri. L\'AI raccoglie il fango e te lo restituisce sotto forma di domande chirurgiche. 30 minuti, poi chiudi.',
-    accent: 'text-primary',
-  },
-  {
-    emoji: '🔨',
-    title: 'LA FORGIA & OVERTON',
-    headline: 'Quando vuoi spingere oltre.',
-    body: 'La Forgia: sfide quotidiane brutali. Overton Shift: 5 step per spostare l\'impossibile dentro di te. Solo per chi è pronto.',
-    accent: 'text-red-500',
-  },
-  {
-    emoji: '🔔',
-    title: 'NOTIFICHE',
-    headline: 'Tutto programmato. Tutto modificabile.',
-    body: 'Nei Promemoria gestisci ogni singola domanda: orario, archivio, eliminazione. Sei tu il regista del ritmo.',
+    emoji: '👑',
+    title: 'AZIONI SOVRANE',
+    headline: 'Riconquista l\'impero.',
+    body: 'Ogni atto reale (lavoro, fisico, disciplina) sposta la Finestra di Overton verso il tuo dominio. +1 streak, +2 lucidità. Niente premi, niente fuochi d\'artificio: solo il numero che cala e il grigio che si dissolve. Ripeti, ogni giorno.',
     accent: 'text-primary',
   },
 ];
@@ -75,47 +54,46 @@ export default function GuidedTour({ onClose }: GuidedTourProps) {
   const current = STEPS[step];
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/90 px-4">
+    <div className="fixed inset-0 z-[90] flex items-center justify-center px-4" style={{ backgroundColor: 'rgba(5,5,5,0.95)' }}>
       <div className="w-full max-w-md space-y-6">
-        {/* progress */}
         <div className="flex items-center justify-between">
           <div className="flex gap-1">
             {STEPS.map((_, i) => (
               <div
                 key={i}
-                className={`h-1 w-8 rounded-full transition-colors ${i <= step ? 'bg-primary' : 'bg-muted'}`}
+                className={`h-1 w-12 ${i <= step ? 'bg-primary' : 'bg-muted'}`}
               />
             ))}
           </div>
-          <button onClick={finish} className="text-muted-foreground hover:text-foreground" aria-label="Salta">
+          <button onClick={finish} className="text-muted-foreground hover:text-foreground" aria-label="Chiudi">
             <X size={20} />
           </button>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-8 space-y-5 text-center">
+        <div className="rounded-none border-2 border-border bg-card p-8 space-y-5 text-center">
           <div className="text-7xl leading-none">{current.emoji}</div>
           <p className={`text-xs font-black uppercase tracking-widest ${current.accent}`}>{current.title}</p>
-          <h2 className="text-2xl font-black text-foreground uppercase leading-tight">{current.headline}</h2>
+          <h2 className="text-2xl font-black text-foreground uppercase leading-tight tracking-tight">{current.headline}</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">{current.body}</p>
         </div>
 
         <div className="flex flex-col gap-2">
           <button
             onClick={next}
-            className="flex items-center justify-center gap-2 w-full rounded-2xl bg-primary py-4 text-base font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
+            className="flex items-center justify-center gap-2 w-full rounded-none bg-primary py-4 text-base font-black uppercase tracking-wider text-primary-foreground hover:bg-primary/90"
           >
-            {step === STEPS.length - 1 ? 'INIZIA' : 'AVANTI'} <ChevronRight size={18} />
+            {step === STEPS.length - 1 ? 'INIZIA IL DOMINIO' : 'AVANTI'} <ChevronRight size={18} />
           </button>
           <Link
             to="/manuale"
             onClick={finish}
-            className="flex items-center justify-center gap-2 w-full rounded-2xl border border-border py-3 text-xs text-muted-foreground hover:bg-muted/40"
+            className="flex items-center justify-center gap-2 w-full rounded-none border-2 border-border py-3 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:bg-muted/40"
           >
-            <BookOpen size={14} /> Apri il Manuale completo
+            <BookOpen size={14} /> Apri il Codice del Sovrano
           </Link>
         </div>
 
-        <p className="text-center text-[10px] text-muted-foreground uppercase tracking-widest">
+        <p className="text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
           Step {step + 1} di {STEPS.length}
         </p>
       </div>
