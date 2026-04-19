@@ -421,6 +421,7 @@ export type Database = {
           name: string | null
           objective: string | null
           quantum_enabled: boolean
+          tour_completed: boolean
           user_id: string
           vision: string | null
         }
@@ -437,6 +438,7 @@ export type Database = {
           name?: string | null
           objective?: string | null
           quantum_enabled?: boolean
+          tour_completed?: boolean
           user_id: string
           vision?: string | null
         }
@@ -453,6 +455,7 @@ export type Database = {
           name?: string | null
           objective?: string | null
           quantum_enabled?: boolean
+          tour_completed?: boolean
           user_id?: string
           vision?: string | null
         }
