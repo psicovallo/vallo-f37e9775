@@ -429,6 +429,9 @@ export type Database = {
           quantum_enabled: boolean
           sovereign_streak: number
           tour_completed: boolean
+          triage_focus: string | null
+          triage_goal: string | null
+          triage_reason: string | null
           user_id: string
           vision: string | null
         }
@@ -453,6 +456,9 @@ export type Database = {
           quantum_enabled?: boolean
           sovereign_streak?: number
           tour_completed?: boolean
+          triage_focus?: string | null
+          triage_goal?: string | null
+          triage_reason?: string | null
           user_id: string
           vision?: string | null
         }
@@ -477,6 +483,9 @@ export type Database = {
           quantum_enabled?: boolean
           sovereign_streak?: number
           tour_completed?: boolean
+          triage_focus?: string | null
+          triage_goal?: string | null
+          triage_reason?: string | null
           user_id?: string
           vision?: string | null
         }
