@@ -15,6 +15,7 @@ import {
 import VoiceInput from '@/components/VoiceInput';
 import QuestionActions from '@/components/QuestionActions';
 import HelpDrawer from '@/components/HelpDrawer';
+import SOSLockGate from '@/components/SOSLockGate';
 
 const RELATIONSHIP_OPTIONS = [
   'Compagna', 'Moglie', 'Fidanzata', 'Figlio', 'Figlia', 'Amica',
@@ -465,6 +466,7 @@ export default function SOSConflittiPage() {
   // WELCOME / INFO SCREEN
   if (showWelcome) {
     return (
+      <SOSLockGate>
       <div className="mx-auto max-w-lg px-4 pt-6 pb-24">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl font-bold text-foreground">Il Consiglio dei 15</h1>
@@ -528,10 +530,12 @@ export default function SOSConflittiPage() {
           </div>
         </div>
       </div>
+      </SOSLockGate>
     );
   }
 
   return (
+    <SOSLockGate>
     <div className="mx-auto max-w-lg px-4 pt-6 pb-24">
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -944,5 +948,6 @@ export default function SOSConflittiPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </SOSLockGate>
   );
 }
