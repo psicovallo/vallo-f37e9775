@@ -25,6 +25,7 @@ import TribunalePage from "@/pages/TribunalePage";
 import OvertonPage from "@/pages/OvertonPage";
 import ManualePage from "@/pages/ManualePage";
 import PhalanxJoinPage from "@/pages/PhalanxJoinPage";
+import UnsubscribePage from "@/pages/UnsubscribePage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
