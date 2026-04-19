@@ -25,7 +25,7 @@ const CAT_LABEL: Record<string, string> = {
   manual: '🔔 Manuale',
 };
 
-export default function NotificationHistory() {
+export default function NotificationHistory({ onEditCategory }: Props = {}) {
   const { user } = useAuth();
   const [rows, setRows] = useState<LogRow[]>([]);
   const [loading, setLoading] = useState(true);
