@@ -94,6 +94,7 @@ export default function HomePage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 pt-8 pb-24">
+      {showTour && <GuidedTour onClose={() => setShowTour(false)} />}
       <div className="mb-6 flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">{getGreeting()},</p>
