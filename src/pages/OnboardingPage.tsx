@@ -86,10 +86,11 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
         .update({
           objective,
           milestone_zero: composedMilestone,
+          monthly_financial_target: monthlyCostNum,
           triage_goal: triageGoal.trim(),
           triage_reason: triageReason.trim(),
           triage_focus: triageFocus,
-        })
+        } as any)
         .eq('user_id', user.id);
 
       const { data: existing } = await supabase

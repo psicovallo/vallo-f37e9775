@@ -107,10 +107,24 @@ interface PredatorStats {
   last_vice_timestamp: string | null;
   last_clean_day_at: string | null;
   last_activity_at: string | null;
+  monthly_financial_target: number;
 }
 
 const INTRO_DISMISS_KEY = 'predator_intro_dismissed_v1';
 const CLEAN_DAY_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
+// Dynamic Blood Price helpers (mirror server)
+const VICE_DAILY_MULTIPLIER = 1.5;
+const SOVEREIGN_DAILY_FRACTION = 0.25;
+function dailyValueOf(monthlyTarget: number): number {
+  return (Number(monthlyTarget) || 3000) / 30;
+}
+function vicePenaltyOf(monthlyTarget: number): number {
+  return Math.round(dailyValueOf(monthlyTarget) * VICE_DAILY_MULTIPLIER);
+}
+function sovereignBaseOf(monthlyTarget: number): number {
+  return Math.round(dailyValueOf(monthlyTarget) * SOVEREIGN_DAILY_FRACTION * 10) / 10;
+}
 
 export default function PredatorDashboard() {
   const { user } = useAuth();
@@ -140,13 +154,13 @@ export default function PredatorDashboard() {
     const { data } = await supabase
       .from('profiles')
       .select(
-        'financial_debt, lucidity_level, sovereign_streak, last_vice_timestamp, last_clean_day_at, last_activity_at',
+        'financial_debt, lucidity_level, sovereign_streak, last_vice_timestamp, last_clean_day_at, last_activity_at, monthly_financial_target' as any,
       )
       .eq('user_id', user.id)
       .maybeSingle();
     if (data) {
-      setStats(data as PredatorStats);
-      return data as PredatorStats;
+      setStats(data as unknown as PredatorStats);
+      return data as unknown as PredatorStats;
     }
     return null;
   }
@@ -166,6 +180,7 @@ export default function PredatorDashboard() {
         last_vice_timestamp: result.last_vice_timestamp,
         last_clean_day_at: result.last_clean_day_at,
         last_activity_at: result.last_activity_at,
+        monthly_financial_target: data.monthly_financial_target,
       });
       toast.error('+50€ Tassa di Passività. 24h senza azione = debolezza.', {
         duration: 6000,
@@ -196,8 +211,12 @@ export default function PredatorDashboard() {
       last_vice_timestamp: data.last_vice_timestamp,
       last_clean_day_at: data.last_clean_day_at,
       last_activity_at: data.last_activity_at,
+      monthly_financial_target: data.monthly_financial_target ?? stats.monthly_financial_target,
     });
-    window.alert('Hai appena venduto un pezzo del tuo futuro per un piacere momentaneo.');
+    const penalty = data.vice_penalty ?? vicePenaltyOf(stats.monthly_financial_target);
+    window.alert(
+      `Hai appena bruciato ${penalty}€. Hai letteralmente venduto 1.5 giorni del tuo lavoro per un'ora di sonno. Il sistema ti ha retrocesso.`
+    );
   }
 
   async function declareSovereignAction() {
@@ -218,6 +237,7 @@ export default function PredatorDashboard() {
       last_vice_timestamp: data.last_vice_timestamp,
       last_clean_day_at: data.last_clean_day_at,
       last_activity_at: data.last_activity_at,
+      monthly_financial_target: data.monthly_financial_target ?? stats.monthly_financial_target,
     });
     toast.success('Azione Sovrana registrata.');
   }
@@ -244,6 +264,7 @@ export default function PredatorDashboard() {
       last_vice_timestamp: data.last_vice_timestamp,
       last_clean_day_at: data.last_clean_day_at,
       last_activity_at: data.last_activity_at,
+      monthly_financial_target: data.monthly_financial_target ?? stats.monthly_financial_target,
     });
     toast.success('DNA Integrato. Streak +1. Hai guadagnato altre 24 ore di dignità.', {
       duration: 5000,
@@ -259,6 +280,14 @@ export default function PredatorDashboard() {
   }
 
   const inDebt = stats.financial_debt > 0;
+
+  // Dynamic Blood Price values for this user
+  const monthlyTarget = Number(stats.monthly_financial_target) || 3000;
+  const dailyValue = dailyValueOf(monthlyTarget);
+  const vicePenalty = vicePenaltyOf(monthlyTarget);
+  const sovBase = sovereignBaseOf(monthlyTarget);
+  const sov7 = Math.round(sovBase * 2 * 10) / 10;
+  const sov14 = Math.round(sovBase * 4 * 10) / 10;
 
   // Clean day cooldown
   const lastCleanMs = stats.last_clean_day_at ? new Date(stats.last_clean_day_at).getTime() : 0;
@@ -292,7 +321,7 @@ export default function PredatorDashboard() {
               <strong className="text-amber-500">LUCIDITÀ</strong> — chiarezza mentale (0–100). Cala con i vizi, sale con le azioni sovrane.
             </li>
             <li>
-              <strong className="text-emerald-500">STREAK</strong> — giorni di controllo. Moltiplica lo sconto sul debito (7gg=−50€, 14gg=−100€).
+              <strong className="text-emerald-500">STREAK</strong> — giorni di controllo. Moltiplica il riscatto (7gg=×2, 14gg=×4).
             </li>
           </ul>
           <Link
@@ -323,8 +352,13 @@ export default function PredatorDashboard() {
               <HelpCircle size={12} />
             </PopoverTrigger>
             <PopoverContent className="w-72 text-xs leading-relaxed">
-              <p className="font-black uppercase mb-1 text-destructive">Debito al Futuro</p>
-              <p>Soldi virtuali rubati al tuo futuro. Vizio = +100€. Inattività 24h = +50€ (Tassa di Passività). Si paga con le Azioni Sovrane: −25€ base, −50€ con streak ≥7, −100€ con streak ≥14.</p>
+              <p className="font-black uppercase mb-1 text-destructive">Prezzo del Sangue Dinamico</p>
+              <p>
+                Target mensile: <strong>€{monthlyTarget.toLocaleString('it-IT')}</strong>. Valore di un tuo giorno: <strong>€{dailyValue.toFixed(2)}</strong>.
+                <br/>Vizio = <strong>+€{vicePenalty}</strong> (1.5 giorni del tuo lavoro).
+                <br/>Tassa Passività 24h = <strong>+€50</strong>.
+                <br/>Riscatto: <strong>−€{sovBase}</strong> base · <strong>−€{sov7}</strong> con streak ≥7 · <strong>−€{sov14}</strong> con streak ≥14.
+              </p>
             </PopoverContent>
           </Popover>
         </div>
@@ -389,10 +423,10 @@ export default function PredatorDashboard() {
           </div>
           <p className="mt-2 text-[9px] uppercase tracking-wider text-neutral-600">
             {stats.sovereign_streak >= 14
-              ? '⚡ Riscatto: −100€/azione'
+              ? `⚡ Riscatto: −€${sov14}/azione`
               : stats.sovereign_streak >= 7
-                ? '⚡ Riscatto: −50€/azione'
-                : 'Riscatto: −25€/azione'}
+                ? `⚡ Riscatto: −€${sov7}/azione`
+                : `Riscatto: −€${sovBase}/azione`}
           </p>
         </div>
       </div>
@@ -413,7 +447,7 @@ export default function PredatorDashboard() {
             </div>
             <div className="mt-1 text-xs font-bold uppercase text-red-300">Dichiara Vizio</div>
             <div className="mt-1 text-[10px] text-red-700 leading-tight">
-              Droghe, alcol, porno, scroll, abbuffata, gioco... +100€ debito.
+              Droghe, alcol, porno, scroll, abbuffata, gioco... <strong>+€{vicePenalty} debito</strong> (1.5 giorni del tuo lavoro).
             </div>
           </button>
           <button
@@ -470,7 +504,7 @@ export default function PredatorDashboard() {
                 Premi <strong>SOLO</strong> se hai davvero ceduto a un vizio (droghe, alcol, porno, scroll, abbuffata, gioco, fuga, procrastinazione grave...).
               </span>
               <span className="block text-destructive font-bold">
-                Conseguenze: +100€ debito · −15 lucidità · streak azzerata · Nucleo in necrosi.
+                Conseguenze: <strong>+€{vicePenalty} debito</strong> (1.5 giorni del tuo lavoro) · −15 lucidità · streak azzerata · Nucleo in necrosi.
               </span>
               <span className="block text-muted-foreground text-xs">
                 Non mentire al sistema. Se ti dichiari vittima quando non lo sei, sabotti il tuo cruscotto.
@@ -501,7 +535,7 @@ export default function PredatorDashboard() {
                 Premi <strong>SOLO</strong> se hai compiuto un'azione reale e difficile: lavoro concentrato, allenamento, conversazione che evitavi, decisione dura.
               </span>
               <span className="block text-emerald-500 font-bold">
-                Conseguenze: +1 streak · +2 lucidità · paga il debito (sconto in base alla streak).
+                Conseguenze: +1 streak · +2 lucidità · paga il debito (−€{sovBase} base · −€{sov7} con ≥7gg · −€{sov14} con ≥14gg).
               </span>
               <span className="block text-muted-foreground text-xs">
                 Non gonfiare la streak con azioni banali. Il numero serve a te.
