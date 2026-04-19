@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { toast } from 'sonner';
-import { Flame, Clock, Bell, ChevronRight, Target, PenLine, Skull, Euro, Sun } from 'lucide-react';
+import { Flame, Clock, Bell, ChevronRight, Target, PenLine, Skull, Euro, Sun, Compass } from 'lucide-react';
 import InstallArmor from '@/components/InstallArmor';
 
 const TIME_OPTIONS = Array.from({ length: 15 }, (_, i) => {
@@ -11,7 +11,13 @@ const TIME_OPTIONS = Array.from({ length: 15 }, (_, i) => {
   return `${h.toString().padStart(2, '0')}:00`;
 });
 
-type Step = 'patto' | 'obiettivo' | 'debito' | 'pietra_miliare' | 'attivazione';
+type Step = 'triage' | 'patto' | 'obiettivo' | 'debito' | 'pietra_miliare' | 'attivazione';
+
+const FOCUS_OPTIONS = [
+  { value: 'self', label: 'SU ME STESSO', desc: 'Disciplina, vizi, vita interiore. Voglio domare me prima di chiunque altro.' },
+  { value: 'others', label: 'SU UNA RELAZIONE', desc: 'Conflitto, manipolazione, bersaglio specifico. Voglio gli strumenti di SOS DNA.' },
+  { value: 'both', label: 'ENTRAMBI', desc: 'Lavoro su di me e contemporaneamente su una relazione che mi sta divorando.' },
+];
 
 const SEED_QUESTIONS = [
   { text: 'Se oggi dovessi smettere di raccontarti la scusa che usi più spesso, cosa resterebbe della tua giornata?', category: 'Lo Specchio della Realtà' },
@@ -28,7 +34,10 @@ const SEED_QUESTIONS = [
 export default function OnboardingPage({ onComplete }: { onComplete: () => void }) {
   const { user } = useAuth();
   const { isSupported, requestPermission } = usePushNotifications();
-  const [step, setStep] = useState<Step>('patto');
+  const [step, setStep] = useState<Step>('triage');
+  const [triageGoal, setTriageGoal] = useState('');
+  const [triageReason, setTriageReason] = useState('');
+  const [triageFocus, setTriageFocus] = useState('');
   const [objective, setObjective] = useState('Dominio Finanziario');
   const [monthlyCost, setMonthlyCost] = useState('');
   const [costError, setCostError] = useState('');
@@ -36,6 +45,11 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
   const [windowStart, setWindowStart] = useState('08:00');
   const [windowEnd, setWindowEnd] = useState('22:00');
   const [loading, setLoading] = useState(false);
+
+  const triageValid =
+    triageGoal.trim().length >= 10 &&
+    triageReason.trim().length >= 10 &&
+    triageFocus !== '';
 
   const validateCost = (): boolean => {
     const n = parseFloat(monthlyCost.replace(',', '.'));
