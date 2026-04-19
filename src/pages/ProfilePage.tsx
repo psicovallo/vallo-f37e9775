@@ -40,6 +40,9 @@ export default function ProfilePage() {
   const [resendingConfirm, setResendingConfirm] = useState(false);
   const [deviceCount, setDeviceCount] = useState(0);
   const [registeringDevice, setRegisteringDevice] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [waEnabled, setWaEnabled] = useState(false);
+  const [savingWa, setSavingWa] = useState(false);
   const { isSupported, requestPermission } = usePushNotifications();
 
   const emailConfirmed = !!user?.email_confirmed_at;
@@ -57,7 +60,7 @@ export default function ProfilePage() {
     if (!user) return;
     supabase
       .from('profiles')
-      .select('name, objective, milestone_zero, communication_style, current_problems, vision, ai_profile_analysis, ai_profile_updated_at, lingua_madre')
+      .select('name, objective, milestone_zero, communication_style, current_problems, vision, ai_profile_analysis, ai_profile_updated_at, lingua_madre, phone_number, wa_notifications_enabled')
       .eq('user_id', user.id)
       .maybeSingle()
       .then(({ data }) => {
@@ -73,6 +76,8 @@ export default function ProfilePage() {
             ai_profile_updated_at: (data as any).ai_profile_updated_at || null,
             lingua_madre: (data as any).lingua_madre || 'italiano',
           });
+          setPhoneNumber((data as any).phone_number || '');
+          setWaEnabled(!!(data as any).wa_notifications_enabled);
         }
         setLoading(false);
       });
@@ -177,6 +182,26 @@ export default function ProfilePage() {
       toast.error('Impossibile registrare il dispositivo. Controlla i permessi del browser.');
     }
     setRegisteringDevice(false);
+  };
+
+  const saveWhatsApp = async () => {
+    if (!user) return;
+    const cleaned = phoneNumber.trim().replace(/\s+/g, '');
+    if (waEnabled && !/^\+\d{8,15}$/.test(cleaned)) {
+      toast.error('Numero non valido. Usa formato internazionale: +393331234567');
+      return;
+    }
+    setSavingWa(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        phone_number: cleaned || null,
+        wa_notifications_enabled: waEnabled,
+      } as any)
+      .eq('user_id', user.id);
+    if (error) toast.error('Errore: ' + error.message);
+    else toast.success(waEnabled ? 'WhatsApp attivato' : 'WhatsApp disattivato');
+    setSavingWa(false);
   };
 
   if (loading) {
