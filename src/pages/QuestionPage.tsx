@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Timer, AlertTriangle, Eye, Pencil } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
+import HelpDrawer from '@/components/HelpDrawer';
 
 const BLOCKED_WORDS = ['domani', 'spero', 'difficile', 'stress', 'festa', 'poco', 'colpa', 'ma ', 'proverò', 'forse'];
 const MIN_CHARS = 50;

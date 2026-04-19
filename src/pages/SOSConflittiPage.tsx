@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
 import QuestionActions from '@/components/QuestionActions';
+import HelpDrawer from '@/components/HelpDrawer';
 
 const RELATIONSHIP_OPTIONS = [
   'Compagna', 'Moglie', 'Fidanzata', 'Figlio', 'Figlia', 'Amica',

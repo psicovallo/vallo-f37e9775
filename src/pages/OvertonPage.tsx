@@ -7,6 +7,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import VoiceInput from '@/components/VoiceInput';
+import HelpDrawer from '@/components/HelpDrawer';
 
 const STEP_LABELS = [
   { num: 1, label: 'IMPENSABILE', subtitle: 'Il Tabù' },
