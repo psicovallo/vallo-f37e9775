@@ -15,6 +15,7 @@ import {
 import VoiceInput from '@/components/VoiceInput';
 import QuestionActions from '@/components/QuestionActions';
 import HelpDrawer from '@/components/HelpDrawer';
+import SOSLockGate from '@/components/SOSLockGate';
 
 const RELATIONSHIP_OPTIONS = [
   'Compagna', 'Moglie', 'Fidanzata', 'Figlio', 'Figlia', 'Amica',

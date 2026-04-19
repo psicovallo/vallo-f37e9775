@@ -11,8 +11,7 @@ interface PredatorStats {
   last_vice_timestamp: string | null;
 }
 
-const VICE_DEBT_INCREMENT = 100;
-const VICE_LUCIDITY_PENALTY = 15;
+// Penalty constants are enforced server-side in calculateVicePenalty edge function
 
 export default function PredatorDashboard() {
   const { user } = useAuth();
