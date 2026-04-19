@@ -530,10 +530,12 @@ export default function SOSConflittiPage() {
           </div>
         </div>
       </div>
+      </SOSLockGate>
     );
   }
 
   return (
+    <SOSLockGate>
     <div className="mx-auto max-w-lg px-4 pt-6 pb-24">
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -946,5 +948,6 @@ export default function SOSConflittiPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </SOSLockGate>
   );
 }
