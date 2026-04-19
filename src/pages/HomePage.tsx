@@ -109,6 +109,8 @@ export default function HomePage() {
 
       <InstallBanner />
 
+      <PredatorDashboard />
+
       {/* Active question card */}
       <Link
         to="/question"
