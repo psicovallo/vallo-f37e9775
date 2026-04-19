@@ -107,10 +107,24 @@ interface PredatorStats {
   last_vice_timestamp: string | null;
   last_clean_day_at: string | null;
   last_activity_at: string | null;
+  monthly_financial_target: number;
 }
 
 const INTRO_DISMISS_KEY = 'predator_intro_dismissed_v1';
 const CLEAN_DAY_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
+// Dynamic Blood Price helpers (mirror server)
+const VICE_DAILY_MULTIPLIER = 1.5;
+const SOVEREIGN_DAILY_FRACTION = 0.25;
+function dailyValueOf(monthlyTarget: number): number {
+  return (Number(monthlyTarget) || 3000) / 30;
+}
+function vicePenaltyOf(monthlyTarget: number): number {
+  return Math.round(dailyValueOf(monthlyTarget) * VICE_DAILY_MULTIPLIER);
+}
+function sovereignBaseOf(monthlyTarget: number): number {
+  return Math.round(dailyValueOf(monthlyTarget) * SOVEREIGN_DAILY_FRACTION * 10) / 10;
+}
 
 export default function PredatorDashboard() {
   const { user } = useAuth();
@@ -140,13 +154,13 @@ export default function PredatorDashboard() {
     const { data } = await supabase
       .from('profiles')
       .select(
-        'financial_debt, lucidity_level, sovereign_streak, last_vice_timestamp, last_clean_day_at, last_activity_at',
+        'financial_debt, lucidity_level, sovereign_streak, last_vice_timestamp, last_clean_day_at, last_activity_at, monthly_financial_target' as any,
       )
       .eq('user_id', user.id)
       .maybeSingle();
     if (data) {
-      setStats(data as PredatorStats);
-      return data as PredatorStats;
+      setStats(data as unknown as PredatorStats);
+      return data as unknown as PredatorStats;
     }
     return null;
   }
