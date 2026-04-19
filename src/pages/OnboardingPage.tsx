@@ -154,6 +154,92 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
 
   return (
     <div className="mx-auto flex min-h-screen max-w-lg flex-col px-4 pb-24 pt-8" style={{ backgroundColor: '#050505' }}>
+      {step === 'triage' && (
+        <div className="flex flex-1 flex-col">
+          <div className="mb-6 text-center">
+            <Compass size={56} className="mx-auto mb-4 text-primary" />
+            <h1 className="mb-2 text-3xl font-black uppercase text-foreground tracking-tight">Triage</h1>
+            <p className="text-xs uppercase tracking-widest text-muted-foreground">
+              Prima di alzare il Vallo, il Consiglio deve sapere chi sei e perché sei qui.
+            </p>
+          </div>
+
+          <div className="flex-1 space-y-5">
+            {/* Q1 — cosa vuoi ottenere */}
+            <div>
+              <label className="mb-2 block text-xs font-black uppercase tracking-widest text-primary">
+                1. Cosa vuoi ottenere?
+              </label>
+              <p className="mb-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                In una frase. Non motivazionale, non vago. Concreto.
+              </p>
+              <textarea
+                value={triageGoal}
+                onChange={(e) => setTriageGoal(e.target.value)}
+                placeholder="Es. Smettere di sabotarmi sul lavoro / Rompere la dipendenza / Vincere uno scontro specifico..."
+                rows={2}
+                className={`${inputClass} resize-none`}
+              />
+              <p className={`mt-1 text-[10px] font-bold uppercase ${triageGoal.trim().length >= 10 ? 'text-primary' : 'text-muted-foreground'}`}>
+                {triageGoal.trim().length}/10 minimi
+              </p>
+            </div>
+
+            {/* Q2 — perché ora */}
+            <div>
+              <label className="mb-2 block text-xs font-black uppercase tracking-widest text-primary">
+                2. Perché sei qui ORA?
+              </label>
+              <p className="mb-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                Cosa è successo (o sta per succedere) che ti ha portato qui in questo momento?
+              </p>
+              <textarea
+                value={triageReason}
+                onChange={(e) => setTriageReason(e.target.value)}
+                placeholder="Es. Ho appena ceduto di nuovo / Sto perdendo qualcuno / Ho toccato il fondo..."
+                rows={2}
+                className={`${inputClass} resize-none`}
+              />
+              <p className={`mt-1 text-[10px] font-bold uppercase ${triageReason.trim().length >= 10 ? 'text-primary' : 'text-muted-foreground'}`}>
+                {triageReason.trim().length}/10 minimi
+              </p>
+            </div>
+
+            {/* Q3 — focus */}
+            <div>
+              <label className="mb-2 block text-xs font-black uppercase tracking-widest text-primary">
+                3. Vuoi lavorare su te stesso o su una relazione?
+              </label>
+              <div className="space-y-2">
+                {FOCUS_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setTriageFocus(opt.value)}
+                    className={`w-full rounded-none border-2 p-3 text-left transition-none active:scale-[0.97] ${
+                      triageFocus === opt.value
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border bg-card hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="text-xs font-black uppercase tracking-wide text-foreground">{opt.label}</div>
+                    <div className="mt-1 text-[10px] text-muted-foreground leading-relaxed">{opt.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setStep('patto')}
+            disabled={!triageValid}
+            className={`mt-6 ${primaryBtn}`}
+          >
+            PROCEDI AL PATTO <ChevronRight size={18} />
+          </button>
+        </div>
+      )}
+
       {step === 'patto' && (
         <div className="flex flex-1 flex-col">
           <div className="mb-8 text-center">
