@@ -83,7 +83,13 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
 
       await supabase
         .from('profiles')
-        .update({ objective, milestone_zero: composedMilestone })
+        .update({
+          objective,
+          milestone_zero: composedMilestone,
+          triage_goal: triageGoal.trim(),
+          triage_reason: triageReason.trim(),
+          triage_focus: triageFocus,
+        })
         .eq('user_id', user.id);
 
       const { data: existing } = await supabase
