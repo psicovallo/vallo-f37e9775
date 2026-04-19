@@ -462,7 +462,19 @@ export default function RemindersPage() {
       )}
 
       {/* ── HISTORY ── */}
-      <NotificationHistory />
+      <NotificationHistory
+        onEditCategory={(cat) => {
+          if (cat === 'reminder') {
+            if (reminders.length > 0) {
+              setEditingReminder(reminders[0]);
+            } else {
+              toast.info('Nessun promemoria manuale da modificare');
+            }
+          } else if (['questions','dna','sfogo','overton'].includes(cat)) {
+            setEditorCategory(cat as EditorCategory);
+          }
+        }}
+      />
 
       {/* ── EDITOR DIALOGS ── */}
       {editorCategory && notifSettings && (

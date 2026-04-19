@@ -12,6 +12,10 @@ interface LogRow {
   sent_at: string;
 }
 
+interface Props {
+  onEditCategory?: (cat: string) => void;
+}
+
 const CAT_LABEL: Record<string, string> = {
   questions: '🔥 Domanda',
   dna: '⚔️ DNA',
@@ -21,7 +25,7 @@ const CAT_LABEL: Record<string, string> = {
   manual: '🔔 Manuale',
 };
 
-export default function NotificationHistory() {
+export default function NotificationHistory({ onEditCategory }: Props = {}) {
   const { user } = useAuth();
   const [rows, setRows] = useState<LogRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,19 +87,31 @@ export default function NotificationHistory() {
           ) : (
             <>
               <div className="space-y-2 max-h-80 overflow-y-auto">
-                {rows.map(r => (
-                  <div key={r.id} className="rounded-lg border border-border bg-background p-2.5 text-xs">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium text-foreground truncate">
-                        {CAT_LABEL[r.category] || r.category}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground shrink-0">
-                        {formatDate(r.sent_at)}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-muted-foreground line-clamp-2">{r.body}</p>
-                  </div>
-                ))}
+                {rows.map(r => {
+                  const clickable = !!onEditCategory && ['questions','dna','sfogo','overton','reminder'].includes(r.category);
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      disabled={!clickable}
+                      onClick={() => clickable && onEditCategory?.(r.category)}
+                      className={`w-full text-left rounded-lg border border-border bg-background p-2.5 text-xs transition-colors ${clickable ? 'hover:border-primary cursor-pointer' : 'cursor-default'}`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium text-foreground truncate">
+                          {CAT_LABEL[r.category] || r.category}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground shrink-0">
+                          {formatDate(r.sent_at)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-muted-foreground line-clamp-2">{r.body}</p>
+                      {clickable && (
+                        <p className="mt-1 text-[10px] text-primary">Tocca per modificare ▸</p>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
               <button
                 onClick={clearAll}
