@@ -51,35 +51,24 @@ export default function PredatorDashboard() {
     if (!user || !stats || loading) return;
     setLoading(true);
 
-    const newDebt = Number(stats.financial_debt) + VICE_DEBT_INCREMENT;
-    const newLucidity = Math.max(0, stats.lucidity_level - VICE_LUCIDITY_PENALTY);
-    const now = new Date().toISOString();
-
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        financial_debt: newDebt,
-        lucidity_level: newLucidity,
-        sovereign_streak: 0, // streak reset on vice
-        last_vice_timestamp: now,
-      })
-      .eq('user_id', user.id);
+    const { data, error } = await supabase.functions.invoke('calculateVicePenalty', {
+      body: { action: 'vice' },
+    });
 
     setLoading(false);
 
-    if (error) {
+    if (error || !data?.ok) {
       toast.error('Errore. Riprova.');
       return;
     }
 
     setStats({
-      financial_debt: newDebt,
-      lucidity_level: newLucidity,
-      sovereign_streak: 0,
-      last_vice_timestamp: now,
+      financial_debt: data.financial_debt,
+      lucidity_level: data.lucidity_level,
+      sovereign_streak: data.sovereign_streak,
+      last_vice_timestamp: data.last_vice_timestamp,
     });
 
-    // Brutal alert
     window.alert('Hai appena venduto un pezzo del tuo futuro per un piacere momentaneo.');
   }
 
@@ -87,28 +76,22 @@ export default function PredatorDashboard() {
     if (!user || !stats || loading) return;
     setLoading(true);
 
-    const newStreak = stats.sovereign_streak + 1;
-    const newLucidity = Math.min(100, stats.lucidity_level + 2);
-
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        sovereign_streak: newStreak,
-        lucidity_level: newLucidity,
-      })
-      .eq('user_id', user.id);
+    const { data, error } = await supabase.functions.invoke('calculateVicePenalty', {
+      body: { action: 'sovereign' },
+    });
 
     setLoading(false);
 
-    if (error) {
+    if (error || !data?.ok) {
       toast.error('Errore. Riprova.');
       return;
     }
 
     setStats({
-      ...stats,
-      sovereign_streak: newStreak,
-      lucidity_level: newLucidity,
+      financial_debt: data.financial_debt,
+      lucidity_level: data.lucidity_level,
+      sovereign_streak: data.sovereign_streak,
+      last_vice_timestamp: data.last_vice_timestamp,
     });
 
     toast.success('Azione Sovrana registrata.');
