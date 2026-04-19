@@ -12,6 +12,10 @@ interface LogRow {
   sent_at: string;
 }
 
+interface Props {
+  onEditCategory?: (cat: string) => void;
+}
+
 const CAT_LABEL: Record<string, string> = {
   questions: '🔥 Domanda',
   dna: '⚔️ DNA',
