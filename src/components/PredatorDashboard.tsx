@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Skull, Flame, Shield, Zap, HelpCircle, BookOpen, X, AlertTriangle } from 'lucide-react';
+import { Skull, Flame, Shield, Zap, HelpCircle, BookOpen, X, AlertTriangle, Sun } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import {
@@ -19,17 +19,19 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import DNACore from './DNACore';
 
 interface PredatorStats {
   financial_debt: number;
   lucidity_level: number;
   sovereign_streak: number;
   last_vice_timestamp: string | null;
+  last_clean_day_at: string | null;
+  last_activity_at: string | null;
 }
 
 const INTRO_DISMISS_KEY = 'predator_intro_dismissed_v1';
-
-// Penalty constants are enforced server-side in calculateVicePenalty edge function
+const CLEAN_DAY_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 export default function PredatorDashboard() {
   const { user } = useAuth();
@@ -38,34 +40,58 @@ export default function PredatorDashboard() {
   const [showIntro, setShowIntro] = useState(false);
   const [confirmVice, setConfirmVice] = useState(false);
   const [confirmSovereign, setConfirmSovereign] = useState(false);
+  const [confirmCleanDay, setConfirmCleanDay] = useState(false);
 
   useEffect(() => {
     if (!user) return;
-    void loadStats();
+    void loadStatsAndCheckPassivity();
     setShowIntro(localStorage.getItem(INTRO_DISMISS_KEY) !== '1');
   }, [user]);
 
-  // Apply grayscale filter to body when in debt
+  // Ensure no leftover global filter from previous version
   useEffect(() => {
-    if (!stats) return;
-    if (stats.financial_debt > 0) {
-      document.documentElement.style.filter = 'grayscale(0.85)';
-    } else {
-      document.documentElement.style.filter = '';
-    }
+    document.documentElement.style.filter = '';
     return () => {
       document.documentElement.style.filter = '';
     };
-  }, [stats?.financial_debt]);
+  }, []);
 
   async function loadStats() {
-    if (!user) return;
+    if (!user) return null;
     const { data } = await supabase
       .from('profiles')
-      .select('financial_debt, lucidity_level, sovereign_streak, last_vice_timestamp')
+      .select(
+        'financial_debt, lucidity_level, sovereign_streak, last_vice_timestamp, last_clean_day_at, last_activity_at',
+      )
       .eq('user_id', user.id)
       .maybeSingle();
-    if (data) setStats(data as PredatorStats);
+    if (data) {
+      setStats(data as PredatorStats);
+      return data as PredatorStats;
+    }
+    return null;
+  }
+
+  async function loadStatsAndCheckPassivity() {
+    const data = await loadStats();
+    if (!data) return;
+    // Trigger server-side passivity check (idempotent — server enforces 24h cooldown)
+    const { data: result } = await supabase.functions.invoke('calculateVicePenalty', {
+      body: { action: 'passivity_check' },
+    });
+    if (result?.ok && result.applied_tax) {
+      setStats({
+        financial_debt: result.financial_debt,
+        lucidity_level: result.lucidity_level,
+        sovereign_streak: result.sovereign_streak,
+        last_vice_timestamp: result.last_vice_timestamp,
+        last_clean_day_at: result.last_clean_day_at,
+        last_activity_at: result.last_activity_at,
+      });
+      toast.error('+50€ Tassa di Passività. 24h senza azione = debolezza.', {
+        duration: 6000,
+      });
+    }
   }
 
   function dismissIntro() {
@@ -76,51 +102,71 @@ export default function PredatorDashboard() {
   async function declareVice() {
     if (!user || !stats || loading) return;
     setLoading(true);
-
     const { data, error } = await supabase.functions.invoke('calculateVicePenalty', {
       body: { action: 'vice' },
     });
-
     setLoading(false);
-
     if (error || !data?.ok) {
       toast.error('Errore. Riprova.');
       return;
     }
-
     setStats({
       financial_debt: data.financial_debt,
       lucidity_level: data.lucidity_level,
       sovereign_streak: data.sovereign_streak,
       last_vice_timestamp: data.last_vice_timestamp,
+      last_clean_day_at: data.last_clean_day_at,
+      last_activity_at: data.last_activity_at,
     });
-
     window.alert('Hai appena venduto un pezzo del tuo futuro per un piacere momentaneo.');
   }
 
   async function declareSovereignAction() {
     if (!user || !stats || loading) return;
     setLoading(true);
-
     const { data, error } = await supabase.functions.invoke('calculateVicePenalty', {
       body: { action: 'sovereign' },
     });
-
     setLoading(false);
-
     if (error || !data?.ok) {
       toast.error('Errore. Riprova.');
       return;
     }
-
     setStats({
       financial_debt: data.financial_debt,
       lucidity_level: data.lucidity_level,
       sovereign_streak: data.sovereign_streak,
       last_vice_timestamp: data.last_vice_timestamp,
+      last_clean_day_at: data.last_clean_day_at,
+      last_activity_at: data.last_activity_at,
     });
-
     toast.success('Azione Sovrana registrata.');
+  }
+
+  async function declareCleanDay() {
+    if (!user || !stats || loading) return;
+    setLoading(true);
+    const { data, error } = await supabase.functions.invoke('calculateVicePenalty', {
+      body: { action: 'clean_day' },
+    });
+    setLoading(false);
+    if (error || !data?.ok) {
+      toast.error('Errore. Riprova.');
+      return;
+    }
+    if (data.blocked === 'cooldown') {
+      toast.error('Già dichiarato nelle ultime 24h. Aspetta.');
+      return;
+    }
+    setStats({
+      financial_debt: data.financial_debt,
+      lucidity_level: data.lucidity_level,
+      sovereign_streak: data.sovereign_streak,
+      last_vice_timestamp: data.last_vice_timestamp,
+      last_clean_day_at: data.last_clean_day_at,
+      last_activity_at: data.last_activity_at,
+    });
+    toast.success('Giorno Pulito registrato. Resistere è un atto attivo.');
   }
 
   if (!stats) {
@@ -132,6 +178,12 @@ export default function PredatorDashboard() {
   }
 
   const inDebt = stats.financial_debt > 0;
+
+  // Clean day cooldown
+  const lastCleanMs = stats.last_clean_day_at ? new Date(stats.last_clean_day_at).getTime() : 0;
+  const cleanCooldownRemaining = Math.max(0, CLEAN_DAY_COOLDOWN_MS - (Date.now() - lastCleanMs));
+  const cleanAvailable = cleanCooldownRemaining === 0;
+  const cleanHoursLeft = Math.ceil(cleanCooldownRemaining / (60 * 60 * 1000));
 
   return (
     <div className="mb-6 space-y-3" style={{ backgroundColor: '#050505' }}>
@@ -150,13 +202,16 @@ export default function PredatorDashboard() {
           </p>
           <ul className="space-y-1.5 text-xs text-foreground leading-relaxed">
             <li>
-              <strong className="text-destructive">DEBITO</strong> — quanto stai derubando il tuo futuro, in euro. Sopra zero, l'app diventa grigia.
+              <strong className="text-primary">NUCLEO</strong> — il tuo DNA visualizzato. Stabile e ambra = sovrano. Glitchato e grigio = in necrosi.
             </li>
             <li>
-              <strong className="text-amber-500">LUCIDITÀ</strong> — la tua chiarezza mentale (0–100). Cala con i vizi, sale con le azioni sovrane.
+              <strong className="text-destructive">DEBITO</strong> — quanto stai derubando il futuro, in euro. Più sale, più il Nucleo si corrompe.
             </li>
             <li>
-              <strong className="text-emerald-500">STREAK</strong> — giorni consecutivi senza cedimenti. Un vizio = ripartenza da zero.
+              <strong className="text-amber-500">LUCIDITÀ</strong> — chiarezza mentale (0–100). Cala con i vizi, sale con le azioni sovrane.
+            </li>
+            <li>
+              <strong className="text-emerald-500">STREAK</strong> — giorni di controllo. Moltiplica lo sconto sul debito (7gg=−50€, 14gg=−100€).
             </li>
           </ul>
           <Link
@@ -167,6 +222,11 @@ export default function PredatorDashboard() {
           </Link>
         </div>
       )}
+
+      {/* DNA Core — Nucleo della Sovranità */}
+      <div className="rounded-none border-2 border-neutral-800 bg-neutral-950 p-4">
+        <DNACore debt={stats.financial_debt} lucidity={stats.lucidity_level} />
+      </div>
 
       {/* Giant debt counter */}
       <div
@@ -182,7 +242,7 @@ export default function PredatorDashboard() {
             </PopoverTrigger>
             <PopoverContent className="w-72 text-xs leading-relaxed">
               <p className="font-black uppercase mb-1 text-destructive">Debito al Futuro</p>
-              <p>Soldi virtuali che ti sei rubato dal futuro ogni volta che hai ceduto a un vizio. Ogni cedimento dichiarato vale <strong>+100€</strong>. Quando è sopra zero, tutta l'app diventa grigia: la chiamiamo <strong>Paga dello Schiavo</strong>.</p>
+              <p>Soldi virtuali rubati al tuo futuro. Vizio = +100€. Inattività 24h = +50€ (Tassa di Passività). Si paga con le Azioni Sovrane: −25€ base, −50€ con streak ≥7, −100€ con streak ≥14.</p>
             </PopoverContent>
           </Popover>
         </div>
@@ -197,7 +257,7 @@ export default function PredatorDashboard() {
         </div>
         {inDebt && (
           <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-red-500">
-            ⛓ Stato: Schiavo
+            ⛓ Stato: Schiavo · Nucleo in Necrosi
           </p>
         )}
       </div>
@@ -213,7 +273,7 @@ export default function PredatorDashboard() {
               </PopoverTrigger>
               <PopoverContent className="w-64 text-xs leading-relaxed">
                 <p className="font-black uppercase mb-1 text-amber-500">Lucidità (0–100)</p>
-                <p>La tua chiarezza mentale. Ogni Vizio te ne toglie <strong>15</strong>. Ogni Azione Sovrana te ne ridà <strong>2</strong>. Sotto soglia critica sei in balia dell'umore.</p>
+                <p>La tua chiarezza mentale. Ogni Vizio te ne toglie <strong>15</strong>. Ogni Azione Sovrana te ne ridà <strong>2</strong>.</p>
               </PopoverContent>
             </Popover>
           </div>
@@ -237,7 +297,7 @@ export default function PredatorDashboard() {
               </PopoverTrigger>
               <PopoverContent className="w-64 text-xs leading-relaxed">
                 <p className="font-black uppercase mb-1 text-emerald-500">Streak Sovrana</p>
-                <p>Giorni consecutivi di controllo. Sale di <strong>+1</strong> ad ogni Azione Sovrana dichiarata. Un solo cedimento la <strong>azzera</strong>. Niente bonus a metà strada.</p>
+                <p>Giorni di controllo. <strong>+1</strong> ad ogni Azione Sovrana o Giorno Pulito. Un cedimento la <strong>azzera</strong>. Moltiplica lo sconto sul debito.</p>
               </PopoverContent>
             </Popover>
           </div>
@@ -246,7 +306,11 @@ export default function PredatorDashboard() {
             <span className="text-xs text-neutral-600"> gg</span>
           </div>
           <p className="mt-2 text-[9px] uppercase tracking-wider text-neutral-600">
-            Giorni di controllo
+            {stats.sovereign_streak >= 14
+              ? '⚡ Riscatto: −100€/azione'
+              : stats.sovereign_streak >= 7
+                ? '⚡ Riscatto: −50€/azione'
+                : 'Riscatto: −25€/azione'}
           </p>
         </div>
       </div>
@@ -267,7 +331,7 @@ export default function PredatorDashboard() {
             </div>
             <div className="mt-1 text-xs font-bold uppercase text-red-300">Dichiara Vizio</div>
             <div className="mt-1 text-[10px] text-red-700 leading-tight">
-              Hai ceduto (droghe, alcol, porno, scroll, abbuffata, fuga...). +100€ debito.
+              Droghe, alcol, porno, scroll, abbuffata, gioco... +100€ debito.
             </div>
           </button>
           <button
@@ -280,10 +344,30 @@ export default function PredatorDashboard() {
             </div>
             <div className="mt-1 text-xs font-bold uppercase text-emerald-300">Azione Sovrana</div>
             <div className="mt-1 text-[10px] text-emerald-700 leading-tight">
-              Hai agito (lavoro vero, allenamento, disciplina). +1 streak.
+              Lavoro vero, allenamento, disciplina. +1 streak, paga debito.
             </div>
           </button>
         </div>
+
+        {/* Clean Day button — full width */}
+        <button
+          onClick={() => cleanAvailable && setConfirmCleanDay(true)}
+          disabled={loading || !cleanAvailable}
+          className="w-full rounded-none border-2 border-amber-800 bg-amber-950/20 p-3 text-left transition-none hover:bg-amber-900/30 active:bg-amber-900/50 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <div className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-amber-500">
+            <Sun size={10} /> Resistenza Attiva
+          </div>
+          <div className="mt-1 text-xs font-bold uppercase text-amber-300">
+            Dichiaro Giorno Pulito
+          </div>
+          <div className="mt-1 text-[10px] text-amber-700 leading-tight">
+            {cleanAvailable
+              ? '24h senza cedimenti. Resistere è un atto attivo. +1 streak, paga debito.'
+              : `Già dichiarato. Disponibile tra ~${cleanHoursLeft}h.`}
+          </div>
+        </button>
+
         <Link
           to="/manuale"
           className="flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground py-1"
@@ -301,13 +385,13 @@ export default function PredatorDashboard() {
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2 text-sm">
               <span className="block">
-                Premi <strong>SOLO</strong> se hai davvero ceduto a un vizio (droghe, alcol, porno, scroll compulsivo, abbuffata, gioco d'azzardo, fuga, procrastinazione grave...).
+                Premi <strong>SOLO</strong> se hai davvero ceduto a un vizio (droghe, alcol, porno, scroll, abbuffata, gioco, fuga, procrastinazione grave...).
               </span>
               <span className="block text-destructive font-bold">
-                Conseguenze: +100€ debito · −15 lucidità · streak azzerata · app grigia.
+                Conseguenze: +100€ debito · −15 lucidità · streak azzerata · Nucleo in necrosi.
               </span>
               <span className="block text-muted-foreground text-xs">
-                Non mentire al sistema. Se ti dichiari vittima quando non lo sei, stai sabotando il tuo cruscotto.
+                Non mentire al sistema. Se ti dichiari vittima quando non lo sei, sabotti il tuo cruscotto.
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -332,13 +416,13 @@ export default function PredatorDashboard() {
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2 text-sm">
               <span className="block">
-                Premi <strong>SOLO</strong> se hai compiuto un'azione reale e difficile: lavoro concentrato, allenamento, una conversazione che evitavi, una decisione dura.
+                Premi <strong>SOLO</strong> se hai compiuto un'azione reale e difficile: lavoro concentrato, allenamento, conversazione che evitavi, decisione dura.
               </span>
               <span className="block text-emerald-500 font-bold">
-                Conseguenze: +1 streak · +2 lucidità.
+                Conseguenze: +1 streak · +2 lucidità · paga il debito (sconto in base alla streak).
               </span>
               <span className="block text-muted-foreground text-xs">
-                Non gonfiare la streak con azioni banali. Il numero serve a te, non al sistema.
+                Non gonfiare la streak con azioni banali. Il numero serve a te.
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -349,6 +433,37 @@ export default function PredatorDashboard() {
               className="rounded-none bg-emerald-700 text-white hover:bg-emerald-600"
             >
               Sì, l'ho fatto
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm Clean Day */}
+      <AlertDialog open={confirmCleanDay} onOpenChange={setConfirmCleanDay}>
+        <AlertDialogContent className="rounded-none border-2 border-amber-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-amber-500 uppercase font-black">
+              <Sun size={18} /> Dichiari un Giorno Pulito
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2 text-sm">
+              <span className="block">
+                Negli ultimi tempi <strong>NON hai ceduto</strong> a nessun vizio. Resistere è un atto attivo, non un'assenza.
+              </span>
+              <span className="block text-amber-500 font-bold">
+                Conseguenze: +1 streak · +2 lucidità · paga il debito.
+              </span>
+              <span className="block text-muted-foreground text-xs">
+                Disponibile una volta ogni 24h. Non barare: il sistema serve a te.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-none">Annulla</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={declareCleanDay}
+              className="rounded-none bg-amber-600 text-white hover:bg-amber-500"
+            >
+              Sì, ho resistito
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
