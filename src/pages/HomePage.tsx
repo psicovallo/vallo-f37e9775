@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { ChevronRight, Eye } from 'lucide-react';
+import { ChevronRight, Eye, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import OnboardingPage from '@/pages/OnboardingPage';
 import HamburgerMenu from '@/components/HamburgerMenu';
 import InstallBanner from '@/components/InstallBanner';
 import LanguageButton from '@/components/LanguageButton';
+import GuidedTour from '@/components/GuidedTour';
 import { useLanguage } from '@/components/AppLayout';
 
 function getGreeting(): string {
@@ -27,6 +28,7 @@ export default function HomePage() {
   const { linguaMadre, setLanguage } = useLanguage();
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
   const [activeQuestion, setActiveQuestion] = useState<ActiveQuestion | null>(null);
+  const [showTour, setShowTour] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -41,6 +43,17 @@ export default function HomePage() {
         .maybeSingle();
 
       setOnboardingDone(data?.onboarding_completed ?? false);
+
+      // Check tour status
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tour_completed')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data?.onboarding_completed && !(profile as any)?.tour_completed) {
+        setShowTour(true);
+      }
     };
 
     checkOnboarding();
