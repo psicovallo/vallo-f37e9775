@@ -8,6 +8,7 @@ import HamburgerMenu from '@/components/HamburgerMenu';
 import InstallBanner from '@/components/InstallBanner';
 import LanguageButton from '@/components/LanguageButton';
 import GuidedTour from '@/components/GuidedTour';
+import PredatorDashboard from '@/components/PredatorDashboard';
 import { useLanguage } from '@/components/AppLayout';
 
 function getGreeting(): string {
@@ -107,6 +108,8 @@ export default function HomePage() {
       </div>
 
       <InstallBanner />
+
+      <PredatorDashboard />
 
       {/* Active question card */}
       <Link
