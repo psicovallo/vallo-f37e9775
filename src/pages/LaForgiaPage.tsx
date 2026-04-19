@@ -6,6 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import VoiceInput from '@/components/VoiceInput';
 import SaveToReminder from '@/components/SaveToReminder';
+import HelpDrawer from '@/components/HelpDrawer';
 
 interface Challenge {
   id: string;

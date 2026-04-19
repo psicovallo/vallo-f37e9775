@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Timer, AlertTriangle, Eye, Pencil } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
+import HelpDrawer from '@/components/HelpDrawer';
 
 const BLOCKED_WORDS = ['domani', 'spero', 'difficile', 'stress', 'festa', 'poco', 'colpa', 'ma ', 'proverò', 'forse'];
 const MIN_CHARS = 50;
@@ -430,6 +431,15 @@ export default function QuestionPage() {
   if (phaseB) {
     return (
       <div className="mx-auto max-w-lg px-4 pb-24 pt-8">
+        <div className="mb-3 flex justify-end">
+          <HelpDrawer
+            title="Fase B — Risposta"
+            whatYouDo="Hai completato le 9 osservazioni. Ora scrivi la tua risposta vera."
+            whatAIDoes="Il Consiglio valida la tua risposta: blocca parole d'evasione e richiede almeno 50 caratteri."
+            expectedResult="Una risposta concreta, presente, senza scuse. Solo allora la domanda si chiude."
+            accent="primary"
+          />
+        </div>
         <div className="mb-2 flex items-center justify-between">
           <span className="text-xs font-medium uppercase tracking-wider text-primary">
             Domanda {assignment.sort_order}
@@ -514,6 +524,15 @@ export default function QuestionPage() {
   // PHASE A
   return (
     <div className="mx-auto max-w-lg px-4 pb-24 pt-8">
+      <div className="mb-3 flex justify-end">
+        <HelpDrawer
+          title="Domanda Attiva — Riflessione"
+          whatYouDo="Stai osservando una domanda. Devi leggerla 9 volte in 9 momenti diversi (timer di 60s ogni volta) prima di poter rispondere."
+          whatAIDoes="Il Consiglio dei 15 Maestri ha scelto questa domanda per colpire un tuo punto cieco. Dopo le 9 letture si sblocca la Fase B."
+          expectedResult="Una risposta scritta di almeno 50 caratteri, senza parole d'evasione (spero, forse, ma, domani). Verità grezza."
+          accent="primary"
+        />
+      </div>
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs font-medium uppercase tracking-wider text-primary">
           Domanda {assignment.sort_order}

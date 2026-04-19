@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { ChevronRight, Eye } from 'lucide-react';
+import { ChevronRight, Eye, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import OnboardingPage from '@/pages/OnboardingPage';
 import HamburgerMenu from '@/components/HamburgerMenu';
 import InstallBanner from '@/components/InstallBanner';
 import LanguageButton from '@/components/LanguageButton';
+import GuidedTour from '@/components/GuidedTour';
 import { useLanguage } from '@/components/AppLayout';
 
 function getGreeting(): string {
@@ -27,6 +28,7 @@ export default function HomePage() {
   const { linguaMadre, setLanguage } = useLanguage();
   const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
   const [activeQuestion, setActiveQuestion] = useState<ActiveQuestion | null>(null);
+  const [showTour, setShowTour] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -41,6 +43,17 @@ export default function HomePage() {
         .maybeSingle();
 
       setOnboardingDone(data?.onboarding_completed ?? false);
+
+      // Check tour status
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('tour_completed')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data?.onboarding_completed && !(profile as any)?.tour_completed) {
+        setShowTour(true);
+      }
     };
 
     checkOnboarding();
@@ -81,6 +94,7 @@ export default function HomePage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 pt-8 pb-24">
+      {showTour && <GuidedTour onClose={() => setShowTour(false)} />}
       <div className="mb-6 flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">{getGreeting()},</p>
@@ -125,7 +139,7 @@ export default function HomePage() {
         >
           <span className="text-2xl">✍️</span>
           <span className="text-xs font-medium text-foreground text-center">Area Sfogo</span>
-          <span className="text-[10px] text-muted-foreground text-center">Scrivi e rifletti</span>
+          <span className="text-[10px] text-muted-foreground text-center">Scarica la testa, l'AI ti ripulisce</span>
         </Link>
         <Link
           to="/sos-conflitti"
@@ -133,7 +147,7 @@ export default function HomePage() {
         >
           <span className="text-2xl">⚔️</span>
           <span className="text-xs font-medium text-foreground text-center">SOS DNA</span>
-          <span className="text-[10px] text-muted-foreground text-center">Il Consiglio dei 15</span>
+          <span className="text-[10px] text-muted-foreground text-center">Frecce per gli scontri reali</span>
         </Link>
         <Link
           to="/la-forgia"
@@ -157,6 +171,7 @@ export default function HomePage() {
         >
           <span className="text-2xl">📜</span>
           <span className="text-xs font-medium text-foreground text-center">Il Patto</span>
+          <span className="text-[10px] text-muted-foreground text-center">Le tue regole non negoziabili</span>
         </Link>
         <Link
           to="/notes"
@@ -164,6 +179,7 @@ export default function HomePage() {
         >
           <span className="text-2xl">📝</span>
           <span className="text-xs font-medium text-foreground text-center">Note</span>
+          <span className="text-[10px] text-muted-foreground text-center">Pensieri e appunti veloci</span>
         </Link>
         <Link
           to="/messages"
@@ -171,8 +187,17 @@ export default function HomePage() {
         >
           <span className="text-2xl">💬</span>
           <span className="text-xs font-medium text-foreground text-center">Messaggi</span>
+          <span className="text-[10px] text-muted-foreground text-center">Comunicazioni dal Consiglio</span>
         </Link>
       </div>
+
+      {/* Manuale link */}
+      <Link
+        to="/manuale"
+        className="flex items-center justify-center gap-2 w-full rounded-2xl border border-primary/30 bg-primary/5 py-3 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+      >
+        <BookOpen size={14} /> Come funziona Vallo — Manuale Operativo
+      </Link>
     </div>
   );
 }

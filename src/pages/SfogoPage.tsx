@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Send, Clock, Loader2, PenLine, History } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
 import QuestionActions from '@/components/QuestionActions';
+import HelpDrawer from '@/components/HelpDrawer';
 import { toast } from 'sonner';
 
 const SESSION_DURATION_MS = 30 * 60 * 1000;
@@ -249,6 +250,13 @@ export default function SfogoPage() {
     <div className="mx-auto max-w-lg px-4 pt-8 pb-24">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-foreground">Area Sfogo</h1>
+        <HelpDrawer
+          title="Area Sfogo"
+          whatYouDo="Scrivi tutto quello che hai in testa, senza filtri né censure. Hai 30 minuti di sessione."
+          whatAIDoes="Il Consiglio raccoglie il tuo sfogo e te lo restituisce sotto forma di domande chirurgiche, in loop, per pulirti la testa."
+          expectedResult="Una mente svuotata e una manciata di domande precise da masticare. Le risposte (anche silenziose) ti riportano in chiarezza."
+          accent="primary"
+        />
         {sessionStart && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Clock size={12} />

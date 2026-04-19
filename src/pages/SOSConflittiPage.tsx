@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import VoiceInput from '@/components/VoiceInput';
 import QuestionActions from '@/components/QuestionActions';
+import HelpDrawer from '@/components/HelpDrawer';
 
 const RELATIONSHIP_OPTIONS = [
   'Compagna', 'Moglie', 'Fidanzata', 'Figlio', 'Figlia', 'Amica',
@@ -467,6 +468,13 @@ export default function SOSConflittiPage() {
       <div className="mx-auto max-w-lg px-4 pt-6 pb-24">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl font-bold text-foreground">Il Consiglio dei 15</h1>
+          <HelpDrawer
+            title="SOS DNA — Metodo Cipolla"
+            whatYouDo="Stai per profilare un bersaglio reale (compagna, capo, figlio, ex...) per ricevere frasi calibrate da usare nello scontro."
+            whatAIDoes="Il Consiglio analizza il profilo, applica il Metodo Cipolla e genera 5 Veli di frasi da usare in sequenza, dal più morbido al più letale."
+            expectedResult="Frasi pronte da ripetere 5 volte mentalmente e poi lanciare. NON modificarle: sono armi calibrate."
+            accent="amber"
+          />
           <button onClick={() => setShowWelcome(false)} className="p-2 text-muted-foreground hover:text-foreground"><X size={20} /></button>
         </div>
         <div className="space-y-6">
