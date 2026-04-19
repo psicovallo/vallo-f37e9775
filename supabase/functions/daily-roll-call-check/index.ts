@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
     const { data: profiles, error: profErr } = await supabase
       .from('profiles')
       .select(
-        'user_id, email, name, financial_debt, sovereign_streak, consecutive_silent_days, last_clean_day_at, last_roll_call_check_date'
+        'user_id, email, name, financial_debt, sovereign_streak, consecutive_silent_days, last_clean_day_at, last_roll_call_check_date, phone_number, wa_notifications_enabled'
       )
       .in('user_id', userIds)
 
@@ -164,6 +164,24 @@ Deno.serve(async (req) => {
       } else {
         emailsSent++
         console.log(`[email-sent] ${profile.email} → day ${newSilentDays}`)
+      }
+
+      // WhatsApp Mandato — only if user opted in and has a phone number
+      if (profile.wa_notifications_enabled && profile.phone_number) {
+        const waBody = `🔴 MANDATO DI COMPARIZIONE\n\n${message}\n\nDebito attuale: ${newDebt}€\nGiorni di silenzio: ${newSilentDays}\n\nApri Vallo: https://psicovallo.com`;
+        supabase.functions
+          .invoke('trigger-wa-notification', {
+            body: {
+              phoneNumber: profile.phone_number,
+              messageType: 'mandato',
+              customMessage: waBody,
+            },
+          })
+          .then(({ error: waErr }) => {
+            if (waErr) console.error(`[wa-error] ${profile.user_id}:`, waErr);
+            else console.log(`[wa-sent] ${profile.phone_number}`);
+          })
+          .catch((e) => console.error(`[wa-throw] ${profile.user_id}:`, e));
       }
     }
 
