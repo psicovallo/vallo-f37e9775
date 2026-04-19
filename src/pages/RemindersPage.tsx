@@ -10,6 +10,7 @@ import { usePushNotifications } from '@/hooks/usePushNotifications';
 import NotificationCategoryEditor from '@/components/NotificationCategoryEditor';
 import NotificationHistory from '@/components/NotificationHistory';
 import ReminderEditor from '@/components/ReminderEditor';
+import QuestionsList from '@/components/QuestionsList';
 
 interface Reminder {
   id: string;
@@ -280,6 +281,9 @@ export default function RemindersPage() {
           </div>
         </section>
       )}
+
+      {/* ── PER-QUESTION SCHEDULE LIST ── */}
+      <QuestionsList />
 
       {/* ── MANUAL REMINDERS ── */}
       <section className="mb-6">

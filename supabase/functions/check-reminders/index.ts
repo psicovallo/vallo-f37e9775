@@ -125,6 +125,53 @@ serve(async (req) => {
       }
     }
 
+    // ── PER-QUESTION SCHEDULED PUSHES (independent of category schedule) ──
+    // Riflessione: question_assignments with times array containing current romeTime
+    const { data: scheduledQs } = await supabase
+      .from('question_assignments')
+      .select('id, user_id, question_text, sort_order, times, archived')
+      .eq('archived', false)
+      .contains('times', [romeTime]);
+    for (const q of scheduledQs || []) {
+      const title = `🔥 Domanda ${q.sort_order}`;
+      const body = q.question_text.slice(0, 140);
+      questionPushes += await sendPush(supabaseUrl, serviceKey, q.user_id, title, body, { url: '/question' }, 'questions');
+    }
+
+    const { data: scheduledDna } = await supabase
+      .from('conflict_questions')
+      .select('id, user_id, question_text, times, archived, conflict_profiles!inner(name)')
+      .eq('archived', false)
+      .contains('times', [romeTime]);
+    for (const q of scheduledDna || []) {
+      const profileName = (q as any).conflict_profiles?.name || 'Bersaglio';
+      const title = `⚔️ DNA: ${profileName}`;
+      const body = q.question_text.slice(0, 140);
+      conflictPushes += await sendPush(supabaseUrl, serviceKey, q.user_id, title, body, { url: `/dna-question?id=${q.id}` }, 'dna');
+    }
+
+    const { data: scheduledSfogo } = await supabase
+      .from('sfogo_questions')
+      .select('id, user_id, question_text, times, archived')
+      .eq('archived', false)
+      .contains('times', [romeTime]);
+    for (const q of scheduledSfogo || []) {
+      const title = '🔥 Sfogo';
+      const body = q.question_text.slice(0, 140);
+      sfogoPushes += await sendPush(supabaseUrl, serviceKey, q.user_id, title, body, { url: '/sfogo' }, 'sfogo');
+    }
+
+    const { data: scheduledOvertonSteps } = await supabase
+      .from('overton_steps')
+      .select('id, user_id, action_text, label, step_number, times, archived')
+      .eq('archived', false)
+      .contains('times', [romeTime]);
+    for (const s of scheduledOvertonSteps || []) {
+      const title = `🎯 Overton ${s.label}`;
+      const body = s.action_text.slice(0, 140);
+      overtonPushes += await sendPush(supabaseUrl, serviceKey, s.user_id, title, body, { url: '/overton' }, 'overton');
+    }
+
     for (const progress of allProgress || []) {
       const userId = progress.user_id;
       const winStart = progress.notification_window_start || '06:00';
@@ -193,6 +240,7 @@ serve(async (req) => {
               .from('question_assignments')
               .select('*')
               .eq('user_id', userId)
+              .eq('archived', false)
               .order('sort_order', { ascending: true });
 
             if (assignments?.length) {
@@ -266,6 +314,7 @@ serve(async (req) => {
             .from('conflict_questions')
             .select('*, conflict_profiles!inner(name)')
             .eq('user_id', userId)
+            .eq('archived', false)
             .in('status', ['generated', 'validated'])
             .limit(50);
 
