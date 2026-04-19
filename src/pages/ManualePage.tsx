@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Flame, Swords, PenLine, Hammer, Target, Bell, Scale, Shield, Zap, ScrollText, Euro, Skull, Crown } from 'lucide-react';
+import { ArrowLeft, BookOpen, Flame, Swords, PenLine, Hammer, Target, Bell, Scale, Shield, Zap, ScrollText, Euro, Skull, Crown, Sparkles, Library } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import NecrosisDemo from '@/components/NecrosisDemo';
 
 export default function ManualePage() {
   return (
