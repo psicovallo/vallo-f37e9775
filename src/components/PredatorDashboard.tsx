@@ -180,6 +180,7 @@ export default function PredatorDashboard() {
         last_vice_timestamp: result.last_vice_timestamp,
         last_clean_day_at: result.last_clean_day_at,
         last_activity_at: result.last_activity_at,
+        monthly_financial_target: data.monthly_financial_target,
       });
       toast.error('+50€ Tassa di Passività. 24h senza azione = debolezza.', {
         duration: 6000,
@@ -210,8 +211,12 @@ export default function PredatorDashboard() {
       last_vice_timestamp: data.last_vice_timestamp,
       last_clean_day_at: data.last_clean_day_at,
       last_activity_at: data.last_activity_at,
+      monthly_financial_target: data.monthly_financial_target ?? stats.monthly_financial_target,
     });
-    window.alert('Hai appena venduto un pezzo del tuo futuro per un piacere momentaneo.');
+    const penalty = data.vice_penalty ?? vicePenaltyOf(stats.monthly_financial_target);
+    window.alert(
+      `Hai appena bruciato ${penalty}€. Hai letteralmente venduto 1.5 giorni del tuo lavoro per un'ora di sonno. Il sistema ti ha retrocesso.`
+    );
   }
 
   async function declareSovereignAction() {
@@ -232,6 +237,7 @@ export default function PredatorDashboard() {
       last_vice_timestamp: data.last_vice_timestamp,
       last_clean_day_at: data.last_clean_day_at,
       last_activity_at: data.last_activity_at,
+      monthly_financial_target: data.monthly_financial_target ?? stats.monthly_financial_target,
     });
     toast.success('Azione Sovrana registrata.');
   }
@@ -258,6 +264,7 @@ export default function PredatorDashboard() {
       last_vice_timestamp: data.last_vice_timestamp,
       last_clean_day_at: data.last_clean_day_at,
       last_activity_at: data.last_activity_at,
+      monthly_financial_target: data.monthly_financial_target ?? stats.monthly_financial_target,
     });
     toast.success('DNA Integrato. Streak +1. Hai guadagnato altre 24 ore di dignità.', {
       duration: 5000,
