@@ -43,6 +43,7 @@ const App = () => (
             <Route path="/manuale" element={<ManualePage />} />
             <Route path="/falange/:token" element={<PhalanxJoinPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/unsubscribe" element={<UnsubscribePage />} />
             <Route element={<AppLayout />}>
               <Route path="/home" element={<HomePage />} />
               <Route path="/question" element={<QuestionPage />} />
