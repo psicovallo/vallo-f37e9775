@@ -20,6 +20,85 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import DNACore from './DNACore';
+import { ChevronDown } from 'lucide-react';
+
+// Status banner for the DNA Core — explains the current necrosis stage
+function NucleusStatusBanner({ debt, streak }: { debt: number; streak: number }) {
+  const [expanded, setExpanded] = useState(false);
+
+  let stage: { label: string; color: string; explain: string; remedy: string };
+  if (debt <= 0) {
+    stage = {
+      label: 'NUCLEO STABILE',
+      color: '#d97706',
+      explain: 'Sei in pieno controllo. Il DNA pulsa libero, ambra brillante. Nessuna corruzione attiva.',
+      remedy: 'Mantieni: ogni giorno una conferma (Azione Sovrana o Giorno Pulito) per non scivolare.',
+    };
+  } else if (debt <= 100) {
+    stage = {
+      label: 'NECROSI INIZIALE',
+      color: '#b8821a',
+      explain: 'Primo glitch. Il Nucleo perde brillantezza. Hai ceduto una volta o sei stato passivo.',
+      remedy: streak >= 14 ? '1 azione = pulito.' : streak >= 7 ? '2 azioni = pulito.' : '4 azioni sovrane = pulito.',
+    };
+  } else if (debt <= 300) {
+    stage = {
+      label: 'NECROSI ATTIVA',
+      color: '#a87a30',
+      explain: 'Il colore svanisce, frammenti visibili, scanline. Il Nucleo si sta corrompendo.',
+      remedy: 'Inverti la rotta ORA. Azioni Sovrane consecutive + Giorno Pulito quotidiano.',
+    };
+  } else if (debt <= 500) {
+    stage = {
+      label: 'NECROSI GRAVE',
+      color: '#8b3a3a',
+      explain: 'Cenere e glitch violenti. Il DNA si sta spezzando. Sei vicino al collasso.',
+      remedy: 'Stop totale ai vizi. Solo lavoro vero. Ogni Azione Sovrana è un mattone contro la deriva.',
+    };
+  } else {
+    stage = {
+      label: 'NUCLEO TERMINALE',
+      color: '#7f1d1d',
+      explain: 'Quasi nero, frammentato. Sei un fantasma di te stesso. Il Consiglio ti osserva.',
+      remedy: 'Ricostruzione totale. Riapri il Patto. Una azione, poi un\'altra. Niente giustificazioni.',
+    };
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setExpanded(!expanded)}
+      className="w-full rounded-none border-2 p-2.5 text-left transition-none"
+      style={{ borderColor: `${stage.color}66`, backgroundColor: 'rgba(20,18,16,0.5)' }}
+      aria-expanded={expanded}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span
+            className="inline-block h-2 w-2 shrink-0"
+            style={{ backgroundColor: stage.color, boxShadow: `0 0 6px ${stage.color}` }}
+          />
+          <p className="text-[10px] font-black uppercase tracking-widest truncate" style={{ color: stage.color }}>
+            {stage.label}
+          </p>
+        </div>
+        <ChevronDown
+          size={12}
+          className="shrink-0 text-neutral-500 transition-transform"
+          style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        />
+      </div>
+      {expanded && (
+        <div className="mt-2 space-y-1.5">
+          <p className="text-[11px] text-foreground leading-relaxed">{stage.explain}</p>
+          <p className="text-[11px] leading-relaxed" style={{ color: stage.color }}>
+            <strong className="uppercase">→ Cosa fare:</strong> {stage.remedy}
+          </p>
+        </div>
+      )}
+    </button>
+  );
+}
 
 interface PredatorStats {
   financial_debt: number;
@@ -226,8 +305,9 @@ export default function PredatorDashboard() {
       )}
 
       {/* DNA Core — Nucleo della Sovranità */}
-      <div className="rounded-none border-2 border-neutral-800 bg-neutral-950 p-4">
+      <div className="rounded-none border-2 border-neutral-800 bg-neutral-950 p-4 space-y-3">
         <DNACore debt={stats.financial_debt} lucidity={stats.lucidity_level} />
+        <NucleusStatusBanner debt={stats.financial_debt} streak={stats.sovereign_streak} />
       </div>
 
       {/* Giant debt counter */}
