@@ -314,6 +314,7 @@ serve(async (req) => {
             .from('conflict_questions')
             .select('*, conflict_profiles!inner(name)')
             .eq('user_id', userId)
+            .eq('archived', false)
             .in('status', ['generated', 'validated'])
             .limit(50);
 
