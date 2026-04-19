@@ -24,6 +24,7 @@ import LaForgiaPage from "@/pages/LaForgiaPage";
 import TribunalePage from "@/pages/TribunalePage";
 import OvertonPage from "@/pages/OvertonPage";
 import ManualePage from "@/pages/ManualePage";
+import PhalanxJoinPage from "@/pages/PhalanxJoinPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/manifesto" element={<ManifestoPage />} />
             <Route path="/manuale" element={<ManualePage />} />
+            <Route path="/falange/:token" element={<PhalanxJoinPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route element={<AppLayout />}>
               <Route path="/home" element={<HomePage />} />

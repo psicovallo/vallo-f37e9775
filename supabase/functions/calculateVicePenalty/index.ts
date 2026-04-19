@@ -1,6 +1,7 @@
 // Edge function: calculateVicePenalty
 // Server-side enforcement of all economy mutations on profiles.
 // Actions: vice | sovereign | sos_cedo | clean_day | passivity_check
+// Includes Phalanx multiplier logic: rewards Generals with healthy active recruits.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
 
@@ -18,17 +19,85 @@ const PASSIVITY_TAX = 50;
 const CLEAN_DAY_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const PASSIVITY_THRESHOLD_MS = 24 * 60 * 60 * 1000;
 
+// Phalanx
+const PHALANX_BONUS_MULTIPLIER = 1.5;
+const PHALANX_HEALTHY_DEBT_MAX = 0;       // recruit must have debt <= 0
+const PHALANX_HEALTHY_STREAK_MIN = 3;     // recruit must have streak > 3 (i.e. >= 4)
+const PHALANX_CORRUPTION_DEBT = 300;      // recruit debt > 300 corrupts the pact
+
 type Action = 'vice' | 'sovereign' | 'sos_cedo' | 'clean_day' | 'passivity_check';
 
 interface Body {
   action: Action;
 }
 
-// Streak multiplier: 1-6 -> 25, 7-13 -> 50, 14+ -> 100
 function debtReductionForStreak(streak: number): number {
   if (streak >= 14) return 100;
   if (streak >= 7) return 50;
   return SOVEREIGN_DEBT_REDUCTION_BASE;
+}
+
+/**
+ * Recompute Phalanx multiplier for the General (userId).
+ * - Promotes 'active' pacts to 'corrupted' if recruit debt > 300.
+ * - Returns 1.5 if at least one active recruit is healthy (debt<=0 AND streak>3), else 1.0.
+ * - Notifies the General (insert into messages) when a pact corrupts.
+ */
+async function recomputePhalanxMultiplier(supabase: any, userId: string): Promise<number> {
+  const { data: pacts } = await supabase
+    .from('phalanx_pacts')
+    .select('id, recruit_id, status, recruit_name')
+    .eq('general_id', userId)
+    .in('status', ['active']);
+
+  if (!pacts || pacts.length === 0) {
+    await supabase.from('profiles').update({ phalanx_multiplier: 1.0 }).eq('user_id', userId);
+    return 1.0;
+  }
+
+  const recruitIds = pacts.filter((p: any) => p.recruit_id).map((p: any) => p.recruit_id);
+  if (recruitIds.length === 0) {
+    await supabase.from('profiles').update({ phalanx_multiplier: 1.0 }).eq('user_id', userId);
+    return 1.0;
+  }
+
+  const { data: recruitProfiles } = await supabase
+    .from('profiles')
+    .select('user_id, financial_debt, sovereign_streak, name')
+    .in('user_id', recruitIds);
+
+  let hasHealthy = false;
+  for (const pact of pacts as any[]) {
+    const r = (recruitProfiles ?? []).find((p: any) => p.user_id === pact.recruit_id);
+    if (!r) continue;
+    const debt = Number(r.financial_debt) || 0;
+    const streak = Number(r.sovereign_streak) || 0;
+    const recruitName = pact.recruit_name || r.name || 'Recluta';
+
+    // Corruption check
+    if (debt > PHALANX_CORRUPTION_DEBT) {
+      await supabase
+        .from('phalanx_pacts')
+        .update({ status: 'corrupted', corrupted_at: new Date().toISOString() })
+        .eq('id', pact.id);
+
+      // Notify general via messages table
+      await supabase.from('messages').insert({
+        user_id: userId,
+        from_role: 'admin',
+        text: `La tua recluta ${recruitName} sta marcendo. Il tuo moltiplicatore è stato revocato per aver scommesso su un debole.`,
+      });
+      continue;
+    }
+
+    if (debt <= PHALANX_HEALTHY_DEBT_MAX && streak > PHALANX_HEALTHY_STREAK_MIN) {
+      hasHealthy = true;
+    }
+  }
+
+  const mult = hasHealthy ? PHALANX_BONUS_MULTIPLIER : 1.0;
+  await supabase.from('profiles').update({ phalanx_multiplier: mult }).eq('user_id', userId);
+  return mult;
 }
 
 Deno.serve(async (req) => {
@@ -68,10 +137,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Recompute Phalanx multiplier BEFORE applying action so it reflects current state
+    const phalanxMultiplier = await recomputePhalanxMultiplier(supabase, userId);
+
     const { data: profile, error: readErr } = await supabase
       .from('profiles')
       .select(
-        'financial_debt, lucidity_level, sovereign_streak, last_vice_timestamp, last_clean_day_at, last_activity_at, last_passivity_tax_at',
+        'financial_debt, lucidity_level, sovereign_streak, last_vice_timestamp, last_clean_day_at, last_activity_at, last_passivity_tax_at, phalanx_multiplier',
       )
       .eq('user_id', userId)
       .maybeSingle();
@@ -108,10 +180,10 @@ Deno.serve(async (req) => {
     } else if (body.action === 'sovereign') {
       newStreak += 1;
       newLucidity = Math.min(100, newLucidity + SOVEREIGN_LUCIDITY_GAIN);
-      const reduction = debtReductionForStreak(newStreak);
+      const baseReduction = debtReductionForStreak(newStreak);
+      const reduction = Math.round(baseReduction * phalanxMultiplier * 10) / 10;
       newDebt = Math.max(0, newDebt - reduction);
     } else if (body.action === 'clean_day') {
-      // Cooldown 24h
       if (profile.last_clean_day_at) {
         const last = new Date(profile.last_clean_day_at).getTime();
         if (now.getTime() - last < CLEAN_DAY_COOLDOWN_MS) {
@@ -121,12 +193,12 @@ Deno.serve(async (req) => {
       if (!blocked) {
         newStreak += 1;
         newLucidity = Math.min(100, newLucidity + SOVEREIGN_LUCIDITY_GAIN);
-        const reduction = debtReductionForStreak(newStreak);
+        const baseReduction = debtReductionForStreak(newStreak);
+        const reduction = Math.round(baseReduction * phalanxMultiplier * 10) / 10;
         newDebt = Math.max(0, newDebt - reduction);
         newCleanDay = nowIso;
       }
     } else if (body.action === 'passivity_check') {
-      // Apply +50€ tax if last_activity older than 24h AND last_passivity_tax_at older than 24h (or null)
       const lastActivity = profile.last_activity_at
         ? new Date(profile.last_activity_at).getTime()
         : 0;
@@ -142,7 +214,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update last_activity_at on any active action (not on passivity_check)
     const isActiveAction =
       body.action === 'vice' ||
       body.action === 'sovereign' ||
@@ -173,12 +244,28 @@ Deno.serve(async (req) => {
       });
     }
 
+    // After this user updates, also recompute multiplier for any GENERAL who has THIS user as recruit
+    // (so the General's bonus reacts to the recruit's new state)
+    const { data: generalPacts } = await supabase
+      .from('phalanx_pacts')
+      .select('general_id')
+      .eq('recruit_id', userId)
+      .in('status', ['active']);
+
+    if (generalPacts && generalPacts.length > 0) {
+      const uniqueGenerals = Array.from(new Set(generalPacts.map((p: any) => p.general_id)));
+      for (const gid of uniqueGenerals) {
+        await recomputePhalanxMultiplier(supabase, gid);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         ok: true,
         action: body.action,
         blocked,
         applied_tax: appliedTax,
+        phalanx_multiplier: phalanxMultiplier,
         financial_debt: newDebt,
         lucidity_level: newLucidity,
         sovereign_streak: newStreak,

@@ -9,6 +9,7 @@ import InstallBanner from '@/components/InstallBanner';
 import LanguageButton from '@/components/LanguageButton';
 import GuidedTour from '@/components/GuidedTour';
 import PredatorDashboard from '@/components/PredatorDashboard';
+import PhalanxDashboard from '@/components/PhalanxDashboard';
 import { useLanguage } from '@/components/AppLayout';
 
 function getGreeting(): string {
@@ -110,6 +111,8 @@ export default function HomePage() {
       <InstallBanner />
 
       <PredatorDashboard />
+
+      <PhalanxDashboard />
 
       {/* Active question card */}
       <Link
