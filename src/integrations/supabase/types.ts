@@ -417,6 +417,9 @@ export type Database = {
           email: string | null
           financial_debt: number
           id: string
+          last_activity_at: string | null
+          last_clean_day_at: string | null
+          last_passivity_tax_at: string | null
           last_vice_timestamp: string | null
           lingua_madre: string
           lucidity_level: number
@@ -438,6 +441,9 @@ export type Database = {
           email?: string | null
           financial_debt?: number
           id?: string
+          last_activity_at?: string | null
+          last_clean_day_at?: string | null
+          last_passivity_tax_at?: string | null
           last_vice_timestamp?: string | null
           lingua_madre?: string
           lucidity_level?: number
@@ -459,6 +465,9 @@ export type Database = {
           email?: string | null
           financial_debt?: number
           id?: string
+          last_activity_at?: string | null
+          last_clean_day_at?: string | null
+          last_passivity_tax_at?: string | null
           last_vice_timestamp?: string | null
           lingua_madre?: string
           lucidity_level?: number
