@@ -61,7 +61,7 @@ Rispondi SOLO con un JSON array di 4 oggetti (step 2-5):
     // Retry logic for transient DNS/network errors
     const callAI = async (attempt = 1): Promise<Response> => {
       try {
-        return await fetch('https://ai-gateway.lovable.dev/v1/chat/completions', {
+        return await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${lovableKey}` },
           body: JSON.stringify({
