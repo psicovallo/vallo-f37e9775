@@ -306,6 +306,40 @@ export default function ProfilePage() {
             Registra ogni telefono/browser su cui vuoi ricevere le notifiche push.
           </p>
         </div>
+
+        {/* WhatsApp Mandato */}
+        <div className="space-y-2 border-t border-border pt-3">
+          <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+            <MessageCircle size={12} /> Mandato via WhatsApp
+          </label>
+          <p className="text-[10px] text-muted-foreground">
+            Ricevi il Mandato di Comparizione anche su WhatsApp alle 22:00 quando salti il Roll Call. Doppio canale = doppia pressione.
+          </p>
+          <input
+            type="tel"
+            value={phoneNumber}
+            onChange={e => setPhoneNumber(e.target.value)}
+            placeholder="+393331234567"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              checked={waEnabled}
+              onChange={e => setWaEnabled(e.target.checked)}
+              className="accent-primary"
+            />
+            Attiva notifiche WhatsApp
+          </label>
+          <button
+            onClick={saveWhatsApp}
+            disabled={savingWa}
+            className="w-full flex items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-medium text-primary hover:bg-primary/20 disabled:opacity-50"
+          >
+            {savingWa ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+            {savingWa ? 'Salvataggio...' : 'Salva WhatsApp'}
+          </button>
+        </div>
       </div>
 
       {/* User-written section */}
