@@ -352,8 +352,13 @@ export default function PredatorDashboard() {
               <HelpCircle size={12} />
             </PopoverTrigger>
             <PopoverContent className="w-72 text-xs leading-relaxed">
-              <p className="font-black uppercase mb-1 text-destructive">Debito al Futuro</p>
-              <p>Soldi virtuali rubati al tuo futuro. Vizio = +100€. Inattività 24h = +50€ (Tassa di Passività). Si paga con le Azioni Sovrane: −25€ base, −50€ con streak ≥7, −100€ con streak ≥14.</p>
+              <p className="font-black uppercase mb-1 text-destructive">Prezzo del Sangue Dinamico</p>
+              <p>
+                Target mensile: <strong>€{monthlyTarget.toLocaleString('it-IT')}</strong>. Valore di un tuo giorno: <strong>€{dailyValue.toFixed(2)}</strong>.
+                <br/>Vizio = <strong>+€{vicePenalty}</strong> (1.5 giorni del tuo lavoro).
+                <br/>Tassa Passività 24h = <strong>+€50</strong>.
+                <br/>Riscatto: <strong>−€{sovBase}</strong> base · <strong>−€{sov7}</strong> con streak ≥7 · <strong>−€{sov14}</strong> con streak ≥14.
+              </p>
             </PopoverContent>
           </Popover>
         </div>
@@ -418,10 +423,10 @@ export default function PredatorDashboard() {
           </div>
           <p className="mt-2 text-[9px] uppercase tracking-wider text-neutral-600">
             {stats.sovereign_streak >= 14
-              ? '⚡ Riscatto: −100€/azione'
+              ? `⚡ Riscatto: −€${sov14}/azione`
               : stats.sovereign_streak >= 7
-                ? '⚡ Riscatto: −50€/azione'
-                : 'Riscatto: −25€/azione'}
+                ? `⚡ Riscatto: −€${sov7}/azione`
+                : `Riscatto: −€${sovBase}/azione`}
           </p>
         </div>
       </div>
@@ -442,7 +447,7 @@ export default function PredatorDashboard() {
             </div>
             <div className="mt-1 text-xs font-bold uppercase text-red-300">Dichiara Vizio</div>
             <div className="mt-1 text-[10px] text-red-700 leading-tight">
-              Droghe, alcol, porno, scroll, abbuffata, gioco... +100€ debito.
+              Droghe, alcol, porno, scroll, abbuffata, gioco... <strong>+€{vicePenalty} debito</strong> (1.5 giorni del tuo lavoro).
             </div>
           </button>
           <button
