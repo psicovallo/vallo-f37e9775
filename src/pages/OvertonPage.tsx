@@ -196,6 +196,15 @@ export default function OvertonPage() {
           <ArrowLeft size={20} />
         </button>
         <h1 className="text-lg font-black uppercase tracking-[0.2em]">OVERTON SHIFT</h1>
+        <div className="ml-auto">
+          <HelpDrawer
+            title="Overton Shift"
+            whatYouDo="Definisci un obiettivo che oggi ti sembra impensabile. Lo sposti dentro di te in 5 step."
+            whatAIDoes="Il Consiglio costruisce la scala: IMPENSABILE → RADICALE → ACCETTABILE → NORMA → DOMINIO. Ogni step ha 48h di decadimento."
+            expectedResult="Un nuovo comportamento che prima ti sembrava impossibile diventa il tuo nuovo normale. Niente forza di volontà: solo ricondizionamento."
+            accent="amber"
+          />
+        </div>
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6 pb-28">
