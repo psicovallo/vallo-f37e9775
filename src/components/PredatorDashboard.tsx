@@ -166,7 +166,9 @@ export default function PredatorDashboard() {
       last_clean_day_at: data.last_clean_day_at,
       last_activity_at: data.last_activity_at,
     });
-    toast.success('Giorno Pulito registrato. Resistere è un atto attivo.');
+    toast.success('DNA Integrato. Streak +1. Hai guadagnato altre 24 ore di dignità.', {
+      duration: 5000,
+    });
   }
 
   if (!stats) {

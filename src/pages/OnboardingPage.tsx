@@ -3,7 +3,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { toast } from 'sonner';
-import { Flame, Clock, Bell, ChevronRight, Target, PenLine, Skull, Euro } from 'lucide-react';
+import { Flame, Clock, Bell, ChevronRight, Target, PenLine, Skull, Euro, Sun } from 'lucide-react';
+import InstallArmor from '@/components/InstallArmor';
 
 const TIME_OPTIONS = Array.from({ length: 15 }, (_, i) => {
   const h = i + 7;
@@ -190,6 +191,31 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
                 </div>
               </div>
             </div>
+
+            {/* LA LEGGE DELLA PRESENZA */}
+            <div className="rounded-none border-2 border-destructive bg-destructive/10 p-5">
+              <div className="flex items-start gap-3">
+                <Sun size={20} className="mt-0.5 shrink-0 text-destructive" />
+                <div>
+                  <p className="text-sm font-black uppercase text-destructive">La Legge della Presenza</p>
+                  <p className="mt-2 text-xs text-foreground leading-relaxed">
+                    Il Consiglio non accetta fantasmi. Se non entri nell'app per <strong className="text-destructive">24 ore</strong>,
+                    il sistema presume che tu sia tornato a dormire nel gregge.
+                  </p>
+                  <p className="mt-2 text-xs text-foreground leading-relaxed">
+                    Conseguenza: <strong className="text-destructive">+50€ di Tassa di Passività</strong> e
+                    inizio della <strong>Necrosi del Nucleo</strong>.
+                    La tua sovranità richiede manutenzione quotidiana.
+                  </p>
+                  <p className="mt-2 text-xs font-black uppercase text-destructive">
+                    Non è un'opzione. È il prezzo del potere.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* InstallArmor — guida installazione PWA */}
+            <InstallArmor />
           </div>
 
           <button onClick={() => setStep('obiettivo')} className={`mt-6 ${primaryBtn}`}>

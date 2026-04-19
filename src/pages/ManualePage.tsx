@@ -249,9 +249,65 @@ export default function ManualePage() {
             </AccordionContent>
           </AccordionItem>
 
+          {/* FAQ SUDDITI SMARRITI */}
+          <AccordionItem value="faq-sudditi" className="rounded-none border-2 border-amber-700/50 bg-amber-950/10 px-4">
+            <AccordionTrigger className="text-sm font-black uppercase tracking-wide">
+              <div className="flex items-center gap-2">
+                <Skull size={16} className="text-amber-500" />
+                Domande Frequenti per Sudditi Smarriti
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-4 text-sm leading-relaxed text-foreground">
+              <div>
+                <p className="font-black uppercase text-amber-500">Perché il Nucleo è grigio e glitchato?</p>
+                <p className="text-xs text-foreground mt-1">
+                  Perché sei <strong>in debito con il tuo futuro</strong>. Ogni vizio corrompe il DNA visualizzato.
+                  Agisci (Azioni Sovrane, Giorni Puliti) per riportarlo allo stato ambra brillante.
+                </p>
+              </div>
+              <div>
+                <p className="font-black uppercase text-amber-500">Cosa succede se dimentico di dichiarare il Giorno Pulito?</p>
+                <p className="text-xs text-foreground mt-1">
+                  <strong>Il silenzio è debolezza.</strong> Se passano 24h senza che tu apra l'app o dichiari nulla,
+                  paghi automaticamente <strong className="text-destructive">+50€ di Tassa di Passività</strong>.
+                  L'omissione costa quanto un mezzo cedimento.
+                </p>
+              </div>
+              <div>
+                <p className="font-black uppercase text-amber-500">Come cancello il debito?</p>
+                <p className="text-xs text-foreground mt-1">
+                  Attraverso le <strong>Azioni Sovrane</strong> e i <strong>Giorni Puliti</strong>. Il lavoro è
+                  l'unica moneta accettata qui. Sconto base: <strong>−25€</strong>. Con streak ≥ 7gg:
+                  <strong> −50€</strong>. Con streak ≥ 14gg: <strong>−100€</strong> (un'azione cancella un cedimento intero).
+                </p>
+              </div>
+              <div>
+                <p className="font-black uppercase text-amber-500">Cos'è il Giorno Pulito e quando lo dichiaro?</p>
+                <p className="text-xs text-foreground mt-1">
+                  È la dichiarazione che <strong>nelle ultime 24h non hai ceduto</strong>.
+                  Resistere è un'azione attiva, non un'assenza. Disponibile <strong>una volta ogni 24h</strong>.
+                  Vale come un'Azione Sovrana: +1 streak, +2 lucidità, paga il debito.
+                </p>
+              </div>
+              <div>
+                <p className="font-black uppercase text-amber-500">Devo per forza installare l'app sul telefono?</p>
+                <p className="text-xs text-foreground mt-1">
+                  Sì. Senza installazione, le notifiche non ti raggiungono in modo affidabile.
+                  Sei un passante nel browser, non un soldato. Vai nelle istruzioni di installazione (Onboarding o Profilo).
+                </p>
+              </div>
+              <div>
+                <p className="font-black uppercase text-amber-500">Posso "imbrogliare" il sistema?</p>
+                <p className="text-xs text-destructive font-black uppercase mt-1">
+                  Puoi. E ti stai derubando da solo. Il punteggio non serve a noi. Serve a te.
+                </p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
           {/* FAQ */}
           <AccordionItem value="faq" className="rounded-none border-2 border-border bg-card px-4">
-            <AccordionTrigger className="text-sm font-black uppercase tracking-wide">❓ Domande frequenti</AccordionTrigger>
+            <AccordionTrigger className="text-sm font-black uppercase tracking-wide">❓ Domande frequenti (Tecniche)</AccordionTrigger>
             <AccordionContent className="space-y-3 text-sm leading-relaxed text-foreground">
               <div>
                 <p className="font-black uppercase">Perché 9 letture?</p>
