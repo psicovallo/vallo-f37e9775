@@ -58,23 +58,60 @@ REGOLE:
 Rispondi SOLO con un JSON array di 4 oggetti (step 2-5):
 [{"step_number": 2, "label": "RADICALE", "action_text": "..."}, ...]`;
 
-    const aiRes = await fetch('https://ai-gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${lovableKey}` },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Scomponi questa azione impossibile in 4 step crescenti: "${goal_text}"` },
-        ],
-        temperature: 0.8,
-      }),
-    });
+    // Retry logic for transient DNS/network errors
+    const callAI = async (attempt = 1): Promise<Response> => {
+      try {
+        return await fetch('https://ai-gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${lovableKey}` },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: `Scomponi questa azione impossibile in 4 step crescenti: "${goal_text}"` },
+            ],
+            temperature: 0.8,
+          }),
+        });
+      } catch (err) {
+        if (attempt < 3) {
+          console.log(`AI call attempt ${attempt} failed, retrying...`, err);
+          await new Promise(r => setTimeout(r, 500 * attempt));
+          return callAI(attempt + 1);
+        }
+        throw err;
+      }
+    };
+
+    const aiRes = await callAI();
+    if (!aiRes.ok) {
+      const errText = await aiRes.text();
+      console.error('AI gateway error:', aiRes.status, errText);
+      if (aiRes.status === 429) {
+        return new Response(JSON.stringify({ error: 'Limite di richieste raggiunto. Riprova tra qualche minuto.' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      if (aiRes.status === 402) {
+        return new Response(JSON.stringify({ error: 'Crediti AI esauriti. Contatta il supporto.' }), { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      throw new Error(`AI gateway returned ${aiRes.status}`);
+    }
 
     const aiData = await aiRes.json();
     let content = aiData.choices?.[0]?.message?.content || '';
     content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const generatedSteps = JSON.parse(content);
+    
+    let generatedSteps;
+    try {
+      generatedSteps = JSON.parse(content);
+    } catch (parseErr) {
+      console.error('Failed to parse AI response:', content);
+      throw new Error('Il Consiglio ha risposto in modo non valido. Riprova.');
+    }
+    
+    if (!Array.isArray(generatedSteps) || generatedSteps.length !== 4) {
+      console.error('Invalid steps structure:', generatedSteps);
+      throw new Error('Struttura step non valida. Riprova.');
+    }
 
     // Create the shift
     const { data: newShift, error: shiftErr } = await supabase.from('overton_shifts').insert({
