@@ -466,6 +466,7 @@ export default function SOSConflittiPage() {
   // WELCOME / INFO SCREEN
   if (showWelcome) {
     return (
+      <SOSLockGate>
       <div className="mx-auto max-w-lg px-4 pt-6 pb-24">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl font-bold text-foreground">Il Consiglio dei 15</h1>

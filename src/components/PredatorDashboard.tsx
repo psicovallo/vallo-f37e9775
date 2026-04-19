@@ -175,7 +175,7 @@ export default function PredatorDashboard() {
             ⚠ Cedimento
           </div>
           <div className="mt-1 text-xs font-bold uppercase text-red-300">Dichiara Vizio</div>
-          <div className="mt-1 text-[10px] text-red-700">+{VICE_DEBT_INCREMENT}€ debito</div>
+          <div className="mt-1 text-[10px] text-red-700">+100€ debito</div>
         </button>
         <button
           onClick={declareSovereignAction}
