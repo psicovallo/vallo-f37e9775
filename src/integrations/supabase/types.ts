@@ -59,6 +59,7 @@ export type Database = {
       conflict_questions: {
         Row: {
           adjustment_notes: string | null
+          archived: boolean
           conflict_profile_id: string
           created_at: string
           id: string
@@ -66,12 +67,14 @@ export type Database = {
           question_text: string
           question_text_translated: string | null
           status: string
+          times: string[] | null
           user_id: string
           validation_text: string
           velo_number: number
         }
         Insert: {
           adjustment_notes?: string | null
+          archived?: boolean
           conflict_profile_id: string
           created_at?: string
           id?: string
@@ -79,12 +82,14 @@ export type Database = {
           question_text?: string
           question_text_translated?: string | null
           status?: string
+          times?: string[] | null
           user_id: string
           validation_text?: string
           velo_number?: number
         }
         Update: {
           adjustment_notes?: string | null
+          archived?: boolean
           conflict_profile_id?: string
           created_at?: string
           id?: string
@@ -92,6 +97,7 @@ export type Database = {
           question_text?: string
           question_text_translated?: string | null
           status?: string
+          times?: string[] | null
           user_id?: string
           validation_text?: string
           velo_number?: number
@@ -303,6 +309,7 @@ export type Database = {
       overton_steps: {
         Row: {
           action_text: string
+          archived: boolean
           confirmed: boolean
           confirmed_at: string | null
           created_at: string
@@ -310,10 +317,12 @@ export type Database = {
           label: string
           shift_id: string
           step_number: number
+          times: string[] | null
           user_id: string
         }
         Insert: {
           action_text: string
+          archived?: boolean
           confirmed?: boolean
           confirmed_at?: string | null
           created_at?: string
@@ -321,10 +330,12 @@ export type Database = {
           label: string
           shift_id: string
           step_number: number
+          times?: string[] | null
           user_id: string
         }
         Update: {
           action_text?: string
+          archived?: boolean
           confirmed?: boolean
           confirmed_at?: string | null
           created_at?: string
@@ -332,6 +343,7 @@ export type Database = {
           label?: string
           shift_id?: string
           step_number?: number
+          times?: string[] | null
           user_id?: string
         }
         Relationships: [
@@ -505,6 +517,7 @@ export type Database = {
       }
       question_assignments: {
         Row: {
+          archived: boolean
           created_at: string
           id: string
           is_seed_question: boolean
@@ -512,10 +525,12 @@ export type Database = {
           question_text: string
           sort_order: number
           status: Database["public"]["Enums"]["assignment_status"]
+          times: string[] | null
           user_id: string
           view_count: number
         }
         Insert: {
+          archived?: boolean
           created_at?: string
           id?: string
           is_seed_question?: boolean
@@ -523,10 +538,12 @@ export type Database = {
           question_text: string
           sort_order?: number
           status?: Database["public"]["Enums"]["assignment_status"]
+          times?: string[] | null
           user_id: string
           view_count?: number
         }
         Update: {
+          archived?: boolean
           created_at?: string
           id?: string
           is_seed_question?: boolean
@@ -534,6 +551,7 @@ export type Database = {
           question_text?: string
           sort_order?: number
           status?: Database["public"]["Enums"]["assignment_status"]
+          times?: string[] | null
           user_id?: string
           view_count?: number
         }
@@ -780,6 +798,39 @@ export type Database = {
           created_at?: string
           id?: string
           text?: string
+          times?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sfogo_questions: {
+        Row: {
+          active: boolean
+          archived: boolean
+          created_at: string
+          id: string
+          question_text: string
+          times: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          archived?: boolean
+          created_at?: string
+          id?: string
+          question_text: string
+          times?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          archived?: boolean
+          created_at?: string
+          id?: string
+          question_text?: string
           times?: string[] | null
           updated_at?: string
           user_id?: string
