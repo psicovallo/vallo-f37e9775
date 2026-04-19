@@ -240,6 +240,7 @@ serve(async (req) => {
               .from('question_assignments')
               .select('*')
               .eq('user_id', userId)
+              .eq('archived', false)
               .order('sort_order', { ascending: true });
 
             if (assignments?.length) {
