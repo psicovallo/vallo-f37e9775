@@ -463,6 +463,7 @@ export type Database = {
           lingua_madre: string
           lucidity_level: number
           milestone_zero: string | null
+          monthly_financial_target: number
           name: string | null
           objective: string | null
           phalanx_multiplier: number
@@ -491,6 +492,7 @@ export type Database = {
           lingua_madre?: string
           lucidity_level?: number
           milestone_zero?: string | null
+          monthly_financial_target?: number
           name?: string | null
           objective?: string | null
           phalanx_multiplier?: number
@@ -519,6 +521,7 @@ export type Database = {
           lingua_madre?: string
           lucidity_level?: number
           milestone_zero?: string | null
+          monthly_financial_target?: number
           name?: string | null
           objective?: string | null
           phalanx_multiplier?: number
