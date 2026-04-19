@@ -173,6 +173,22 @@ export default function SfogoPage() {
       });
     }
 
+    // Persist the AI-generated question into sfogo_questions (idempotent)
+    try {
+      const { data: existing } = await supabase
+        .from('sfogo_questions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('question_text', currentQuestion.text)
+        .maybeSingle();
+      if (!existing) {
+        await supabase.from('sfogo_questions').insert({
+          user_id: user.id,
+          question_text: currentQuestion.text,
+        });
+      }
+    } catch (e) { console.warn('sfogo_questions persist:', e); }
+
     const newEmptyCount = hasNote ? 0 : emptyNoteCount + 1;
     setEmptyNoteCount(newEmptyCount);
 
