@@ -11,10 +11,15 @@ const corsHeaders = {
     'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const VICE_DEBT_INCREMENT = 100;
+// Default monthly target if user hasn't set one
+const DEFAULT_MONTHLY_TARGET = 3000;
+// Vice penalty multiplier on daily_value
+const VICE_DAILY_MULTIPLIER = 1.5;
+// Sovereign action redemption (% of daily_value, base before streak)
+const SOVEREIGN_DAILY_FRACTION = 0.25;
+
 const VICE_LUCIDITY_PENALTY = 15;
 const SOVEREIGN_LUCIDITY_GAIN = 2;
-const SOVEREIGN_DEBT_REDUCTION_BASE = 25;
 const PASSIVITY_TAX = 50;
 const CLEAN_DAY_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const PASSIVITY_THRESHOLD_MS = 24 * 60 * 60 * 1000;
@@ -143,7 +148,7 @@ Deno.serve(async (req) => {
     const { data: profile, error: readErr } = await supabase
       .from('profiles')
       .select(
-        'financial_debt, lucidity_level, sovereign_streak, last_vice_timestamp, last_clean_day_at, last_activity_at, last_passivity_tax_at, phalanx_multiplier',
+        'financial_debt, lucidity_level, sovereign_streak, last_vice_timestamp, last_clean_day_at, last_activity_at, last_passivity_tax_at, phalanx_multiplier, monthly_financial_target',
       )
       .eq('user_id', userId)
       .maybeSingle();
@@ -154,6 +159,12 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // Dynamic Blood Price math
+    const monthlyTarget = Number((profile as any).monthly_financial_target) || DEFAULT_MONTHLY_TARGET;
+    const dailyValue = monthlyTarget / 30;
+    const vicePenalty = Math.round(dailyValue * VICE_DAILY_MULTIPLIER);
+    const sovereignBase = dailyValue * SOVEREIGN_DAILY_FRACTION;
 
     let newDebt = Number(profile.financial_debt) || 0;
     let newLucidity = Number(profile.lucidity_level) || 0;
@@ -168,20 +179,19 @@ Deno.serve(async (req) => {
     let appliedTax = false;
 
     if (body.action === 'vice') {
-      newDebt += VICE_DEBT_INCREMENT;
+      newDebt += vicePenalty;
       newLucidity = Math.max(0, newLucidity - VICE_LUCIDITY_PENALTY);
       newStreak = 0;
       newVice = nowIso;
     } else if (body.action === 'sos_cedo') {
-      newDebt += VICE_DEBT_INCREMENT;
+      newDebt += vicePenalty;
       newLucidity = 0;
       newStreak = 0;
       newVice = nowIso;
     } else if (body.action === 'sovereign') {
       newStreak += 1;
       newLucidity = Math.min(100, newLucidity + SOVEREIGN_LUCIDITY_GAIN);
-      const baseReduction = debtReductionForStreak(newStreak);
-      const reduction = Math.round(baseReduction * phalanxMultiplier * 10) / 10;
+      const reduction = Math.round(sovereignBase * streakMultiplier(newStreak) * phalanxMultiplier * 10) / 10;
       newDebt = Math.max(0, newDebt - reduction);
     } else if (body.action === 'clean_day') {
       if (profile.last_clean_day_at) {
@@ -193,8 +203,7 @@ Deno.serve(async (req) => {
       if (!blocked) {
         newStreak += 1;
         newLucidity = Math.min(100, newLucidity + SOVEREIGN_LUCIDITY_GAIN);
-        const baseReduction = debtReductionForStreak(newStreak);
-        const reduction = Math.round(baseReduction * phalanxMultiplier * 10) / 10;
+        const reduction = Math.round(sovereignBase * streakMultiplier(newStreak) * phalanxMultiplier * 10) / 10;
         newDebt = Math.max(0, newDebt - reduction);
         newCleanDay = nowIso;
       }
