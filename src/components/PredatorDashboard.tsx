@@ -281,6 +281,14 @@ export default function PredatorDashboard() {
 
   const inDebt = stats.financial_debt > 0;
 
+  // Dynamic Blood Price values for this user
+  const monthlyTarget = Number(stats.monthly_financial_target) || 3000;
+  const dailyValue = dailyValueOf(monthlyTarget);
+  const vicePenalty = vicePenaltyOf(monthlyTarget);
+  const sovBase = sovereignBaseOf(monthlyTarget);
+  const sov7 = Math.round(sovBase * 2 * 10) / 10;
+  const sov14 = Math.round(sovBase * 4 * 10) / 10;
+
   // Clean day cooldown
   const lastCleanMs = stats.last_clean_day_at ? new Date(stats.last_clean_day_at).getTime() : 0;
   const cleanCooldownRemaining = Math.max(0, CLEAN_DAY_COOLDOWN_MS - (Date.now() - lastCleanMs));
@@ -313,7 +321,7 @@ export default function PredatorDashboard() {
               <strong className="text-amber-500">LUCIDITÀ</strong> — chiarezza mentale (0–100). Cala con i vizi, sale con le azioni sovrane.
             </li>
             <li>
-              <strong className="text-emerald-500">STREAK</strong> — giorni di controllo. Moltiplica lo sconto sul debito (7gg=−50€, 14gg=−100€).
+              <strong className="text-emerald-500">STREAK</strong> — giorni di controllo. Moltiplica il riscatto (7gg=×2, 14gg=×4).
             </li>
           </ul>
           <Link
