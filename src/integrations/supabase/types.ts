@@ -415,12 +415,16 @@ export type Database = {
           created_at: string
           current_problems: string | null
           email: string | null
+          financial_debt: number
           id: string
+          last_vice_timestamp: string | null
           lingua_madre: string
+          lucidity_level: number
           milestone_zero: string | null
           name: string | null
           objective: string | null
           quantum_enabled: boolean
+          sovereign_streak: number
           tour_completed: boolean
           user_id: string
           vision: string | null
@@ -432,12 +436,16 @@ export type Database = {
           created_at?: string
           current_problems?: string | null
           email?: string | null
+          financial_debt?: number
           id?: string
+          last_vice_timestamp?: string | null
           lingua_madre?: string
+          lucidity_level?: number
           milestone_zero?: string | null
           name?: string | null
           objective?: string | null
           quantum_enabled?: boolean
+          sovereign_streak?: number
           tour_completed?: boolean
           user_id: string
           vision?: string | null
@@ -449,12 +457,16 @@ export type Database = {
           created_at?: string
           current_problems?: string | null
           email?: string | null
+          financial_debt?: number
           id?: string
+          last_vice_timestamp?: string | null
           lingua_madre?: string
+          lucidity_level?: number
           milestone_zero?: string | null
           name?: string | null
           objective?: string | null
           quantum_enabled?: boolean
+          sovereign_streak?: number
           tour_completed?: boolean
           user_id?: string
           vision?: string | null
