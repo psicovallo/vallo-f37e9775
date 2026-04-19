@@ -84,6 +84,79 @@ export default function ManualePage() {
             </AccordionContent>
           </AccordionItem>
 
+          {/* IL NUCLEO E LA NECROSI — DEMO INTERATTIVA */}
+          <AccordionItem value="nucleo-necrosi" className="rounded-none border-2 border-amber-700/50 bg-amber-950/10 px-4">
+            <AccordionTrigger className="text-sm font-black uppercase tracking-wide">
+              <div className="flex items-center gap-2"><Sparkles size={16} className="text-amber-500" /> Il Nucleo & la Necrosi (Demo)</div>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-3 text-sm leading-relaxed text-foreground">
+              <p>
+                Il <strong className="text-amber-500">Nucleo della Sovranità</strong> al centro del cruscotto
+                è il tuo <strong>DNA visualizzato</strong>. Non è decorazione: è il termometro vivo del tuo stato.
+              </p>
+              <p>
+                Quando sei sovrano (debito a 0), il Nucleo è <strong className="text-amber-500">ambra brillante</strong>,
+                stabile, pulsante. Quando entri in debito, inizia la <strong className="text-destructive">Necrosi Digitale</strong>:
+                glitch, sfocatura, perdita di colore, frammentazione. Più aumenta il debito, più il Nucleo si corrompe.
+              </p>
+              <p className="text-xs text-amber-700 uppercase font-black">↓ Trascina lo slider e guarda i 5 stadi ↓</p>
+              <NecrosisDemo />
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* GLOSSARIO BRUTALE */}
+          <AccordionItem value="glossario" className="rounded-none border-2 border-border bg-card px-4">
+            <AccordionTrigger className="text-sm font-black uppercase tracking-wide">
+              <div className="flex items-center gap-2"><Library size={16} className="text-primary" /> Glossario Brutale</div>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-3 text-sm leading-relaxed text-foreground">
+              <div>
+                <p className="font-black uppercase text-primary">Sovrano</p>
+                <p className="text-xs text-muted-foreground">Chi controlla i propri impulsi e dichiara la verità al cruscotto. Non chi è "perfetto", ma chi non si mente.</p>
+              </div>
+              <div>
+                <p className="font-black uppercase text-destructive">Vizio (Cedimento)</p>
+                <p className="text-xs text-muted-foreground">Qualsiasi atto di fuga: droga, alcol, porno, scroll, abbuffata, gioco, esplosione, procrastinazione grave. +100€ debito · −15 lucidità · streak azzerata.</p>
+              </div>
+              <div>
+                <p className="font-black uppercase text-emerald-500">Azione Sovrana</p>
+                <p className="text-xs text-muted-foreground">Lavoro vero, allenamento, confronto difficile, disciplina mantenuta. +1 streak · +2 lucidità · paga il debito (−25€/−50€/−100€ secondo streak).</p>
+              </div>
+              <div>
+                <p className="font-black uppercase text-amber-500">Giorno Pulito</p>
+                <p className="text-xs text-muted-foreground">Dichiarazione attiva: "nelle ultime 24h non ho ceduto". Disponibile 1 volta ogni 24h. Vale come Azione Sovrana.</p>
+              </div>
+              <div>
+                <p className="font-black uppercase text-destructive">Tassa di Passività</p>
+                <p className="text-xs text-muted-foreground">+50€ automatici se passi 24h senza aprire l'app o dichiarare nulla. L'omissione è debolezza.</p>
+              </div>
+              <div>
+                <p className="font-black uppercase text-amber-500">Necrosi Digitale</p>
+                <p className="text-xs text-muted-foreground">Corruzione progressiva del Nucleo (5 stadi: Stabile → Iniziale → Attiva → Grave → Terminale) all'aumentare del debito.</p>
+              </div>
+              <div>
+                <p className="font-black uppercase text-primary">Lucidità</p>
+                <p className="text-xs text-muted-foreground">Scala 0–100. Chiarezza mentale. Sotto soglia critica sei una marionetta del tuo umore.</p>
+              </div>
+              <div>
+                <p className="font-black uppercase text-emerald-500">Streak Sovrana</p>
+                <p className="text-xs text-muted-foreground">Giorni consecutivi di controllo. Moltiplica lo sconto sul debito. ≥7gg = −50€/azione. ≥14gg = −100€/azione.</p>
+              </div>
+              <div>
+                <p className="font-black uppercase text-foreground">Mattone vs Crepa</p>
+                <p className="text-xs text-muted-foreground">Mattone = azione che costruisce. Crepa = cedimento o omissione. Il Tribunale li conta ogni 15 giorni.</p>
+              </div>
+              <div>
+                <p className="font-black uppercase text-primary">Velo</p>
+                <p className="text-xs text-muted-foreground">Strato di difesa di un bersaglio in SOS DNA. 5 Veli per profilo. Vanno usati in ordine, mai saltati.</p>
+              </div>
+              <div>
+                <p className="font-black uppercase text-amber-500">Pietra Zero</p>
+                <p className="text-xs text-muted-foreground">La verità grezza che hai inciso nell'onboarding. Il motivo per cui sei qui. Non si modifica a cuor leggero.</p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
           {/* Consiglio */}
           <AccordionItem value="consiglio" className="rounded-none border-2 border-border bg-card px-4">
             <AccordionTrigger className="text-sm font-black uppercase tracking-wide">
