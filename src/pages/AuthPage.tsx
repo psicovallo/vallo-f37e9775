@@ -170,6 +170,21 @@ export default function AuthPage() {
             minLength={6}
             className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
+          <div className="space-y-1">
+            <input
+              type="tel"
+              placeholder="WhatsApp con prefisso (es. 393331234567)"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              required
+              inputMode="tel"
+              pattern="[0-9+\s]{10,16}"
+              className="w-full rounded-2xl border border-border bg-card px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <p className="px-2 text-[10px] text-muted-foreground">
+              Obbligatorio. Riceverai notifiche WhatsApp dal Consiglio. Niente prefisso "+" o spazi: solo cifre con il codice paese (es. 39 per l'Italia).
+            </p>
+          </div>
           <button
             type="submit"
             disabled={loading}
