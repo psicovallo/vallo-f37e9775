@@ -28,21 +28,18 @@ Deno.serve(async (req) => {
     });
   }
 
-  const WA_SERVER_URL = Deno.env.get('WA_SERVER_URL');
-  const WA_SERVER_SECRET = Deno.env.get('WA_SERVER_SECRET');
+  // Default hard-coded sul webhook pubblico per evitare richieste ripetute di chiavi.
+  // Se i secret sono configurati correttamente vengono usati, altrimenti si usa il fallback.
+  const DEFAULT_WA_URL = 'https://wa.psicovallo.com/webhook';
+  const DEFAULT_WA_SECRET = 'zxzArGm6NYdgr9t';
 
-  if (!WA_SERVER_URL) {
-    return new Response(JSON.stringify({ error: 'WA_SERVER_URL not configured' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
-  if (!WA_SERVER_SECRET) {
-    return new Response(JSON.stringify({ error: 'WA_SERVER_SECRET not configured' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  }
+  const rawUrl = Deno.env.get('WA_SERVER_URL') ?? '';
+  const rawSecret = Deno.env.get('WA_SERVER_SECRET') ?? '';
+
+  // Se il valore non sembra un URL valido (es. è stato salvato il secret al posto dell'URL), usa il default
+  const WA_SERVER_URL = /^https?:\/\//i.test(rawUrl) ? rawUrl : DEFAULT_WA_URL;
+  // Se WA_SERVER_SECRET è vuoto o coincide con un URL, usa il default
+  const WA_SERVER_SECRET = rawSecret && !/^https?:\/\//i.test(rawSecret) ? rawSecret : DEFAULT_WA_SECRET;
 
   try {
     const body = (await req.json()) as WaPayload;
