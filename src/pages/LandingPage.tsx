@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Shield, ScrollText, Share2, BookOpen } from 'lucide-react';
 
-const SHARE_MESSAGE = `Smetti di trascinarti nel fango della normalità. Ho trovato il codice per camminare a un palmo da terra mentre gli altri mormorano nell'ombra. Senti il brivido di chi ha finalmente indossato l'Armatura. Diventa il Dio della tua realtà: https://www.psicovallo.com`;
+const SHARE_MESSAGE = `Smetti di trascinarti nel fango della normalità. Ho trovato il codice per camminare a un palmo da terra mentre gli altri mormorano nell'ombra. Ho eretto il Vallo: la trincea che separa il Sovrano dalla sua natura debole. Diventa il Dio della tua realtà: https://www.psicovallo.com`;
 
 export default function LandingPage() {
   const { user, loading } = useAuth();
@@ -63,13 +63,17 @@ export default function LandingPage() {
 
           <p className="text-lg font-bold text-primary">È ora di cambiare le regole.</p>
 
-          {/* Iron Man section */}
+          {/* Iron Man / Vallo section */}
           <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 space-y-3">
-            <h2 className="text-lg font-bold text-primary uppercase">E se ti dicessi che puoi avere i superpoteri?</h2>
+            <h2 className="text-lg font-bold text-primary uppercase">E se ti dicessi che puoi erigere un Vallo?</h2>
             <p>
-              Pensa a Tony Stark prima di diventare un eroe. Un uomo comune, vulnerabile. Poi trova la sua arma segreta. Indossa l'armatura di Iron Man e all'improvviso... smette di essere carne da macello. Diventa un Dio tra i mortali. Non chiede più permesso per entrare in una stanza; è la stanza che si adatta a lui.
+              Pensa a Tony Stark prima di diventare un eroe. Un uomo comune, vulnerabile. Poi erige la sua fortezza:
+              indossa l'esoscheletro di Iron Man e all'improvviso... smette di essere carne da macello.
+              Diventa un Dio tra i mortali. Non chiede più permesso per entrare in una stanza; è la stanza che si adatta a lui.
             </p>
-            <p className="font-semibold">Questa pagina è la tua armatura.</p>
+            <p className="font-semibold">
+              Questa pagina è il tuo Vallo: la trincea mentale che separa il Sovrano dalla sua natura debole.
+            </p>
           </div>
 
           <p>
@@ -112,7 +116,7 @@ export default function LandingPage() {
           <Link to="/auth"
             className="flex items-center justify-center gap-3 w-full rounded-2xl bg-primary py-4 px-6 text-base font-bold text-primary-foreground hover:bg-primary/90 transition-colors">
             <Shield size={20} />
-            Indossa l'Armatura ed Entra Ora
+            Erigi il Vallo ed Entra Ora
           </Link>
 
           <Link to="/manifesto"

@@ -141,7 +141,7 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
         }
       }
 
-      toast.success('Iniziazione completata. Il Vallo è alzato.');
+      toast.success('Iniziazione completata. Il Vallo è eretto.');
       onComplete();
     } catch (err) {
       toast.error("Errore durante l'iniziazione");
@@ -161,7 +161,7 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
             <Compass size={56} className="mx-auto mb-4 text-primary" />
             <h1 className="mb-2 text-3xl font-black uppercase text-foreground tracking-tight">Triage</h1>
             <p className="text-xs uppercase tracking-widest text-muted-foreground">
-              Prima di alzare il Vallo, il Consiglio deve sapere chi sei e perché sei qui.
+              Prima di erigere il Vallo, il Consiglio deve sapere chi sei e perché sei qui.
             </p>
           </div>
 
@@ -254,9 +254,14 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
           <div className="flex-1 space-y-3">
             <div className="rounded-none border-2 border-primary/40 bg-card p-5">
               <p className="text-sm text-foreground leading-relaxed">
-                <strong className="text-primary">Psico Vallo non è un'app di supporto.</strong> Non è un coach,
-                non è un amico, non è terapia. È <strong>un'armatura</strong> e un <strong>cruscotto</strong>:
-                misura quanto stai derubando il tuo futuro e ti restituisce il conto, in euro, ogni giorno.
+                Non stai scaricando un'app. Stai erigendo <strong className="text-primary uppercase">Il Vallo</strong>:
+                la trincea mentale che separa l'uomo che sei destinato a essere
+                dall'animale che continua a farti fallire.
+              </p>
+              <p className="mt-3 text-sm text-foreground leading-relaxed">
+                Il Vallo richiede manutenzione. Il Vallo richiede sangue. Se non
+                <strong className="text-primary"> presidi le mura</strong> ogni giorno, la tua fortezza cadrà
+                e <strong className="text-destructive">i Barbari entreranno</strong>.
               </p>
             </div>
 
@@ -264,11 +269,11 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
               <div className="flex items-start gap-3">
                 <Euro size={20} className="mt-0.5 shrink-0 text-primary" />
                 <div>
-                  <p className="text-sm font-black uppercase text-foreground">Debito Finanziario</p>
+                  <p className="text-sm font-black uppercase text-foreground">Debito di Guerra</p>
                   <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                    Ogni cedimento dichiarato vale <strong className="text-primary">+100€</strong> di debito
-                    virtuale. Quando il debito sale sopra zero, l'intera app diventa <strong>grigia</strong>:
-                    è la tua "Paga dello Schiavo".
+                    Ogni volta che apri un varco ai Barbari (un Vizio dichiarato), paghi
+                    <strong className="text-primary"> +100€</strong> di tributo. Quando il debito sale sopra zero,
+                    l'intera fortezza diventa <strong>grigia</strong>: è la tua "Paga dello Schiavo".
                   </p>
                 </div>
               </div>
@@ -278,9 +283,9 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
               <div className="flex items-start gap-3">
                 <Bell size={20} className="mt-0.5 shrink-0 text-primary" />
                 <div>
-                  <p className="text-sm font-black uppercase text-foreground">Notifiche Inevitabili</p>
+                  <p className="text-sm font-black uppercase text-foreground">Corni di Guardia</p>
                   <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                    Domande, SOS, Sfogo. Tornano finché non le attraversi. Niente snooze, niente pietà.
+                    Domande, SOS, Sfogo. Suonano finché non sali sulle mura. Niente snooze, niente pietà.
                   </p>
                 </div>
               </div>
@@ -293,35 +298,36 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
                   <p className="text-sm font-black uppercase text-foreground">Zero Gratificazione</p>
                   <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
                     Nessun badge, nessuna stellina, nessun complimento. Solo il numero che cresce o che cala.
-                    Tu decidi da che parte.
+                    Tu decidi da che parte delle mura stare.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* LA LEGGE DELLA PRESENZA */}
+            {/* LA LEGGE DEL TURNO DI GUARDIA */}
             <div className="rounded-none border-2 border-destructive bg-destructive/10 p-5">
               <div className="flex items-start gap-3">
                 <Sun size={20} className="mt-0.5 shrink-0 text-destructive" />
                 <div>
-                  <p className="text-sm font-black uppercase text-destructive">La Legge della Presenza</p>
+                  <p className="text-sm font-black uppercase text-destructive">La Legge del Turno di Guardia</p>
                   <p className="mt-2 text-xs text-foreground leading-relaxed">
-                    Il Consiglio non accetta fantasmi. Se non entri nell'app per <strong className="text-destructive">24 ore</strong>,
-                    il sistema presume che tu sia tornato a dormire nel gregge.
+                    Il Consiglio non accetta sentinelle fantasma. Se non
+                    <strong className="text-destructive"> presidi il Vallo per 24 ore</strong>,
+                    le mura restano scoperte e l'Orda annusa la breccia.
                   </p>
                   <p className="mt-2 text-xs text-foreground leading-relaxed">
-                    Conseguenza: <strong className="text-destructive">+50€ di Tassa di Passività</strong> e
+                    Conseguenza: <strong className="text-destructive">+50€ di Tassa di Diserzione</strong> e
                     inizio della <strong>Necrosi del Nucleo</strong>.
-                    La tua sovranità richiede manutenzione quotidiana.
+                    Il Vallo richiede manutenzione quotidiana.
                   </p>
                   <p className="mt-2 text-xs font-black uppercase text-destructive">
-                    Non è un'opzione. È il prezzo del potere.
+                    Se non ti presenti al turno, i Barbari entrano.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* InstallArmor — guida installazione PWA */}
+            {/* InstallArmor — Erigi il Vallo */}
             <InstallArmor />
           </div>
 
@@ -480,7 +486,7 @@ export default function OnboardingPage({ onComplete }: { onComplete: () => void 
             ) : (
               <>
                 <Bell size={18} />
-                ALZA IL VALLO
+                ERIGI IL VALLO
               </>
             )}
           </button>
