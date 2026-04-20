@@ -2,7 +2,17 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { lovable } from '@/integrations/lovable';
 import { toast } from 'sonner';
+
+async function handleSocial(provider: 'google' | 'apple') {
+  const result = await lovable.auth.signInWithOAuth(provider, {
+    redirect_uri: window.location.origin + '/home',
+  });
+  if (result.error) {
+    toast.error((result.error as any)?.message || 'Errore accesso social');
+  }
+}
 
 export default function AuthPage() {
   const [email, setEmail] = useState('');
