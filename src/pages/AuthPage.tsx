@@ -18,6 +18,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<'login' | 'forgot'>('login');
   const { user, loading: authLoading, signIn, signUp } = useAuth();
@@ -31,14 +32,39 @@ export default function AuthPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Normalizza phone: tieni solo cifre
+    const cleanPhone = phoneNumber.replace(/\D/g, '');
     setLoading(true);
     try {
       await signIn(email, password);
+      // Login riuscito: se l'utente ha digitato un numero in fase di accesso, salvalo
+      if (cleanPhone.length >= 10) {
+        const { data: { user: u } } = await supabase.auth.getUser();
+        if (u) {
+          await supabase
+            .from('profiles')
+            .update({ phone_number: cleanPhone, wa_notifications_enabled: true })
+            .eq('user_id', u.id);
+        }
+      }
       navigate('/home', { replace: true });
     } catch {
       try {
-        await signUp(email, password, name || undefined);
+        if (cleanPhone.length < 10) {
+          toast.error('Inserisci un numero WhatsApp valido (almeno 10 cifre con prefisso)');
+          setLoading(false);
+          return;
+        }
+        await signUp(email, password, name || undefined, cleanPhone);
         await signIn(email, password);
+        // Riallinea phone_number dopo il signIn (in caso il profilo fosse stato creato dopo)
+        const { data: { user: u } } = await supabase.auth.getUser();
+        if (u) {
+          await supabase
+            .from('profiles')
+            .update({ phone_number: cleanPhone, wa_notifications_enabled: true })
+            .eq('user_id', u.id);
+        }
         navigate('/home', { replace: true });
       } catch (err: any) {
         toast.error(err.message || 'Errore di autenticazione');
