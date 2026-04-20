@@ -145,7 +145,7 @@ export default function HomePage() {
         >
           <span className="text-2xl">✍️</span>
           <span className="text-xs font-medium text-foreground text-center">Area Sfogo</span>
-          <span className="text-[10px] text-muted-foreground text-center">Scarica la testa, l'AI ti ripulisce</span>
+          <span className="text-[10px] text-muted-foreground text-center">Scarica la testa, il Consiglio ti ripulisce</span>
         </Link>
         <Link
           to="/sos-conflitti"
@@ -202,7 +202,7 @@ export default function HomePage() {
         to="/manuale"
         className="flex items-center justify-center gap-2 w-full rounded-2xl border border-primary/30 bg-primary/5 py-3 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
       >
-        <BookOpen size={14} /> Come funziona Vallo — Manuale Operativo
+        <BookOpen size={14} /> Come funziona Psico Vallo — Manuale Operativo
       </Link>
     </div>
   );

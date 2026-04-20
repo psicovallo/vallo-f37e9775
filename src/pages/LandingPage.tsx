@@ -92,9 +92,9 @@ export default function LandingPage() {
             <BookOpen size={18} className="text-primary" /> Come funziona
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Vallo è un sistema di strumenti brutalisti: <strong className="text-foreground">Domanda Attiva</strong> (riflessione quotidiana),
+            Psico Vallo è un sistema di strumenti brutalisti: <strong className="text-foreground">Domanda Attiva</strong> (riflessione quotidiana),
             <strong className="text-foreground"> SOS DNA</strong> (frasi calibrate per scontri reali),
-            <strong className="text-foreground"> Area Sfogo</strong> (scarico mentale guidato dall'AI),
+            <strong className="text-foreground"> Area Sfogo</strong> (scarico mentale guidato dal Consiglio dei 15 Maestri),
             <strong className="text-foreground"> La Forgia</strong> (sfide quotidiane),
             <strong className="text-foreground"> Overton Shift</strong> (riprogrammazione in 5 step).
           </p>

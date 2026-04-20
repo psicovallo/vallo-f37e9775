@@ -84,7 +84,7 @@ export default function NotificationCategoryEditor({
             <Textarea
               value={customText}
               onChange={e => setCustomText(e.target.value)}
-              placeholder="Lascia vuoto per usare il testo generato dall'AI"
+              placeholder="Lascia vuoto per usare il testo del Consiglio dei Maestri"
               rows={3}
               className="text-sm"
             />

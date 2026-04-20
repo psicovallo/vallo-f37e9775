@@ -72,7 +72,7 @@ export default function PhoneRequiredGate() {
               Manca il tuo canale diretto
             </h2>
             <p className="text-xs text-muted-foreground mt-1">
-              Vallo ha bisogno del tuo numero WhatsApp per raggiungerti quando le notifiche del browser falliscono.
+              Psico Vallo ha bisogno del tuo numero WhatsApp per raggiungerti quando le notifiche del browser falliscono.
             </p>
           </div>
         </div>

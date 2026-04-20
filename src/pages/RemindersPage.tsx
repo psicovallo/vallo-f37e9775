@@ -183,7 +183,7 @@ export default function RemindersPage() {
         }
       }
       const { data, error } = await supabase.functions.invoke('send-push-notification', {
-        body: { user_ids: [user.id], title: '🧪 Test Vallo', body: 'Le notifiche push funzionano!' },
+        body: { user_ids: [user.id], title: '🧪 Test Psico Vallo', body: 'Le notifiche push funzionano!' },
       });
       if (error) setTestResult(`❌ Errore: ${error.message}`);
       else setTestResult(`✅ Inviate: ${data.sent}`);
