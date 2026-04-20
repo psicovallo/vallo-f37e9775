@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Menu, X, User, Zap, Bell, BookOpen, LogOut, Globe, Save, Shield, ScrollText, Share2, MessageSquare, Compass } from 'lucide-react';
+import { Menu, X, User, Zap, Bell, BookOpen, LogOut, Globe, Save, Shield, ScrollText, Share2, MessageSquare, Compass, KeyRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -101,6 +101,10 @@ export default function HamburgerMenu() {
           <Link to="/profile" onClick={() => setOpen(false)}
             className="w-full flex items-center gap-3 rounded-xl p-3 text-sm text-foreground hover:bg-muted transition-colors">
             <User size={18} /> Il Mio Profilo Evolutivo
+          </Link>
+          <Link to="/account" onClick={() => setOpen(false)}
+            className="w-full flex items-center gap-3 rounded-xl p-3 text-sm text-foreground hover:bg-muted transition-colors">
+            <KeyRound size={18} /> Account (email, telefono, accessi)
           </Link>
           <button onClick={() => { setShowQuantum(true); setShowProfile(false); setShowManual(false); }}
             className="w-full flex items-center gap-3 rounded-xl p-3 text-sm text-foreground hover:bg-muted transition-colors">
