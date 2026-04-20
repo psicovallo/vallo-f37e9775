@@ -63,11 +63,11 @@ export default function InstallBanner() {
       <div className="flex-1 min-w-0">
         {isIOS ? (
           <p className="text-xs text-foreground leading-snug">
-            Installa l'app: tocca <span className="font-bold">Condividi</span> → <span className="font-bold">Aggiungi alla schermata Home</span>
+            <span className="font-black uppercase">Erigi il Vallo</span>: tocca <span className="font-bold">Condividi</span> → <span className="font-bold">Aggiungi alla schermata Home</span>. Sigilla i cancelli.
           </p>
         ) : (
           <button onClick={handleInstall} className="text-xs text-foreground font-medium leading-snug text-left">
-            Installa l'app sul tuo telefono per un'esperienza migliore
+            <span className="font-black uppercase">Erigi il Vallo</span> sul tuo dispositivo. Sigilla i cancelli prima che arrivino i Barbari.
           </button>
         )}
       </div>
