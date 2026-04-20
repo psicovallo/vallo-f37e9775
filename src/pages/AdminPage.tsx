@@ -111,7 +111,7 @@ function MessagesTab() {
     supabase.functions.invoke('send-push-notification', {
       body: {
         user_ids: [selectedUser.user_id],
-        title: 'Vallo',
+        title: 'Psico Vallo',
         body: text.trim().substring(0, 100),
         data: { url: '/messages' },
       },
