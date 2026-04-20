@@ -62,10 +62,10 @@ export default function InstallArmor() {
     return (
       <div className="rounded-none border-2 border-primary bg-primary/10 p-4">
         <p className="text-[10px] font-black uppercase tracking-widest text-primary">
-          ⚡ Armatura installata
+          ⚡ Vallo Eretto · Cancelli Sigillati
         </p>
         <p className="mt-1 text-xs text-foreground leading-relaxed">
-          Sei un soldato, non un passante. L'app vive sul tuo schermo.
+          Sei un Sentinella sulle mura, non un passante nel deserto. La fortezza vive sul tuo schermo.
         </p>
       </div>
     );
@@ -76,7 +76,7 @@ export default function InstallArmor() {
       <div className="flex items-center gap-2">
         <Skull size={18} className="text-destructive" />
         <p className="text-[10px] font-black uppercase tracking-widest text-destructive">
-          Installa l'arma sul tuo schermo
+          Erigi il Vallo sul tuo dispositivo · Sigilla i cancelli
         </p>
       </div>
 
@@ -97,7 +97,7 @@ export default function InstallArmor() {
             <li>Conferma con <strong className="text-primary">"Aggiungi"</strong>.</li>
           </ol>
           <p className="text-[10px] uppercase font-black text-destructive leading-snug">
-            Se non lo fai, sei solo un passante nel browser. Le notifiche non possono raggiungerti.
+            Senza il Vallo eretto sei carne fuori dalle mura. I Barbari entrano e tu non senti il corno della guardia.
           </p>
         </div>
       )}
@@ -112,7 +112,7 @@ export default function InstallArmor() {
               onClick={handleAndroidInstall}
               className="w-full rounded-none bg-primary px-4 py-3 text-xs font-black uppercase tracking-widest text-primary-foreground hover:bg-primary/90 active:scale-[0.97]"
             >
-              ⚡ Installa l'App ora
+              ⚡ Erigi il Vallo ora
             </button>
           ) : (
             <ol className="list-decimal pl-5 text-xs text-foreground space-y-1.5 leading-relaxed">
@@ -129,7 +129,7 @@ export default function InstallArmor() {
             </ol>
           )}
           <p className="text-[10px] uppercase font-black text-destructive leading-snug">
-            Trasforma questo sito in un'arma permanente sul tuo schermo. Il browser è una stanza in affitto.
+            Trasforma questo sito in una fortezza permanente. Il browser è una tenda nel campo nemico: il Vallo è la tua mura di pietra.
           </p>
         </div>
       )}
@@ -147,7 +147,7 @@ export default function InstallArmor() {
             <li>L'app diventerà una finestra dedicata sul tuo computer.</li>
           </ol>
           <p className="text-[10px] uppercase font-black text-muted-foreground leading-snug">
-            Per la massima efficacia, installa l'app sul telefono: lì arrivano le push.
+            Per presidiare davvero, erigi il Vallo sul telefono: lì arrivano i corni di guardia.
           </p>
         </div>
       )}
