@@ -220,7 +220,7 @@ export default function ManualePage() {
             </AccordionTrigger>
             <AccordionContent className="space-y-3 text-sm leading-relaxed text-foreground">
               <p><strong>A cosa serve:</strong> hai casino in testa e devi scaricare prima di poter ragionare.</p>
-              <p><strong>Come funziona:</strong> scrivi tutto, senza censure. L'AI raccoglie il fango e te lo restituisce sotto forma di domande chirurgiche, in loop. La sessione dura 30 minuti.</p>
+              <p><strong>Come funziona:</strong> scrivi tutto, senza censure. Il Consiglio dei Maestri raccoglie il fango e te lo restituisce sotto forma di domande chirurgiche, in loop. La sessione dura 30 minuti.</p>
               <p><strong>Quando usarla:</strong> pressione che sale, ansia che blocca, testa che gira a vuoto.</p>
             </AccordionContent>
           </AccordionItem>

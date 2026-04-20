@@ -533,12 +533,12 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Chatta con Vallo */}
+      {/* Chatta con il Consiglio */}
       <Link
         to="/messages"
         className="flex items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-primary hover:bg-primary/20 transition-colors"
       >
-        <MessageSquare size={18} /> Chatta con Vallo
+        <MessageSquare size={18} /> Chatta con il Consiglio
       </Link>
 
       {/* Disclaimer */}
