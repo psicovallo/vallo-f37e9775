@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import BottomNav from '@/components/BottomNav';
 import GoogleTranslate from '@/components/GoogleTranslate';
 import { LANG_MAP } from '@/components/GoogleTranslate';
+import PhoneRequiredGate from '@/components/PhoneRequiredGate';
 
 const TRANSLATION_ENABLED_KEY = 'vallo_translation_enabled';
 
@@ -94,6 +95,7 @@ export default function AppLayout() {
         <GoogleTranslate language={linguaMadre} enabled={translationEnabled} />
         <Outlet />
         <BottomNav />
+        <PhoneRequiredGate />
       </div>
     </LangContext.Provider>
   );

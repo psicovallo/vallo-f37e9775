@@ -6,7 +6,7 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  signUp: (email: string, password: string, name?: string) => Promise<void>;
+  signUp: (email: string, password: string, name?: string, phoneNumber?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
@@ -42,13 +42,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [session?.user?.id]);
 
-  const signUp = async (email: string, password: string, name?: string) => {
-    const { error } = await supabase.auth.signUp({
+  const signUp = async (email: string, password: string, name?: string, phoneNumber?: string) => {
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name: name || '' }, emailRedirectTo: window.location.origin }
+      options: { data: { name: name || '', phone_number: phoneNumber || '' }, emailRedirectTo: window.location.origin }
     });
     if (error) throw error;
+    // Salva phone_number + abilita WA notifications appena il profilo esiste (creato da trigger)
+    if (phoneNumber && data.user) {
+      // Tentativo immediato; se profilo non ancora creato dal trigger, riprova dopo signIn
+      await supabase
+        .from('profiles')
+        .update({ phone_number: phoneNumber, wa_notifications_enabled: true })
+        .eq('user_id', data.user.id);
+    }
   };
 
   const signIn = async (email: string, password: string) => {
