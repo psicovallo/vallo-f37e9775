@@ -32,10 +32,12 @@ export default function ChatPage() {
       setChats(list);
       const otherIds = Array.from(new Set(list.map(c => c.user_a === user.id ? c.user_b : c.user_a)));
       if (otherIds.length) {
-        const { data: ps } = await supabase
-          .from('profiles').select('user_id, name, email').in('user_id', otherIds);
         const map: Record<string, ProfileLite> = {};
-        (ps || []).forEach((p: any) => { map[p.user_id] = p; });
+        await Promise.all(otherIds.map(async id => {
+          const { data } = await supabase.rpc('get_chat_profile' as any, { _user_id: id });
+          const row = (data as any[])?.[0];
+          if (row) map[id] = row;
+        }));
         setProfiles(map);
       }
     })();
