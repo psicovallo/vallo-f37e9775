@@ -44,9 +44,8 @@ export default function ChatPage() {
   const openPicker = async () => {
     setShowPicker(true);
     if (allUsers.length === 0) {
-      const { data } = await supabase
-        .from('profiles').select('user_id, name, email').order('name', { ascending: true }).limit(500);
-      setAllUsers(((data as any) || []).filter((p: ProfileLite) => p.user_id !== user?.id));
+      const { data } = await supabase.rpc('list_chat_directory' as any, { _search: '' });
+      setAllUsers((data as any) || []);
     }
   };
 
