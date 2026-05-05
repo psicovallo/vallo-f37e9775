@@ -1179,6 +1179,14 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_chat_profile: {
+        Args: { _user_id: string }
+        Returns: {
+          email: string
+          name: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1189,6 +1197,14 @@ export type Database = {
       is_chat_member: {
         Args: { _chat_id: string; _user_id: string }
         Returns: boolean
+      }
+      list_chat_directory: {
+        Args: { _search?: string }
+        Returns: {
+          email: string
+          name: string
+          user_id: string
+        }[]
       }
       move_to_dlq: {
         Args: {
