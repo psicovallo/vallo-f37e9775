@@ -1,98 +1,92 @@
 
+# Chat Interna tra Utenti (con Audio + Trascrizione)
 
-## Capisco lo stato attuale
+Una nuova sezione "Chat" separata dalla MessagesPage admin esistente. Stile WhatsApp: lista utenti → conversazione 1-a-1 → testo + audio. Gli audio vengono trascritti automaticamente (riusando `transcribe-audio` / Groq Whisper), il destinatario può ascoltare l'audio E scaricare il trascritto come `.txt`. UI in inglese di default, switch lingua nella chat (cambia solo la UI/etichette, non i messaggi).
 
-L'app **Vallo / Psico Vallo** è un sistema potentissimo composto da:
+> Nota: la memoria di progetto vieta "Chatta con Vallo" (chat con AI). Questa è chat **utente↔utente**, non viola il vincolo.
 
-- **Onboarding** (4 step: Patto, Obiettivo, Pietra Miliare, Attivazione notifiche)
-- **Domanda attiva** (riflessione: 9 letture obbligatorie, timer 60s, parole bloccate, Fase B con risposta)
-- **SOS DNA** (Metodo Cipolla, 4 scenari: Conflitto/Eros/Business/WhatsApp, 5 Veli, validazione AI)
-- **Area Sfogo** (scrittura libera, AI genera domande in loop, sessione 30min)
-- **La Forgia** (sfide quotidiane, gatekeeper Profilo Evolutivo)
-- **Tribunale** (cicli 15 giorni, Mattoni vs Crepe)
-- **Overton Shift** (5 step di riprogrammazione, decay 48h)
-- **Centro Notifiche** (gestione granulare per domanda)
-- **Manuale Operativo** nel menu hamburger (sintetico, nascosto)
+## Sezione 1 – Database (migrazione)
 
-**Il problema vero**: l'utente entra, vede l'Home con 7 quadratini cliccabili e non sa **cosa fare prima**, **perché**, **in che ordine**, e **come tutto si collega**. Il "Manifesto" è epico ma astratto. Il "Manuale" è nascosto nel menu e parla solo del Consiglio. Manca un **filo narrativo guidato**.
+Nuove tabelle:
 
-## Cosa propongo: rendere l'app una figata da usare
+**`user_chats`** (conversazione 1-a-1)
+- `id uuid pk`, `user_a uuid`, `user_b uuid` (ordinati alfabeticamente per unicità), `created_at`, `last_message_at`
+- unique (user_a, user_b)
 
-Trasformare Vallo da "scatola di strumenti potenti" a "**percorso guidato di dominio**" con tre interventi mirati.
+**`user_chat_messages`**
+- `id uuid pk`
+- `chat_id uuid → user_chats.id`
+- `sender_id uuid` (auth.users)
+- `recipient_id uuid`
+- `body text` (testo o trascrizione audio)
+- `audio_path text null` (path in storage bucket `chat-audio`)
+- `audio_duration_sec int null`
+- `transcript text null` (trascritto Whisper)
+- `transcript_lang text default 'en'`
+- `read_at timestamptz null`
+- `created_at timestamptz default now()`
 
-### 1. Tour guidato post-onboarding ("Il Primo Giro")
+**Storage bucket** `chat-audio` (privato), RLS: utente può leggere/scrivere solo file il cui path inizia con `{chat_id}/` se è membro della chat.
 
-Subito dopo l'attivazione (e accessibile anche dal menu come "Rifai il giro"), un **walkthrough a 6 schermate** in stile slide brutaliste che mostra:
+**RLS** su entrambe le tabelle: SELECT/INSERT consentito solo se `auth.uid() in (user_a, user_b)` / `auth.uid() in (sender_id, recipient_id)`.
 
-```
-[1] Home → "Da qui comandi tutto"
-[2] Domanda attiva 🔥 → "Il cuore. Una domanda al giorno, 9 letture, poi rispondi"
-[3] SOS DNA ⚔️ → "Quando hai uno scontro reale: profila il bersaglio, ricevi le frecce"
-[4] Area Sfogo ✍️ → "Quando hai casino in testa: scrivi, l'AI ti pulisce"
-[5] La Forgia 🔨 + Overton 🎯 → "Sfide e shift quando vuoi spingere oltre"
-[6] Notifiche 🔔 → "Tutto programmato, tutto modificabile"
-```
+**Realtime**: `ALTER PUBLICATION supabase_realtime ADD TABLE public.user_chat_messages;`
 
-Ogni schermata: icona grande, frase brutale (1 riga), micro-spiegazione (2 righe), pulsante "Avanti". Skippabile, ma di default attivo al primo accesso a Home.
+## Sezione 2 – Edge function `chat-send-audio`
 
-### 2. Sezione "Come funziona" pubblica + completa
+Riceve `multipart/form-data` con `audio`, `chat_id`, `recipient_id`, `language` (default `en`).
+1. Valida che il sender sia membro della chat (JWT).
+2. Carica l'audio nel bucket `chat-audio/{chat_id}/{uuid}.webm` con service role.
+3. Chiama Groq Whisper (riutilizzando la stessa logica di `transcribe-audio`) con `language` selezionata.
+4. INSERT in `user_chat_messages` con `audio_path`, `transcript`, `transcript_lang`, `body = transcript`.
+5. Aggiorna `last_message_at` su `user_chats`.
+6. Ritorna il messaggio creato.
 
-Trasformare la voce "Manuale Operativo" del menu in una vera pagina **`/manuale`** strutturata in accordion (Radix Accordion già installato), con:
+## Sezione 3 – Frontend
 
-- **Filosofia**: il sistema brutalista, il Consiglio dei 15
-- **I tuoi strumenti**: scheda dettagliata per ogni sezione (a cosa serve, quando usarla, esempio reale, regole)
-- **Il flusso giornaliero ideale**: "mattina = 1 domanda, pomeriggio = sfogo se serve, sera = forgia"
-- **Domande Frequenti**: "perché 9 letture?", "perché parole bloccate?", "cos'è un Velo?", "Quantum cos'è?"
-- **Le regole d'oro**: non modificare frasi SOS DNA, ripetere mentalmente 5x, ecc.
+### Nuova route `/chat`
+Aggiungere in `App.tsx` dentro `<AppLayout>`. Voce nel `HamburgerMenu` con icona `MessagesSquare` → "Chat".
 
-Linkata anche dalla landing pubblica come "**Come funziona**" prima del CTA, così chi arriva da fuori capisce **prima di registrarsi**.
+### Pagina `ChatPage.tsx` (lista chat + utenti)
+- Header con switch lingua (`en | it | es | fr | de | pt`) salvato in `localStorage` chiave `chat_ui_lang`.
+- Pulsante "New chat" → modal con lista utenti pescati da `profiles` (mostra `name`, `email`). Click su utente → upsert riga in `user_chats` e apre conversazione.
+- Lista delle chat esistenti dell'utente con anteprima ultimo messaggio.
 
-### 3. Tooltips contestuali "?" + Card "Cosa è successo qui?"
+### Pagina `ChatConversationPage.tsx` (`/chat/:chatId`)
+Stile WhatsApp:
+- Bubble destra (mie) / sinistra (loro).
+- Per messaggi audio: `<audio controls src={signedUrl}>` + badge "Transcript ready" + bottone **Download .txt** (genera Blob da `transcript` e fa download `transcript-{id}.txt`).
+- Toggle "Show transcript" inline.
+- Input bar:
+  - Textbox + send.
+  - Pulsante mic (riusa pattern di `VoiceInput.tsx` con `MediaRecorder`). Stop registrazione → upload via `supabase.functions.invoke('chat-send-audio', {body: formData})`.
+- Realtime subscribe su `user_chat_messages` filtrato `chat_id=eq.{id}`.
+- Auto-mark `read_at` quando il messaggio è visibile.
 
-In ogni pagina principale (Domanda, SOS DNA, Sfogo, Forgia, Overton): piccola icona **`?`** in alto a destra che apre un drawer con:
-- "**Cosa stai facendo qui**" (1 paragrafo)
-- "**Cosa farà l'AI**" (1 paragrafo)
-- "**Risultato atteso**" (1 paragrafo)
-- Link "Apri il Manuale completo"
+### URL firmati per l'audio
+Bucket privato → genera signed URL con `supabase.storage.from('chat-audio').createSignedUrl(path, 3600)` quando si renderizza il player.
 
-Inoltre, sulla **Home** sostituire/completare l'attuale griglia con micro-descrizioni più chiare sotto ogni quadratino (alcune già ci sono, altre no — uniformare tutte).
+## Sezione 4 – i18n leggera (UI chat)
+Piccolo dizionario `src/lib/chat-i18n.ts` con stringhe base ("New chat", "Type a message", "Recording…", "Download transcript", ecc.) per le 6 lingue. Hook `useChatLang()` che legge `localStorage`.
 
-### Architettura tecnica (sintesi)
+## Sezione 5 – Memoria
+Aggiornare `mem://constraints` o equivalente: il vincolo "no internal chat" si riferiva a chat con AI Vallo. Annotare che ora esiste **chat utente↔utente** in `/chat`, distinta dalle messaggi admin in `/messages`.
 
-```text
-src/components/
-  GuidedTour.tsx          [NEW] - 6-step modal overlay, salva tour_completed in profiles
-  HelpDrawer.tsx          [NEW] - drawer riusabile "?" per ogni pagina
+## File da creare / modificare
 
-src/pages/
-  ManualePage.tsx         [NEW] - /manuale, accordion completo
-  HomePage.tsx            [EDIT] - trigger GuidedTour se !profile.tour_completed,
-                                   uniforma sottotitoli quadratini, aggiunge link "Manuale"
-  LandingPage.tsx         [EDIT] - aggiunge sezione "Come funziona" linkata a /manuale
-  QuestionPage.tsx        [EDIT] - aggiunge HelpDrawer (?)
-  SOSConflittiPage.tsx    [EDIT] - aggiunge HelpDrawer (?)
-  SfogoPage.tsx           [EDIT] - aggiunge HelpDrawer (?)
-  LaForgiaPage.tsx        [EDIT] - aggiunge HelpDrawer (?)
-  OvertonPage.tsx         [EDIT] - aggiunge HelpDrawer (?)
+Nuovi:
+- `supabase/migrations/<ts>_user_chat.sql` (tabelle + RLS + storage bucket + realtime)
+- `supabase/functions/chat-send-audio/index.ts`
+- `src/pages/ChatPage.tsx`
+- `src/pages/ChatConversationPage.tsx`
+- `src/lib/chat-i18n.ts`
 
-src/components/HamburgerMenu.tsx [EDIT]
-  - "Manuale Operativo" diventa Link a /manuale (non più popup interno)
-  - Aggiunge "Rifai il Tour Guidato" che resetta tour_completed
+Modificati:
+- `src/App.tsx` – aggiungere route `/chat` e `/chat/:chatId`
+- `src/components/HamburgerMenu.tsx` – voce "Chat"
+- `mem://index.md` (+ eventuale file constraint)
 
-App.tsx                   [EDIT] - aggiunge route /manuale (anche pubblica)
-
-Migration SQL:
-  ALTER TABLE profiles ADD COLUMN tour_completed boolean DEFAULT false;
-```
-
-Tutti i contenuti rimangono nel **tono brutalista esistente** (no smielate, no premi). Niente cambia nelle logiche AI, notifiche, DB esistenti — è puramente **layer di guida e narrazione**.
-
-### Cosa NON tocco
-- Logica del Consiglio dei Maestri (resta in italiano, output invariato)
-- Sistema di notifiche e scheduling (appena rifatto)
-- Validazioni delle risposte (parole bloccate, 9 letture, ecc.)
-- Database esistente (solo aggiunta `tour_completed`)
-
-### Risultato per l'utente
-Chi entra **capisce in 60 secondi** cos'è Vallo, cosa fare oggi, dove andare quando ha un conflitto reale, dove sfogare la testa, dove spingere oltre. Chi è dentro da settimane può aprire il Manuale per riscoprire feature dimenticate. Chi arriva dalla landing capisce **prima di registrarsi** se fa per lui.
-
+## Domande aperte (rispondi se vuoi cambiare default)
+1. Le chat sono **1-a-1** (default) o anche di gruppo?
+2. Gli utenti selezionabili sono **tutti** quelli registrati o solo quelli loggati con Google? (Default proposto: tutti gli utenti con un `profiles.name`. Filtrare solo Google è possibile leggendo `auth.users.app_metadata.providers`, ma richiede service role.)
+3. Lingua default UI = **English**, confermi?

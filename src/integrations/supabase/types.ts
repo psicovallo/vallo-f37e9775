@@ -1074,6 +1074,80 @@ export type Database = {
         }
         Relationships: []
       }
+      user_chat_messages: {
+        Row: {
+          audio_duration_sec: number | null
+          audio_path: string | null
+          body: string
+          chat_id: string
+          created_at: string
+          id: string
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+          transcript: string | null
+          transcript_lang: string
+        }
+        Insert: {
+          audio_duration_sec?: number | null
+          audio_path?: string | null
+          body?: string
+          chat_id: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+          transcript?: string | null
+          transcript_lang?: string
+        }
+        Update: {
+          audio_duration_sec?: number | null
+          audio_path?: string | null
+          body?: string
+          chat_id?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
+          transcript?: string | null
+          transcript_lang?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_chat_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "user_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_chats: {
+        Row: {
+          created_at: string
+          id: string
+          last_message_at: string
+          user_a: string
+          user_b: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          user_a: string
+          user_b: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          user_a?: string
+          user_b?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -1105,12 +1179,32 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_chat_profile: {
+        Args: { _user_id: string }
+        Returns: {
+          email: string
+          name: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      is_chat_member: {
+        Args: { _chat_id: string; _user_id: string }
+        Returns: boolean
+      }
+      list_chat_directory: {
+        Args: { _search?: string }
+        Returns: {
+          email: string
+          name: string
+          user_id: string
+        }[]
       }
       move_to_dlq: {
         Args: {
