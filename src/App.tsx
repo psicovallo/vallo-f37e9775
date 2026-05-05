@@ -21,6 +21,8 @@ import SOSConflittiPage from "@/pages/SOSConflittiPage";
 import DNAQuestionPage from "@/pages/DNAQuestionPage";
 import ProfilePage from "@/pages/ProfilePage";
 import AccountPage from "@/pages/AccountPage";
+import ChatPage from "@/pages/ChatPage";
+import ChatConversationPage from "@/pages/ChatConversationPage";
 import LaForgiaPage from "@/pages/LaForgiaPage";
 import TribunalePage from "@/pages/TribunalePage";
 import OvertonPage from "@/pages/OvertonPage";
@@ -55,6 +57,8 @@ const App = () => (
               <Route path="/dna-question" element={<DNAQuestionPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/account" element={<AccountPage />} />
+              <Route path="/chat" element={<ChatPage />} />
+              <Route path="/chat/:chatId" element={<ChatConversationPage />} />
               <Route path="/reminders" element={<RemindersPage />} />
               <Route path="/notes" element={<NotesPage />} />
               <Route path="/messages" element={<MessagesPage />} />
